@@ -20,17 +20,17 @@ class CEAS(PipelineModule):
 	#end __init__()
 	
 	def show_version(self, handle=None, fancy=True, path=''):
-		buffer = ""
+		buff = ""
 		if fancy:
-			buffer = 'CEAS version is....\n  -> '
-		buffer += subprocess.check_output(path+' --version 2>&1 | tail -n 1', shell=True, stderr=subprocess.STDOUT)
+			buff = 'CEAS version is....\n  -> '
+		buff += subprocess.check_output(path+' --version 2>&1 | tail -n 1', shell=True, stderr=subprocess.STDOUT)
 		if fancy:
-			buffer += '\n'
+			buff += '\n'
 		if handle is not None:
-			handle.write(buffer)
+			handle.write(buff)
 			handle.flush()
 		else:
-			return buffer
+			return buff
 	#end show_version()
 	
 	def supported_types(self):

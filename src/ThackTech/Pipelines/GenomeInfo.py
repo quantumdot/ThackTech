@@ -1,16 +1,21 @@
 import os
 import glob
-from ThackTech import Common
+from ThackTech import filetools
 
 
 
-class GenomeInfo:
+class GenomeInfo(object):
 	def __init__(self, name, gsize, chrsize=None):
-		'''genome name, typically UCSC naming convention '''
+		"""Initalize a GenomeInfo object
+		
+		Parameters:
+			name (str): genome name, typically UCSC naming convention
+			gsize (int): Effective genome size
+			chrsize (str): location of chromosome size info file
+			
+		"""
 		self.name = name
-		'''Effective genome size'''
 		self.gsize = gsize
-		'''location of chromosome size info file'''
 		self.chrsize = chrsize
 		self.indexes = {}
 		self.wg_fasta = None
@@ -30,11 +35,11 @@ class GenomeInfo:
 			if os.path.exists(idx_path):
 				matches = glob.glob(os.path.join(idx_path, idx_types[idx]))
 				if len(matches) > 0:
-					self.add_index(idx, os.path.join(idx_path, Common.basename_noext(matches[0], True)))
+					self.add_index(idx, os.path.join(idx_path, filetools.basename_noext(matches[0], True)))
 		
 		#chromosome fasta files
 		for f in glob.glob(os.path.join(basepath, 'Sequence', 'Chromosomes', '*.fa')):
-			self.chr_fasta[Common.basename_noext(f)] = f
+			self.chr_fasta[filetools.basename_noext(f)] = f
 		
 		#whole genome fasta
 		wg_fasta_results = glob.glob(os.path.join(basepath, 'Sequence', 'WholeGenomeFasta', '*.fa'))

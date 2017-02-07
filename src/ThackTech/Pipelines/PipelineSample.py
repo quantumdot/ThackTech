@@ -4,9 +4,9 @@ from ThackTech.Pipelines import GenomeInfo, FileInfo, GLOBAL_MANAGER
 
 
 
-class PipelineSample:
+class PipelineSample(object):
 
-	def __init__(self, name, genome, dest, format):
+	def __init__(self, name, genome, dest):
 		self.files = GLOBAL_MANAGER.dict()
 		self.attr = GLOBAL_MANAGER.dict()
 		self.name = name
@@ -15,7 +15,6 @@ class PipelineSample:
 		else:
 			self.genome = GenomeInfo.get_reference_genomes()[genome]
 		self.dest = os.path.abspath(dest)
-		self.format = format.lower()
 	#end __init__()
 	
 	def __getstate__(self):

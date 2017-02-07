@@ -3,17 +3,17 @@ import sys
 import traceback
 import platform
 import time
-import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
-import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
-from ThackTech import Common
+from ThackTech import filetools
 
-# try:
-	# #try to add module system to python path
-	# sys.path.insert(0, os.path.join(os.environ['MODULESHOME'], "init"))
-# except:
-	# pass
 
-class PipelineRunner:
+class PipelineRunner(object):
+	"""Base class for pipeline runners
+	
+	Pipeline runners separate the logic of actually executing the pipeline, which may differ
+	depending on the environment, from the pipeline definition.
+	
+	To implement a pipeline runner, you must implement the run() method.
+	"""
 	def __init__(self, pipeline):
 		self.pipeline = pipeline
 		self.tasks_statuses = None
@@ -30,7 +30,7 @@ class PipelineRunner:
 def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 	tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
 	#ensure the output directory exists
-	Common.ensure_dir(sample.dest)
+	filetools.ensure_dir(sample.dest)
 
 	with open(os.path.join(sample.dest, sample.name+'.log'), 'a', buffering=0) as logfile:
 		sys.stdout = sys.stderr = logfile
@@ -99,43 +99,3 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			logfile.flush()
 			return sample
 #end __execute_pipeline_on_sample()
-
-
-# if __name__ == "__main__":
-	# import argparse
-	# import threading
-	# import dill
-	
-	# parser = argparse.ArgumentParser()
-	# parser.add_argument('pipeline', help="pipeline pickle file")
-	# parser.add_argument('sample', help="sample pickle file")
-	# parser.add_argument('status', help="sample status pickle file")
-	# args = parser.parse_args()
-	
-	# if not os.path.exists(args.pipeline):
-		# raise ValueError("Path %s not found!" % (args.pipeline,))
-	# if not os.path.exists(args.sample):
-		# raise ValueError("Path %s not found!" % (args.sample,))
-	# if not os.path.exists(args.status):
-		# raise ValueError("Path %s not found!" % (args.status,))
-	
-	# with open(args.pipeline, 'rb') as pf:
-		# pipeline_pickle = dill.load(pf)
-	# with open(args.sample, 'rb') as sf:
-		# sample_pickle = dill.load(sf)
-	# with open(args.status, 'rb') as ssf:
-		# status_pickle = dill.load(ssf)
-	
-	# tasks_statuses = dict()
-	# tasks_statuses[sample_pickle.name] = status_pickle
-	
-	# thread = threading.Thread(target=_execute_pipeline_on_sample, args=(pipeline_pickle, sample_pickle, tasks_statuses))
-	# thread.start()
-	
-	# while thread.is_alive():
-		# time.sleep(0.5)
-		# with open(args.status, 'wb', 0) as f:
-			# dill.dump(tasks_statuses[sample_pickle.name], f)
-	# thread.join()
-	
-

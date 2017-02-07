@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -18,7 +18,7 @@ class BamFingerprint(PipelineModule):
 	
 	def run(self, sample, logfile):
 		dest_dir = os.path.join(sample.dest, 'fingerprint')
-		Common.ensure_dir(dest_dir)
+		filetools.ensure_dir(dest_dir)
 		fingerprint_args = [
 			#'bamFingerprint',
 			'plotFingerprint',	#renamed in deepTools 2.0

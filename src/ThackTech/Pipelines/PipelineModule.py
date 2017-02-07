@@ -1,11 +1,14 @@
-import os
 import subprocess
 from tabulate import tabulate
 from ThackTech.Pipelines import ModuleParameter
 
 
-class PipelineModule:
-
+class PipelineModule(object):
+	"""Represents a self-contained work unit within a pipeline
+	
+	
+	
+	"""
 	def __init__(self, name, short_description):
 		self.name = name
 		self.description = short_description
@@ -47,7 +50,7 @@ class PipelineModule:
 	
 	def get_parameter_value(self, parameter_name):
 		if self.has_parameter(parameter_name):
-			return self.parameters[parameter_name].get_value()
+			return self.parameters[parameter_name].value
 		else:
 			raise ValueError('Parameter "%s" does not exist!' % (parameter_name,))
 	#end get_parameter()
@@ -60,11 +63,16 @@ class PipelineModule:
 	#end get_parameter()
 	
 	def _name_resolver(self, name):
+		"""Names a resolver that should be supplied by the consumer
+		
+		When a resolver is initially named, the defualt implementation
+		assigned to the resolver is a lambda that returns None.
+		"""
 		self.resolvers[name] = lambda sample: None
 	#end _name_resolver()
 	
-	def set_resolver(self, name, function):
-		self.resolvers[name] = function
+	def set_resolver(self, name, _callable):
+		self.resolvers[name] = _callable
 	#end set_resolver()
 	
 	def resolve_input(self, name, sample):
@@ -72,6 +80,8 @@ class PipelineModule:
 	#end resolve_input()
 	
 	def get_resolver_names(self):
+		"""Gets a list of declared resolver names
+		"""
 		return self.resolvers.keys()
 	#end get_resolver_names()
 	
@@ -105,6 +115,17 @@ class PipelineModule:
 	#end is_compatible_with_sample()
 	
 	def _run_subprocess(self, cmd, **kwargs):
+		"""Wrapper around the subprocess.Popen call and provides some extra convience
+		
+		Use is basically the same as the subprocess.Popen call, except that this method
+		checks the return code of the completed process and raises a CalledProcessError
+		if the return code <> 0. 
+		
+		This method returns a tuple of (stdout, stderr) from the process, but this requires
+		setting stdout and stderr to subprocess.PIPE in kwargs.
+		
+		This method will block until the process has completed!
+		"""
 		#print os.environ
 		proc = subprocess.Popen(cmd, **kwargs)
 		out, err = proc.communicate()
@@ -115,32 +136,34 @@ class PipelineModule:
 	#end _run_subprocess()
 	
 	def documentation(self):
+		"""Return a string that documents this module
+		"""
 		hash_length = 40
-		buffer = "%s\n%s\n%s\n%s\n" % (self.name, '-'*hash_length, self.description, '-'*hash_length)
-		buffer += "PARAMETERS:"
+		buff = "%s\n%s\n%s\n%s\n" % (self.name, '-'*hash_length, self.description, '-'*hash_length)
+		buff += "PARAMETERS:"
 		if len(self.parameters) < 1:
-			buffer += "\n\tNo Parameters Declared\n"
+			buff += "\n\tNo Parameters Declared\n"
 		else:
-			buffer += "\n"
-			param_headers = ['Name', 'Type', 'Value', 'Default', 'Description']
+			buff += "\n"
+			param_headers = ['Name', 'Type', 'Value', 'Default', 'Nullable', 'Choices', 'Description', ]
 			param_table = []
 			for param in self.parameters.itervalues():
-				param_table.append([str(param.name), param.get_type_as_string(), str(param.get_value()), str(param.default), str(param.description)])
+				param_table.append([str(param.name), param.type_name, str(param.value), str(param.default), str(param.nullable), str(param.choices), str(param.description)])
 				#buffer += "\t%s: %s\n" % (param, str(self.parameters[param]))
-			buffer += tabulate(param_table, headers=param_headers, tablefmt="simple")
-			buffer += '\n'
+			buff += tabulate(param_table, headers=param_headers, tablefmt="simple")
+			buff += '\n'
 		#buffer += '-'*hash_length
-		buffer += '\n'
+		buff += '\n'
 		
-		buffer += "RESOLVERS:"
+		buff += "RESOLVERS:"
 		if len(self.resolvers) < 1:
-			buffer += "\n\tNo Resolvers Declared\n"
+			buff += "\n\tNo Resolvers Declared\n"
 		else:
-			buffer += "\n"
+			buff += "\n"
 			for resolver in self.resolvers:
-				buffer += "\t%s: %s\n" % (resolver, str(self.resolvers[resolver]))
-		buffer += '-'*hash_length
-		buffer += '\n'
-		return buffer
+				buff += "\t%s: %s\n" % (resolver, str(self.resolvers[resolver]))
+		buff += '-' * hash_length
+		buff += '\n'
+		return buff
 	#end documentation()
 #end class PipelineModule

@@ -2,7 +2,7 @@ import os
 import sys
 from ThackTech.Pipelines import GLOBAL_MANAGER
 
-class FileInfo:
+class FileInfo(object):
 	"""Represents a file within the pipeline framework
 	
 	Provides convience methods for working with files, as well as providing support

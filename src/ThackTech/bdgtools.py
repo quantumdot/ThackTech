@@ -5,6 +5,7 @@ import cStringIO
 import csv
 import numpy as np
 import os.path
+from ThackTech import chromtools
 
 score_funcs = {}
 score_funcs['mean'] 	= np.mean
@@ -71,11 +72,6 @@ def bed_to_bedgraph(input, output):
 			output.write("%s\t%d\t%d\t%s\n" % (chrom, start, stop, value))
 #end wig_to_bedgraph()
 
-def chrom_to_int(chrom):
-	ord3 = lambda x : '%.3d' % ord(x)
-	return int(''.join(map(ord3, chrom))) 
-#end chrom_to_int()
-
 class Interval:
 	def __init__(self, chrom, start, stop, score):
 		self.chr = chrom
@@ -84,8 +80,9 @@ class Interval:
 		self.score = score
 	#end Interval.__init__()
 	
+	@property
 	def numeric_chrom(self):
-		return chrom_to_int(self.chr)
+		return chromtools.chrom_to_int(self.chr)
 	#end numeric_chrom()
 	
 	def getOverlap(self, other):

@@ -1,5 +1,3 @@
-import os
-import sys
 import time
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
 import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
@@ -29,7 +27,7 @@ class ParallelPipelineRunner(PipelineRunner):
 		results = []
 		r = [pool.apply_async(_execute_pipeline_on_sample, (self.pipeline, sample, self.tasks_statuses), callback=results.append) for sample in samples]
 		
-	 	while len(results) < sample_count:
+		while len(results) < sample_count:
 			time.sleep(0.5)
 			progress.update(len(results), '(%d/%d complete)' % (len(results), sample_count), self.tasks_statuses)
 		

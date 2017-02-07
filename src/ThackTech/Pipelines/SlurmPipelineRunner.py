@@ -2,7 +2,6 @@ import os
 import sys
 import time
 import traceback
-import re
 #from multiprocessing import Pool, Manager 
 #from multiprocessing import Manager
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
@@ -12,7 +11,7 @@ from ThackTech.Pipelines import PipelineRunner, GLOBAL_MANAGER
 from ThackTech.Processes import MultiStatusProgressItem, MultiStatusProgressBar
 
 try:
-	cpu_count = multiprocessing.cpu_count()
+	cpu_count = mp.cpu_count()
 except:
 	cpu_count = 1
 if cpu_count is None:
