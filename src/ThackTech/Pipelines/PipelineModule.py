@@ -19,14 +19,28 @@ class PipelineModule(object):
 	#end __init__()
 	
 	def set_critical(self, is_critical):
+		"""Sets if failure of this module is a critical failure.
+		If this module fails and is marked as critical, then the remainder of
+		the pipeline will be aborted. Useful if downstream steps rely on the 
+		output of this module.
+		"""
 		self._critical = is_critical
 	#end set_critical()
 	
+	@property
 	def is_critical(self):
+		"""Returns bool where True indicates that this module is critical
+		"""
 		return self._critical
 	#end is_critical()
 	
 	def add_parameter(self, parameter):
+		"""Adds a parameter to this module
+		Typically this is used only derivitives of PipelineModule.
+		To set the value of a parameter, use the set_parameter() method
+		"""
+		if not isinstance(parameter, ModuleParameter):
+			raise ValueError('Expecting parameter to be of type ModuleParmater, %s given!' % (type(parameter).__name__,))
 		self.parameters[parameter.name] = parameter
 	#end add_parameter()
 	
@@ -136,7 +150,7 @@ class PipelineModule(object):
 	#end _run_subprocess()
 	
 	def documentation(self):
-		"""Return a string that documents this module
+		"""Return a string that documents this module and its parameters and resolvers
 		"""
 		hash_length = 40
 		buff = "%s\n%s\n%s\n%s\n" % (self.name, '-'*hash_length, self.description, '-'*hash_length)

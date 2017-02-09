@@ -1,4 +1,7 @@
-from multiprocess.sharedctypes import _new_value
+from distutils.util import strtobool
+
+
+
 class ModuleParameter(object):
 	"""Represents a parameter for a PipelineModule
 	
@@ -66,7 +69,6 @@ class ModuleParameter(object):
 		if self.nullable and value is None:
 			new_value = None
 		elif value_type == bool:
-			from distutils.util import strtobool
 			new_value = strtobool(str(value))
 		elif value_type == int:
 			new_value = int(value)
