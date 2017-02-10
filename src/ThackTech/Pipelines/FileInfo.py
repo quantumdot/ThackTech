@@ -1,57 +1,20 @@
 import os
 import sys
 from ThackTech.Pipelines import GLOBAL_MANAGER
-
-class ModuleContext(object):
-
-	def __init__(self, pipeline_name, step_num, module_name):
-		self.__pipeline = pipeline_name
-		self.__step = step_num
-		self.__module = module_name
-	
-	@property
-	def pipeline(self):
-		return self.__pipeline
-	
-	@property
-	def step(self):
-		return self.__step
-	
-	@property
-	def module(self):
-		return self.__module
-	
-#end class ModuleContext
-
-class ModuleRunContext(ModuleContext):
-
-	def __init__(self, pipeline_name, step_num, module_name, logfile, sample):
-		super(FileContext, self).__init__(pipeline_name, step_num, module_name)
-		self.__logfile = logfile
-		self.__sample = sample
-		
-	@property
-	def sample(self):
-		return self.__sample
-	
-	@property
-	def logfile(self):
-		return self.__logfile
-	
-#end class ModuleRunContext
+from ThackTech.Pipelines.Context import ModuleContext
 
 class FileContext(ModuleContext):
 	"""Represents the context of a file within the pipelineing system
-	
-	"""
+    
+    """
 	def __init__(self, pipeline_name, step_num, module_name, file_role):
 		super(FileContext, self).__init__(pipeline_name, step_num, module_name)
 		self.__role = file_role
-		
+
 	@property
 	def role(self):
 		return self.__role
-	
+
 #end class FileContext
 
 class FileInfo(object):
@@ -68,18 +31,14 @@ class FileInfo(object):
 	- context: context that this file was generated under....... (NEED TO DEFINE THIS BETTER!!!)
 	
 	"""
-	def __init__(self, filepath):
+	def __init__(self, filepath, context):
 		"""Initializes a FileInfo object
 		
 		Args:
 			filepath (str): Path of the file this object represents
 		"""
 		self._fullpath = filepath
-		
-		#contextual information
-		self._generator = ""
-		self._role = ""
-		self.context = ""
+		self.context = context
 		
 		#support for companion files
 		self._parent = None
