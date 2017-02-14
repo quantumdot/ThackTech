@@ -202,6 +202,7 @@ def fill_complement(f, chroms, mode):
 	
 	Args:
 		f (string): b
+	"""
 	sys.stderr.write('Finding regions with missing data\n')
 	
 	if mode == 'zero':
