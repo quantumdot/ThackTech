@@ -1,8 +1,3 @@
-'''
-Created on Feb 7, 2017
-
-@author: sresearch
-'''
 import os
 import errno
 import subprocess
@@ -38,78 +33,78 @@ def basename_noext(path, complete=False):
                 return new_base
             base = new_base
 #end basename_noext()
+
 def get_known_compression_ext():
     ''' Return a list of known and supported compressed file extensions. Used by is_compressed() and extract() '''
     return ['.tar.bz2', '.tar.gz', '.tar.xz', '.bz2', '.gz', '.tar', '.tbz2', '.tgz', '.zip']
 #end get_known_compression_ext()
 
-def is_compressed(file):
-    '''    Uses a pretty naive method of checking file extension to see if a file
-        *looks* like it is compressed.'''
+def is_compressed(filename):
+    '''Uses a naive method of checking file extension to see if a file *looks* like it is compressed.'''
     for ext in get_known_compression_ext():
-        if file.endswith(ext):
+        if filename.endswith(ext):
             return True
 #end is_compressed
 
-def extract(file_path, destdir, keeporigional=True, overwrite=False, wait=True):
+def extract(filename, destdir, keeporigional=True, overwrite=False, wait=True):
     '''Extracts a file given by file to destination directory. Attempts to automagically detect the
        compression format used. Returns the new file name and the subprocess process spawned.'''
-    basename = os.path.basename(file_path)
+    basename = os.path.basename(filename)
     destfilename = basename
     extdepth = 0
     cmd = []
     
-    if file_path.endswith('.tar.bz2'):
+    if filename.endswith('.tar.bz2'):
         extdepth = 2
         cmd = ['tar', 'xOjf']
-    elif file_path.endswith('.tar.gz'):
+    elif filename.endswith('.tar.gz'):
         extdepth = 2
         cmd = ['tar', 'xOzf']
-    elif file_path.endswith('.tar.xz'):
+    elif filename.endswith('.tar.xz'):
         extdepth = 2
         cmd = ['tar', 'xOJf']
-    elif file_path.endswith('.bz2'):
+    elif filename.endswith('.bz2'):
         extdepth = 1
         cmd = ['bunzip2', '--decompress', '--stdout']
         if keeporigional:
             cmd.append('--keep')
-    elif file_path.endswith('.gz'):
+    elif filename.endswith('.gz'):
         extdepth = 1
         cmd = ['gunzip', '--stdout']
         #if keeporigional: #stdout should keep origional file
         #    cmd.append('--keep')
-    elif file_path.endswith('.tar'):
+    elif filename.endswith('.tar'):
         extdepth = 1
         cmd = ['tar', 'xOf']
-    elif file_path.endswith('.tbz2'):
+    elif filename.endswith('.tbz2'):
         extdepth = 1
         cmd = ['tar', 'xOjf']
-    elif file_path.endswith('.tgz'):
+    elif filename.endswith('.tgz'):
         extdepth = 1
         cmd = ['tar', 'xOzf']
-    elif file_path.endswith('.zip'):
+    elif filename.endswith('.zip'):
         extdepth = 1
         cmd = ['unzip', '-p']
-    #elif file.endswith('lzma'):
+    #elif filename.endswith('lzma'):
     #    extdepth = 1
     #    cmd = unlzma ./"$1"
-    #elif file.endswith('rar'):
+    #elif filename.endswith('rar'):
     #    extdepth = 1
     #    cmd = unrar x -ad ./"$1"
-    #elif file.endswith('Z'):
+    #elif filename.endswith('Z'):
     #    extdepth = 1
     #    cmd = uncompress ./"$1"
-    #elif file.endswith('7z'):
+    #elif filename.endswith('7z'):
     #    extdepth = 1
     #    cmd = 7z x ./"$1"
-    #elif file.endswith('xz'):
+    #elif filename.endswith('xz'):
     #    extdepth = 1
     #    #cmd = unxz ./"$1"
-    #elif file.endswith('exe'):
+    #elif filename.endswith('exe'):
     #    extdepth = 1
     #    #cmd = cabextract ./"$1"
     else:
-        raise IOError('extract: "%s" - unknown archive method' % (file_path,))
+        raise IOError('extract: "%s" - unknown archive method' % (filename,))
     
     #remove the appropriate number of file extensions....
     for i in range(extdepth):

@@ -1,8 +1,3 @@
-'''
-Created on Feb 7, 2017
-
-@author: sresearch
-'''
 import subprocess
 import pybedtools
 import sys
@@ -72,9 +67,23 @@ class ChromSizes(dict):
     #end __init__()
 
     def write(self, outhandle):
+        """Writes this ChromSizes to outhandle
+        format is:
+        {chromosome}[TAB]{Size}[NEWLINE]
+        """
         for chrom, size in self.iteritems():
             outhandle.write('%s\t%d\n' % (chrom, size))
+        outhandle.flush()
     #end write()
+    
+    def save(self, filename):
+        """Saves this ChromSizes to the file specified
+        format is:
+        {chromosome}[TAB]{Size}[NEWLINE]
+        """
+        with open(filename, 'w+') as f:
+            self.write(f)
+    #end save()
     
     def __parse_chrom_sizes(self):
         with open(self.path, 'r') as infile:

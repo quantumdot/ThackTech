@@ -2,8 +2,7 @@
 import os
 import sys
 import argparse
-import cStringIO
-from ThackTech import bdgtools
+from ThackTech import bdgtools, chromtools
 
 
 
@@ -15,7 +14,7 @@ def main():
     parser.add_argument('-g', '--genome', action='store', required=True, help='Genome chromosome sizes. Can specify UCSC genome builds (i.e. hg19, mm9) or the location of a chromosome sizes file (standard UCSC genome sizes format).')
     parser.add_argument('-r', '--repairoverlaps', action='store_true', help='Repair overlapping intervals in the bedgraph, substituting the intersecting regions with a new interval having a score computed by --method.')
     parser.add_argument('-m', '--method', choices=bdgtools.score_funcs.keys(), default='mean', help='Method to use for computation of score when repairing/merging overlapping intervals.')
-    parser.add_argument('-e', '--missingregions', choices=['ignore', 'zero'], action='store', default='ignore', help='How to treat regions with no data.')
+    parser.add_argument('-e', '--missingregions', action='store', default='ignore', help='How to treat regions with no data. `ignore` to ignore missing regions, otherwise a numeric (float or int).')
     parser.add_argument('-q', '--quiet', action='store_true', help='Be as quiet as possible.')
     args = parser.parse_args()
     
@@ -25,29 +24,26 @@ def main():
     if args.quiet:
         sys.stderr = os.devnull
         
-    chrom_sizes = bdgtools.get_chrom_sizes(args.genome)
+    chrom_sizes = chromtools.ChromSizes(args.genome)
+    #chrom_sizes = bdgtools.get_chrom_sizes(args.genome)
         
-    buff = cStringIO.StringIO()
-    bdgtools.bed_to_bedgraph(open(args.bed, 'r'), buff)
-    buff.seek(0)
+
+    with open(args.bed, 'r') as infile:
+        intervals = bdgtools.parse_bed(infile)
     
     
     if args.repairoverlaps:
-        intervals = bdgtools.repair_overlapping_segments(buff, chrom_sizes, bdgtools.score_funcs[args.method])
-        buff = cStringIO.StringIO()
-        bdgtools.write_bedgraph(intervals, buff)
-        buff.seek(0)
+        intervals = bdgtools.reduce_overlaps(intervals, chrom_sizes, bdgtools.score_funcs[args.method])
+    
     
     if not args.missingregions == 'ignore':
-        intervals = bdgtools.get_complement_fast(buff, chrom_sizes, args.missingregions)
-        buff = cStringIO.StringIO()
-        bdgtools.write_bedgraph(intervals, buff)
-        buff.seek(0)
+        intervals = bdgtools.fill_complement(intervals, chrom_sizes, float(args.missingregions))
+
     
     if args.format == 'bw':
-        sys.stdout.write(bdgtools.convert_bdg_to_bw(buff.getvalue(), chrom_sizes))
+        bdgtools.write_bigwig(intervals, chrom_sizes, sys.stdout)
     else:
-        sys.stdout.write(buff.getvalue())
+        bdgtools.write_bedgraph(intervals, sys.stdout)
     return
 #end main()
 
