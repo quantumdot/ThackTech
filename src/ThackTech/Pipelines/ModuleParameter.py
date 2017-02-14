@@ -13,7 +13,7 @@ class ModuleParameter(object):
 		self.description = desc
 		self.nullable = nullable
 		self.choices = choices
-		self.default = self._coerce_value(default, self.type)
+		self.default = self.__coerce_value(default, self.type)
 		if value is None and not self.nullable:
 			self.value = self.default
 		else:
@@ -26,7 +26,7 @@ class ModuleParameter(object):
 	
 	@value.setter
 	def value(self, value):
-		self.__value = self._coerce_value(value, self.type)
+		self.__value = self.__coerce_value(value, self.type)
 
 	@value.deleter
 	def value(self):
@@ -54,7 +54,7 @@ class ModuleParameter(object):
 	def get_value_as_type(self, value_type):
 		"""Gets the current value of this parameter, coerced to the type specified
 		"""
-		return self._coerce_value(self.get_value(), value_type)
+		return self.__coerce_value(self.get_value(), value_type)
 	#end get_value()
 	
 	@property
@@ -64,7 +64,7 @@ class ModuleParameter(object):
 		return self.type.__name__
 	#end get_type_as_string()
 
-	def _coerce_value(self, value, value_type):
+	def __coerce_value(self, value, value_type):
 		new_value = None
 		if self.nullable and value is None:
 			new_value = None

@@ -6,6 +6,9 @@ import csv
 import numpy as np
 import os.path
 from ThackTech import chromtools
+from intervaltree import IntervalTree
+import subprocess
+import tempfile
 
 score_funcs = {}
 score_funcs['mean'] 	= np.mean
@@ -102,8 +105,6 @@ class Interval:
 #end class Interval
 
 def convert_bdg_to_bw(bdg, chrsizes):
-	import subprocess
-	import tempfile
 	
 	with tempfile.NamedTemporaryFile() as temp_bdg:
 		temp_bdg.write(bdg)
@@ -173,16 +174,15 @@ def write_bedgraph(intervals, outhandle):
 #end write_bedgraph()
 
 def repair_overlapping_segments(f, chroms, scorefunc):
-	from intervaltree import IntervalTree
 	sys.stderr.write('Repairing overlapping regions\n')
-	all = parse_bedgraph(f)
+	all_regions = parse_bedgraph(f)
 	
 	trees = {}
 	for chrom in chroms:
 		trees[chrom] = IntervalTree()
 	
-	for i in range(len(all)):
-		trees[all[i].chr].addi(all[i].start, all[i].stop, all[i].score)
+	for i in range(len(all_regions)):
+		trees[all_regions[i].chr].addi(all_regions[i].start, all_regions[i].stop, all_regions[i].score)
 
 	results = []
 	for chrom in chroms:
@@ -197,8 +197,11 @@ def repair_overlapping_segments(f, chroms, scorefunc):
 	return results
 #end repair_overlapping_segments()
 
-def get_complement_fast(f, chroms, mode):
-	from intervaltree import IntervalTree
+def fill_complement(f, chroms, mode):
+	"""fills the complement of the bedgraph with some value
+	
+	Args:
+		f (string): b
 	sys.stderr.write('Finding regions with missing data\n')
 	
 	if mode == 'zero':
@@ -206,74 +209,23 @@ def get_complement_fast(f, chroms, mode):
 	else:
 		complement_value = None
 	
-	all = parse_bedgraph(f)
-	real_trees = {}
+	all_regions = parse_bedgraph(f)
 	genome_trees = {}
 	for chrom in chroms:
 		genome_trees[chrom] = IntervalTree()
 		genome_trees[chrom].addi(0, chroms[chrom], complement_value)
-		real_trees[chrom] = IntervalTree()
+
 	
-	for i in range(len(all)):
-		trees[all[i].chr].addi(all[i].start, all[i].stop, all[i].score)
-	
-	results = []	
+	results = []
+	for iv in all_regions:
+		results.append(iv)
+		genome_trees[iv.chr].chop(iv.start, iv.stop)
+		
 	for chrom in chroms:
-		for iv in real_trees[chrom]:
-			results.append(Interval(chrom, iv.begin, iv.end, iv.data))
-			genome_trees[chrom].chop(iv)
 		for iv in genome_trees[chrom]:
-			results.append(Interval(chrom, iv.begin, iv.end, iv.data))
+			results.append(Interval(chrom, iv.begin, iv.end, iv.data))	
 			
 	results.sort(key=lambda x:(x.chr, x.start, x.stop))
 	return results
 #end get_complement_fast()
-
-
-
-# def get_complement(f, chromsizes, mode):
-	# sys.stderr.write('Finding regions with missing data\n')
-	# all = parse_bedgraph(f)
-	# all.sort(key=lambda x:(x.chr, x.start, x.stop))
-	# chroms_present = []
-	# for interval in all:
-		# if interval.chr not in chroms_present:
-			# chroms_present.append(interval.chr)
-	# sys.stderr.write('Processing %d regions\n' % (len(all),))
-	# additional = []
-	# for chrom in chromsizes.keys():
-		# if chrom not in chroms_present:
-			# continue # skip chromosomes where there is NO data at all
-		# sys.stderr.write('-> Processing %s\n' % (chrom,))
-		# chromosome = np.zeros(chromsizes[chrom], dtype=bool)
-		# for i in range(len(all)):
-			# if not chrom == all[i].chr:
-				# continue
-			# chromosome[all[i].start:all[i].stop] = True
-		# curr_complement = None
-		# for j in xrange(chromosome.shape[0]):
-			# if chromosome[j]:
-				# if curr_complement is None:
-					# continue
-				# else:
-					# #sys.stderr.write('-> ending compliment region at %s:%d\n' % (chrom, j-1))
-					# curr_complement.stop = j
-					# additional.append(curr_complement)
-					# curr_complement = None
-			# else:
-				# if curr_complement is None:
-					# #sys.stderr.write('-> starting compliment region at %s:%d\n' % (chrom, j))
-					# curr_complement = Interval(chrom, j, 0, 0)
-				# else:
-					# continue
-		# if curr_complement is not None:
-			# #we left hanging a compliment!
-			# curr_complement.stop = j
-			# additional.append(curr_complement)
-			# curr_complement = None
-	# sys.stderr.write('=> Found %d complement(s)\n' % (len(additional),))
-	# all += additional
-	# all.sort(key=lambda x:(x.chr, x.start, x.stop))
-	# return all
-# #end get_complement()
 

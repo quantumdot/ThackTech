@@ -31,39 +31,45 @@ class FileInfo(object):
 	- context: context that this file was generated under....... (NEED TO DEFINE THIS BETTER!!!)
 	
 	"""
-	def __init__(self, filepath, context):
+	def __init__(self, filepath, context=None):
 		"""Initializes a FileInfo object
 		
 		Args:
 			filepath (str): Path of the file this object represents
 		"""
-		self._fullpath = filepath
-		self.context = context
+		self.__fullpath = filepath
+		self.__context = context
 		
 		#support for companion files
-		self._parent = None
-		self._companions = GLOBAL_MANAGER.list()
+		self.__parent = None
+		self.__companions = GLOBAL_MANAGER.list()
 	#end __init__()
+	
+	@property
+	def context(self):
+		"""Gets the context of this file
+		"""
+		return self.__context
 	
 	@property
 	def fullpath(self):
 		"""Gets the fully-qualified path to this file
 		"""
-		return self._fullpath
+		return self.__fullpath
 	
 	@property
 	def dirname(self):
 		"""Gets the directory where this file is located
 		Equivelent to os.path.dirname()
 		"""
-		return os.path.dirname(self._fullpath)
+		return os.path.dirname(self.__fullpath)
 	
 	@property
 	def basename(self):
 		"""Gets the name of this file, including the file extension
 		Equivelent to os.path.basename()
 		"""
-		return os.path.basename(self._fullpath)
+		return os.path.basename(self.__fullpath)
 		
 	@property
 	def filename(self):
@@ -81,13 +87,19 @@ class FileInfo(object):
 	
 	
 	def has_companions(self):
-		return len(self._companions) > 0
+		return len(self.__companions) > 0
 		
 	def add_companion(self, role, filepath):
-		self._companions.append(FileInfo(filepath))
+		self.__companions.append(FileInfo(filepath))
 		
 		
-		
+	def __str__(self):
+		return self.fullpath
+	#end __str__()
+	
+	def __repr__(self):
+		return "FileInfo(%s)" % (self.fullpath,)
+	#end __repr__()
 		
 #end class FileInfo
 
