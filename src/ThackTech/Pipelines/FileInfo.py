@@ -13,6 +13,8 @@ class FileContext(ModuleContext):
 
 	@property
 	def role(self):
+		"""The role of this file respect to the parent context (ModuleContext; ex: 'output_file_1')
+		""" 
 		return self.__role
 
 #end class FileContext
@@ -41,8 +43,10 @@ class FileInfo(object):
 		self.__context = context
 		
 		#support for companion files
-		self.__parent = None
 		self.__companions = GLOBAL_MANAGER.list()
+		
+		#random extra data as needed.
+		self.attributes = {}
 	#end __init__()
 	
 	@property
@@ -85,12 +89,11 @@ class FileInfo(object):
 		"""
 		return os.path.splitext(self.basename)[1]
 	
-	
-	def has_companions(self):
-		return len(self.__companions) > 0
-		
-	def add_companion(self, role, filepath):
-		self.__companions.append(FileInfo(filepath))
+	@property
+	def companions(self):
+		"""Gets a list of companion files associated with this file
+		"""
+		return self.__companions
 		
 		
 	def __str__(self):

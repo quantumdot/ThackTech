@@ -96,6 +96,15 @@ class GenomeInfo(object):
 		return GenomeInfo.__known_references
 	#end get_reference_genomes()
 #end class GenomeInfo
+
+
+def crawl_golden_path(root):
+	pass
+	
+	
+	
+#end crawl_golden_path()
+
 GenomeInfo.register_path('/mnt/ref/reference/Homo_sapiens/UCSC')
 GenomeInfo.register_path('/mnt/ref/reference/Mus_musculus/UCSC')
 GenomeInfo.register_path('/mnt/ref/reference/Rattus_norvegicus/UCSC')
