@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -27,20 +28,20 @@ class DecompressFiles(PipelineModule):
 			ofiles = sample.get_file(fl[0], fl[1])
 			if isinstance(ofiles, str):
 				#just a single file here
-				if Common.is_compressed(ofiles):
+				if filetools.is_compressed(ofiles):
 					logfile.write("\t-> Decompressing file %s....\n" % (ofiles,))
 					logfile.flush()
-					d, p = Common.extract(ofiles, sample.dest, overwrite=self.get_parameter_value('overwrite'))
+					d, p = filetools.extract(ofiles, sample.dest, overwrite=self.get_parameter_value('overwrite'))
 					sample.add_file(fl[0], fl[1], d)
 					sample.add_attribute('decompressed_files', sample.get_attribute('decompressed_files') + [d])
 					decompress_procs.append(p)
 			else:
 				dfiles = []
 				for of in ofiles:
-					if Common.is_compressed(of):
+					if filetools.is_compressed(of):
 						logfile.write("\t-> Decompressing file %s....\n" % (of,))
 						logfile.flush()
-						d, p = Common.extract(of, sample.dest, overwrite=self.get_parameter_value('overwrite'))
+						d, p = filetools.extract(of, sample.dest, overwrite=self.get_parameter_value('overwrite'))
 						dfiles.append(d)
 						sample.add_attribute('decompressed_files', sample.get_attribute('decompressed_files') + [d])
 						decompress_procs.append(p)

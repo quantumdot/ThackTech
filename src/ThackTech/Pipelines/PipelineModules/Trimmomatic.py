@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -20,7 +21,7 @@ class Trimmomatic(PipelineModule):
 	#end supported_types()
 	
 	def run(self, sample, logfile):
-		Common.ensure_dir(outdir) 
+		filetools.ensure_dir(outdir) 
 
 		trimlog_loc = os.path.join(outdir, name+'.trimlog')
 		trimmomatic_args = [

@@ -49,9 +49,11 @@ class PipelineModule(object):
 			self.parameters[parameter_name].value = value
 		else:
 			raise ValueError('Parameter "%s" does not exist!' % (parameter_name,))
-	#end add_parameter()
+	#end set_parameter()
 	
 	def has_parameter(self, parameter_name):
+		"""Check if a parameter by the name of `parameter_name` has been declared by this module
+		"""
 		return parameter_name in self.parameters
 	#end has_parameter()
 	
@@ -76,6 +78,9 @@ class PipelineModule(object):
 			raise ValueError('Parameter "%s" does not exist!' % (parameter_name,))
 	#end get_parameter()
 	
+	
+	
+	
 	def _name_resolver(self, name):
 		"""Names a resolver that should be supplied by the consumer
 		
@@ -98,6 +103,10 @@ class PipelineModule(object):
 		"""
 		return self.resolvers.keys()
 	#end get_resolver_names()
+	
+	
+	
+	
 	
 	def set_available_cpus(self, cpus):
 		self.processors = cpus
@@ -123,6 +132,8 @@ class PipelineModule(object):
 	#end supported_types()
 	
 	def is_compatible_with_sample(self, sample):
+		"""Deprecated
+		"""
 		#if self.supported_types() is not None:
 		#	return sample.format in self.supported_types()
 		return True

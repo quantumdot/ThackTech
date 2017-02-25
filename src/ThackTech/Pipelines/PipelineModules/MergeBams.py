@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -19,7 +20,7 @@ class MergeBams(PipelineModule):
 	
 	def run(self, sample, logfile):
 		outdir = os.path.join(sample.dest, 'merged_bam')
-		Common.ensure_dir(outdir)
+		filetools.ensure_dir(outdir)
 		outfile = os.path.join(outdir, sample.name+'.merged.bam')
 		
 		samtools_cmd = [ 'samtools', 'merge', outfile ] + self.resolve_input('alignments', sample)

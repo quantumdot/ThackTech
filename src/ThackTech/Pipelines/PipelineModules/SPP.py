@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -18,7 +19,7 @@ class SPP(PipelineModule):
 	
 	def run(self, sample, logfile):
 		spp_dir = os.path.join(sample.dest, 'spp')
-		Common.ensure_dir(spp_dir)
+		filetools.ensure_dir(spp_dir)
 		spp_results = os.path.join(spp_dir, 'spp_results.tsv')
 		sys.stdout.flush()
 		
@@ -56,7 +57,7 @@ class SPP(PipelineModule):
 		}
 	#end run()
 	
-	def extract_first_mate():
+	def extract_first_mate(self):
 		output = os.path.join(dest, os.path.splitext(os.path.basename(bam))[0]+'.firstmates.sam')
 		cmd = 'samtools view -h -f 0x0040 %s > %s' % (bam, output)
 		sys.stdout.write("\t-> Extracting first mates......")

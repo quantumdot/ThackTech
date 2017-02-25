@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 import pysam
 
@@ -35,7 +36,7 @@ class PerformIDRv2Analysis(PipelineModule):
 	def run(self, sample, logfile):
 		curr_dest = sample.dest
 		sample.dest = os.path.join(sample.dest, 'idr')
-		Common.ensure_dir(sample.dest)
+		filetools.ensure_dir(sample.dest)
 		output_files = {}
 		
 		consistancy_output = os.path.join(sample.dest, sample.name+'_idr_npeaks.txt')
@@ -73,8 +74,8 @@ class PerformIDRv2Analysis(PipelineModule):
 		replicate_combinations = list(itertools.combinations(self.resolve_input(replicate_type, sample), 2))
 		output_prefixes = []
 		for pair in replicate_combinations:
-			rep1_bn = Common.basename_noext(pair[0])
-			rep2_bn = Common.basename_noext(pair[1])
+			rep1_bn = filetools.basename_noext(pair[0])
+			rep2_bn = filetools.basename_noext(pair[1])
 			
 			peak_type = os.path.splitext(pair[0])[1][1:]
 			output_name = rep1_bn+'_VS_'+rep2_bn

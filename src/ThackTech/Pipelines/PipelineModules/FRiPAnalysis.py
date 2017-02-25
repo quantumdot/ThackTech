@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -20,7 +21,7 @@ class FRiPAnalysis(PipelineModule):
 	
 	def run(self, sample, logfile):
 		dest_dir = os.path.join(sample.dest, 'FRiP')
-		Common.ensure_dir(dest_dir)
+		filetools.ensure_dir(dest_dir)
 		with open(os.path.join(dest_dir, sample.name+'.FRiP.txt'), 'w') as results_file:
 			#results_file.write("FRiP (Fraction of Reads in Peaks) for sample group %s\n" % (sample.name,))
 			#results_file.write("================================================================================\n")

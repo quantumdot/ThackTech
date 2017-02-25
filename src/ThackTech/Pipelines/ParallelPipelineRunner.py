@@ -7,11 +7,28 @@ from ThackTech.Processes import MultiStatusProgressItem, MultiStatusProgressBar
 
 
 class ParallelPipelineRunner(PipelineRunner):
+	"""Run a pipeline against samples on a single node in parallel
+	
+	This PipelineRunner uses the multiprocess worker pool to parallelize running
+	of pipelines on multiple samples.
+	"""
 	def __init__(self, pipeline, threads):
+		"""Initialize this PipelineRunner
+		
+		Parameters:
+			pipeline:	(AnalysisPipeline)	Pipeline to run
+			threads:	(int)	Number of workers to spawn
+		"""
 		PipelineRunner.__init__(self, pipeline)
 		self.threads = threads
+	#end __init__()
 
 	def run(self, samples):
+		"""Run this pipeline runner on the supplied samples
+		
+		Parameters:
+			samples: (iterable of PipelineSample) Samples to run against
+		"""
 		sample_count = len(samples)
 		if sample_count < 1:
 			return #No samples to run!
@@ -35,4 +52,5 @@ class ParallelPipelineRunner(PipelineRunner):
 		pool.join()
 		progress.update(sample_count, 'Done!', self.tasks_statuses)
 		progress.finish()
+	#end run()
 #end class ParallelPipelineRunner

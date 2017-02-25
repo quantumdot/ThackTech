@@ -8,7 +8,12 @@ class AnalysisPipeline(object):
 		self.tasks_statuses = None
 	#end __inti__()
 	
+	@property
 	def safe_name(self):
+		"""Gets a safe version of this pipeline's name
+		
+		The returned string should be safe to use in things like filenames etc.
+		"""
 		return re.sub('[^\w\-_\.]', '_', self.name)
 	#end safe_name()
 	

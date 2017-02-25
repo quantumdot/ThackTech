@@ -4,6 +4,8 @@ import traceback
 import platform
 import time
 from ThackTech import filetools
+from ThackTech.Pipelines.AnalysisPipeline import AnalysisPipeline
+from ThackTech.Pipelines.PipelineSample import PipelineSample
 
 
 class PipelineRunner(object):
@@ -28,6 +30,23 @@ class PipelineRunner(object):
 #end class PipelineRunner
 
 def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
+	"""Exexutes a pipeline on a given sample
+	
+	This method is responsible for directly running a pipeline on a given sample, although
+	it is not intended to use this method directly. Instead, one should use a derivitive 
+	of the PipelineRunner class (e.x. SerialPipelineRunner, ParallelPipelineRunner, or 
+	SlurmPipelineRunner).
+	
+	Parameters
+		pipeline:	(AnalysisPipeline) Pipeline to run
+		sample:		(PipelineSample) Sample to run pipeline on
+		task_statuses: (complicated....) Status information
+	"""
+	#some assertions to make sure we don't go too crazy!
+	assert isinstance(pipeline, AnalysisPipeline), "pipeline parameter must be of type AnalysisPipeline!"
+	assert isinstance(sample, PipelineSample), "sample parameter must be of type PipelineSample!"
+	
+	
 	tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
 	#ensure the output directory exists
 	filetools.ensure_dir(sample.dest)

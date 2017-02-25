@@ -5,8 +5,24 @@ from ThackTech.Pipelines import GenomeInfo, FileInfo, GLOBAL_MANAGER
 
 
 class PipelineSample(object):
-
+	"""A PipelineSample represents an individual sample that moves through a pipeline.
+	
+	A PipelineSample serves as a container for sample data (i.e. state) as it traverses 
+	a pipeline. Samples contain data that identifies the sample, files associated with this
+	sample, data regarding the reference genome this sample uses, and a dict object for storing
+	arbitrary information.
+	
+	
+	
+	"""
 	def __init__(self, name, genome, dest):
+		"""Initializes a PipelineSample object
+		
+		Parameters:
+			name:	(string)				Name of this sample
+			genome:	(GenomeInfo | string)	String representing known reference genome or directly a GenomeInfo object
+			dest:	(string)				Directory path that serves as the destination for results
+		"""
 		self.files = GLOBAL_MANAGER.dict()
 		self.attr = GLOBAL_MANAGER.dict()
 		self.name = name
@@ -18,6 +34,8 @@ class PipelineSample(object):
 	#end __init__()
 	
 	def __getstate__(self):
+		"""implemented for pickling support
+		"""
 		state = dict(self.__dict__)
 		state['files'] = dict(self.files)
 		state['attr'] = dict(self.attr)
@@ -25,10 +43,62 @@ class PipelineSample(object):
 	#end __getstate__()
 	
 	def __setstate__(self, state):
+		"""implemented for pickling support
+		"""
 		self.files = GLOBAL_MANAGER.dict(state['files'])
 		self.attr = GLOBAL_MANAGER.dict(state['attr'])
 		self.__dict__.update(state)
 	#end __setstate__()
+	
+	
+	def set_attribute(self, name, value):
+		"""Set an attribute and its value, overwriting any previous value if set
+		
+		Parameters:
+			name:	(string) Name of the attribute
+			value:	(??????) Value of the attribute
+		"""
+		self.attr[name] = value
+	#end add_attribute()
+	
+	def has_attribute(self, name):
+		"""Return a boolean indicating if name is in the attribute dictionary
+		
+		Parameters:
+			name:	(string)	Name of the attribute to check
+		
+		Returns:
+			(bool) True if name exists as a key in the attribute dictionary
+		"""
+		return name in self.attr
+	#end has_attribute()
+	
+	def get_attribute(self, name):
+		"""Gets the value of the attribute with name name, or None if name does not exist
+		
+		Parameters:
+			name:	(string)	Name of the attribute to get
+		
+		Returns:
+			(None | value) None if attribute does not exist, otherwise arbitrary value
+		"""
+		if self.has_attribute(name):
+			return self.attr[name]
+		return None
+	#end get_attribute()
+	
+	def remove_attribute(self, name):
+		"""deletes the attribute with name name
+		
+		Parameters:
+			name:	(string)	Name of the attribute to delete
+		"""
+		if self.has_attribute(name):
+			del self.attr[name]
+	#end remove_attribute()
+	
+	
+	
 	
 	def add_file(self, group, label, path):
 		if group not in self.files:
@@ -61,24 +131,4 @@ class PipelineSample(object):
 			return self.files[group]
 		return None
 	#end get_file_group()
-	
-	def add_attribute(self, name, value):
-		self.attr[name] = value
-	#end add_attribute()
-	
-	def has_attribute(self, name):
-		return name in self.attr
-	#end has_attribute()
-	
-	def get_attribute(self, name):
-		if self.has_attribute(name):
-			return self.attr[name]
-		return None
-	#end get_attribute()
-	
-	def remove_attribute(self, name):
-		if self.has_attribute(name):
-			del self.attr[name]
-		return None
-	#end remove_attribute()
 #end PipelineSample

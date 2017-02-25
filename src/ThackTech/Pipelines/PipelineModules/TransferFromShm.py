@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -32,7 +33,7 @@ class TransferFromShm(PipelineModule):
 			
 
 		true_dest = sample.get_attribute('origional_dest')
-		Common.ensure_dir(true_dest)
+		filetools.ensure_dir(true_dest)
 		self._run_subprocess('cp -pr -t '+true_dest+' '+os.path.join(sample.dest, '*'), shell=True, stderr=subprocess.STDOUT, stdout=logfile)
 		
 		for groupkey in sample.files.keys():

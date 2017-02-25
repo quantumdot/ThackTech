@@ -19,11 +19,25 @@ if cpu_count is None:
 
 
 class SlurmPipelineRunner(PipelineRunner):
-	def __init__(self, pipeline, partition="main", nodes=1, threads_per_node=cpu_count, time_limit="1:00:00"):
+	"""Run a pipeline against samples on a SLURM managed cluster/system
+	
+	This PipelineRunner uses the multiprocess worker pool to parallelize running
+	of pipelines on multiple samples.
+	"""
+	def __init__(self, pipeline, partition="main", nodes=1, threads=cpu_count, time_limit="1:00:00"):
+		"""
+		
+		Parameters:
+			pipeline:	(AnalysisPipeline)	Pipeline to run
+			partition:	(string)			System partition to request for execution
+			nodes:		(int) 				Number of nodes to request per sample
+			threads:	(int)				Number of CPUs to request per sample
+			time_limit:	(time-string)		Approximate time limit for this SLURM job to run.
+		"""
 		PipelineRunner.__init__(self, pipeline)
 		self.partition = partition
 		self.nodes = nodes
-		self.threads_per_node = threads_per_node
+		self.threads_per_node = threads
 		self.time_limit = time_limit
 
 	def run(self, samples):

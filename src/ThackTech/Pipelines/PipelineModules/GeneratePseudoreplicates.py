@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 import pysam
 
@@ -22,7 +23,7 @@ class GeneratePseudoreplicates(PipelineModule):
 	
 	def run(self, sample, logfile):
 		dest_dir = os.path.join(sample.dest, 'pseudoreps')
-		Common.ensure_dir(dest_dir)
+		filetools.ensure_dir(dest_dir)
 		alignments = self.resolve_input('alignments', sample)
 		samfile = pysam.AlignmentFile(alignments, 'rb')
 		

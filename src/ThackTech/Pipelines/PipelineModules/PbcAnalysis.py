@@ -1,6 +1,8 @@
+import os
 import sys
 
 import ThackTech.Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -21,7 +23,7 @@ class PbcAnalysis(PipelineModule):
 		import encode_filter_qc
 		results = encode_filter_qc.run_filter_qc(bam, sample.get_attribute('PE'), "-q 30")
 		pbc_dir = os.path.join(sample.dest, 'pbc')
-		Common.ensure_dir(pbc_dir)
+		filetools.ensure_dir(pbc_dir)
 		self._run_subprocess('mv -f '+sample.name+'.filt.* '+sample.name+'.dup.qc '+pbc_dir, shell=True)
 		self._run_subprocess(['rm', '-f', os.path.join(sample.dest), ('tmp.%s.filt.srt.bam' % (sample.name,))])
 		logfile.write('\t-> Completed PBC QC...\n')

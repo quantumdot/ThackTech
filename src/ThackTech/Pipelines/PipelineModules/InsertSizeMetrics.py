@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -23,7 +24,7 @@ class InsertSizeMetrics(PipelineModule):
 			logfile.write('\t-> Running insert size analysis...\n')
 			logfile.flush()
 			ism_dir = os.path.join(sample.dest, 'ism')
-			Common.ensure_dir(ism_dir)
+			filetools.ensure_dir(ism_dir)
 			insmet_outbase = os.path.join(ism_dir, sample.name+'.insertsize')
 			self._run_subprocess('picard-tools CollectInsertSizeMetrics INPUT=%s OUTPUT=%s HISTOGRAM_FILE=%s' % (bam, insmet_outbase+'.txt', insmet_outbase+'.hist.pdf'), shell=True)
 			logfile.write('\t-> Completed insert size analysis...\n')

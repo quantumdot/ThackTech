@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -24,7 +25,7 @@ class TransferToShm(PipelineModule):
 		sample.add_attribute('origional_sources', paths)
 		sample.add_attribute('origional_dest', sample.dest)
 		shmdest = os.path.join(self.get_parameter_value('shm_path'), sample.name)
-		Common.ensure_dir(shmdest)
+		filetools.ensure_dir(shmdest)
 		
 		logfile.flush()
 		procs = []
