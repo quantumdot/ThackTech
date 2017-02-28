@@ -54,29 +54,32 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 	with open(os.path.join(sample.dest, sample.name+'.log'), 'a', buffering=0) as logfile:
 		sys.stdout = sys.stderr = logfile
 		logfile.write(pipeline.documentation())
-		status_counts = {}
+		
+		pipeline_size = len(pipeline)
+		status_counts = {
+			'total': 	pipeline_size,
+			'attempted':0,
+			'warn':		0,
+			'critical':	0
+		}
 		try:
+			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(0, 'Preparing...')
 			logfile.write('Processing sample "%s" [%s]....\n' % (sample.name, sample.format))
-			logfile.write('-> Pipeline: %s\n' % (pipeline.name,))
+			logfile.write('-> Pipeline: %s (%d steps)\n' % (pipeline.name, pipeline_size))
 			logfile.write('-> Running on: %s\n' % (' '.join(platform.uname()),))
 			logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
 			logfile.write("--------------------------------------------\n\n")
-			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(0, 'Preparing...')
 			
-			pipeline_size = len(pipeline.pipeline)
-			status_counts['total'] = pipeline_size
-			status_counts['attempted'] = 0
-			status_counts['warn'] = 0
-			status_counts['critical'] = 0
+			
 			for i in range(pipeline_size):
 				step = pipeline.pipeline[i]
 				status_counts['attempted'] += 1
-				logfile.write('Running pipeline step: %s\n' % (step.name,))
+				logfile.write('Running pipeline step #%d: %s\n' % (i+1, step.name,))
 				logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
 				logfile.flush()
 				try:
-					if not step.is_compatible_with_sample(sample):
-						raise ValueError('%s does not support the "%s" file format!\nThe following types ARE supported: %s\nSkipping processing......\n' % (step.name, sample.format, ', '.join(step.supported_types())))
+					#if not step.is_compatible_with_sample(sample):
+					#	raise ValueError('%s does not support the "%s" file format!\nThe following types ARE supported: %s\nSkipping processing......\n' % (step.name, sample.format, ', '.join(step.supported_types())))
 				
 					tasks_statuses[sample.name] = tasks_statuses[sample.name].update(float(i)/float(pipeline_size), step.description)
 					#step.load_modules(logfile)
@@ -102,6 +105,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			logfile.write('Encountered error during processing:\n')
 			logfile.write('%s\n' % e)
 			logfile.write(traceback.format_exc())
+			logfile.write('\n')
 		else:
 			#let the user know our progress
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(1, 'Done!').finish()

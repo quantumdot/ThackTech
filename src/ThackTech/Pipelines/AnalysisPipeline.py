@@ -47,4 +47,7 @@ class AnalysisPipeline(object):
 		buff += "%s\nEnd Pipeline: %s\n%s\n" % ('='*hash_length, self.name, '='*hash_length)
 		return buff
 	#end explain()
+	
+	def __len__(self):
+		return len(self.pipeline)
 #end class AnalysisPipeline

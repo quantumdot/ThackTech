@@ -6,6 +6,7 @@ import numpy as np
 from ThackTech import chromtools
 from functools import total_ordering
 from intervaltree import IntervalTree
+from ThackTech.chromtools import ChromSizes
 
 
 score_funcs = {}
@@ -187,6 +188,30 @@ def write_bigwig(intervals, chrsizes, outhandle):
 	outhandle.flush()
 #end convert_bdg_to_bw()
 
+def clip_chrom_sizes(intervals, chromsizes):
+	"""Clip intervals to be within the size bounds defined by chromsizes
+	
+	TODO: complete implementation!
+	
+	Parameters:
+		intervals: (list of BedGraphInterval) intervals to repair
+		chrsizes: (chromtools.ChromSizes) Chromosome size information
+		
+	Returns:
+		list of BedGraphIntervals conforming to chromosome sizes
+	"""
+	trees = {}
+	#init a intervaltree for each chromosome
+	for chrom in chromsizes:
+		trees[chrom] = IntervalTree()
+	
+	#populate the chromosome-specific intervaltrees with the intervals
+	for i in range(len(intervals)):
+		trees[intervals[i].chr].addi(intervals[i].start, intervals[i].stop, intervals[i].score)
+		
+		
+#end clip_chrom_sizes()
+
 
 def reduce_overlaps(intervals, chromsizes, scorefunc):
 	"""Resolves overlapping BedGraphIntervals by reducing overlapping values by `scorefunc`
@@ -223,7 +248,7 @@ def reduce_overlaps(intervals, chromsizes, scorefunc):
 			
 	results.sort()
 	return results
-#end repair_overlapping_segments()
+#end reduce_overlaps()
 
 def fill_complement(intervals, chroms, fill_value):
 	"""fills the complement of the bedgraph with some value
@@ -250,5 +275,5 @@ def fill_complement(intervals, chroms, fill_value):
 			
 	results.sort()
 	return results
-#end get_complement_fast()
+#end fill_complement()
 

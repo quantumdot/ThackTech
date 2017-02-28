@@ -7,15 +7,8 @@ import traceback
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
 import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
 import subprocess
-from ThackTech.Pipelines import PipelineRunner, GLOBAL_MANAGER
+from ThackTech.Pipelines import PipelineRunner, GLOBAL_MANAGER, CPU_COUNT
 from ThackTech.Processes import MultiStatusProgressItem, MultiStatusProgressBar
-
-try:
-	cpu_count = mp.cpu_count()
-except:
-	cpu_count = 1
-if cpu_count is None:
-	cpu_count = 1
 
 
 class SlurmPipelineRunner(PipelineRunner):
@@ -24,7 +17,7 @@ class SlurmPipelineRunner(PipelineRunner):
 	This PipelineRunner uses the multiprocess worker pool to parallelize running
 	of pipelines on multiple samples.
 	"""
-	def __init__(self, pipeline, partition="main", nodes=1, threads=cpu_count, time_limit="1:00:00"):
+	def __init__(self, pipeline, partition="main", nodes=1, threads=CPU_COUNT, time_limit="1:00:00"):
 		"""
 		
 		Parameters:

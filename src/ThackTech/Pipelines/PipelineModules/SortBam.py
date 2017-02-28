@@ -13,9 +13,7 @@ class SortBam(PipelineModule):
 		self._name_resolver('alignments')
 	#end __init__()
 
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
+	
 	
 	def run(self, sample, logfile):
 		bam = self.resolve_input('alignments', sample)

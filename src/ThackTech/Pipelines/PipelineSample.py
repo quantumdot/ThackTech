@@ -12,7 +12,9 @@ class PipelineSample(object):
 	sample, data regarding the reference genome this sample uses, and a dict object for storing
 	arbitrary information.
 	
-	
+	The file and attribute tables are managed by a multiprocessing manager to enable
+	multiprocessing support. These should not be accessed directly in favor of the method
+	wrappers.
 	
 	"""
 	def __init__(self, name, genome, dest):
@@ -23,7 +25,7 @@ class PipelineSample(object):
 			genome:	(GenomeInfo | string)	String representing known reference genome or directly a GenomeInfo object
 			dest:	(string)				Directory path that serves as the destination for results
 		"""
-		self.files = GLOBAL_MANAGER.dict()
+		self.files = GLOBAL_MANAGER.list()
 		self.attr = GLOBAL_MANAGER.dict()
 		self.name = name
 		if isinstance(genome, GenomeInfo):
@@ -37,7 +39,7 @@ class PipelineSample(object):
 		"""implemented for pickling support
 		"""
 		state = dict(self.__dict__)
-		state['files'] = dict(self.files)
+		state['files'] = list(self.files)
 		state['attr'] = dict(self.attr)
 		return state
 	#end __getstate__()
@@ -45,7 +47,7 @@ class PipelineSample(object):
 	def __setstate__(self, state):
 		"""implemented for pickling support
 		"""
-		self.files = GLOBAL_MANAGER.dict(state['files'])
+		self.files = GLOBAL_MANAGER.list(state['files'])
 		self.attr = GLOBAL_MANAGER.dict(state['attr'])
 		self.__dict__.update(state)
 	#end __setstate__()
@@ -100,35 +102,58 @@ class PipelineSample(object):
 	
 	
 	
-	def add_file(self, group, label, path):
-		if group not in self.files:
-			self.files[group] = {}
-		#necessary to swap the whole sub-dict when multiprocessing!
-		tmp = self.files[group]
-		tmp[label] = path
-		self.files[group] = tmp
+	def add_file(self, fileinfo):
+		"""Adds a file to this sample
+		
+		Parameters:
+			fileinfo:	String path to the file, or a FileInfo object
+		"""
+		if not isinstance(fileinfo, FileInfo):
+			fileinfo = FileInfo(fileinfo)
+		self.files.append(fileinfo)
 	#end add_file()
 	
-	def has_file_group(self, group):
-		return group in self.files
-	#end has_file_group()
+	def find_files(self, predicate):
+		"""Find files that satisfy a predicate
+		
+		Find and return a list of FileInfo objects 
+		that satisfy the supplied predicate. The FileInfo
+		object is supplied to the predicate as the sole argument.
+		>>> sample.find_files(lambda f: f.ext == 'bam')
+		
+		Parameters:
+			predicate: Callable that takes a FileInfo as its sole parameter
+			
+		Returns:
+			List of FileInfo objects that satisfy the supplied predicate
+		"""
+		return list(filter(predicate, self.files))
+	#end find_files()
 	
-	def has_file(self, group, label):
-		if group in self.files:
-			if label in self.files[group]:
-				return True
-		return False
-	#end has_file()
-	
-	def get_file(self, group, label):
-		if self.has_file(group, label):
-			return self.files[group][label] 
-		return None
-	#end has_file()
-	
-	def get_file_group(self, group):
-		if group in self.files:
-			return self.files[group]
-		return None
-	#end get_file_group()
+	#===========================================================================
+	# DEPRECATED
+	#===========================================================================
+	# def has_file_group(self, group):
+	# 	return group in self.files
+	# #end has_file_group()
+	# 
+	# def has_file(self, group, label):
+	# 	if group in self.files:
+	# 		if label in self.files[group]:
+	# 			return True
+	# 	return False
+	# #end has_file()
+	# 
+	# def get_file(self, group, label):
+	# 	if self.has_file(group, label):
+	# 		return self.files[group][label] 
+	# 	return None
+	# #end has_file()
+	# 
+	# def get_file_group(self, group):
+	# 	if group in self.files:
+	# 		return self.files[group]
+	# 	return None
+	# #end get_file_group()
+	#===========================================================================
 #end PipelineSample

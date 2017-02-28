@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import re
 
 import ThackTech.Common as Common
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
@@ -18,6 +19,19 @@ class CEAS(PipelineModule):
 		self._name_resolver('signal')
 		self._name_resolver('peaks')
 	#end __init__()
+	
+	def tool_versions(self):
+		versions = {}
+		tools = {
+			'ceas_wig':		self.get_parameter_value('ceas_wig_path'),
+			'ceas_bigwig':	self.get_parameter_value('ceas_bw_path')
+		}
+		for name, path in tools:
+			vout = subprocess.check_output(path+' --version 2>&1 | tail -n 1', shell=True, stderr=subprocess.STDOUT)
+			versions[name] = re.match(r"ceas[\s-]+([\d. \(\)\w]+)", vout).group(1)
+		return versions
+	#end tool_versions
+	
 	
 	def show_version(self, handle=None, fancy=True, path=''):
 		buff = ""

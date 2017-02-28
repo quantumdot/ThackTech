@@ -1,7 +1,7 @@
 import time
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
 import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
-from ThackTech.Pipelines import PipelineRunner, GLOBAL_MANAGER
+from ThackTech.Pipelines import PipelineRunner, GLOBAL_MANAGER, CPU_COUNT
 from ThackTech.Pipelines.PipelineRunner import _execute_pipeline_on_sample
 from ThackTech.Processes import MultiStatusProgressItem, MultiStatusProgressBar
 
@@ -12,7 +12,7 @@ class ParallelPipelineRunner(PipelineRunner):
 	This PipelineRunner uses the multiprocess worker pool to parallelize running
 	of pipelines on multiple samples.
 	"""
-	def __init__(self, pipeline, threads):
+	def __init__(self, pipeline, threads=CPU_COUNT):
 		"""Initialize this PipelineRunner
 		
 		Parameters:

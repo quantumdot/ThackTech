@@ -12,10 +12,6 @@ class InsertSizeMetrics(PipelineModule):
 	def __init__(self):
 		PipelineModule.__init__(self, 'InsertSizeMetrics', 'Calculating Insert Size Metrics')
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam']
-	#end supported_types()
 	
 	def run(self, sample, logfile):
 		if not sample.get_attribute('PE'):

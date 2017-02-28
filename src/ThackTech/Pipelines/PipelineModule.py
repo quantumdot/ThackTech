@@ -112,7 +112,11 @@ class PipelineModule(object):
 		self.processors = cpus
 	#end set_available_processors()
 	
-	def show_version(self, handle=None, fancy=True):
+	def tool_versions(self):
+		"""Return a dict of tool versions used by this module
+		
+		dictionary is of the form <ToolName> -> <VersionString>
+		"""
 		pass
 	#end show_version()
 	
@@ -125,19 +129,6 @@ class PipelineModule(object):
 		""" Runs the pipeline module on the provided PipelineSample and sending log information to logfile handle """
 		pass
 	#end run()
-	
-	def supported_types(self):
-		""" Returns an iterable of the file types this module supports """
-		pass
-	#end supported_types()
-	
-	def is_compatible_with_sample(self, sample):
-		"""Deprecated
-		"""
-		#if self.supported_types() is not None:
-		#	return sample.format in self.supported_types()
-		return True
-	#end is_compatible_with_sample()
 	
 	def _run_subprocess(self, cmd, **kwargs):
 		"""Wrapper around the subprocess.Popen call and provides some extra convience

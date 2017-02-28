@@ -12,6 +12,12 @@ import multiprocess as mp	#use this ls alternative multiprocessing from pathos, 
 
 
 GLOBAL_MANAGER = mp.Manager()
+try:
+	CPU_COUNT = mp.cpu_count()
+except:
+	CPU_COUNT = 1
+if CPU_COUNT is None:
+	CPU_COUNT = 1
 
 from ThackTech import Common
 

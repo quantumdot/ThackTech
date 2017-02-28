@@ -16,6 +16,9 @@ class FileContext(ModuleContext):
 		"""The role of this file respect to the parent context (ModuleContext; ex: 'output_file_1')
 		""" 
 		return self.__role
+	
+	def __str__(self):
+		return "%s_%s" % (super(FileContext, self).__str__(), self.role)
 
 #end class FileContext
 

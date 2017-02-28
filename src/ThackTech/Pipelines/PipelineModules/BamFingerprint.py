@@ -11,10 +11,6 @@ class BamFingerprint(PipelineModule):
 	def __init__(self):
 		PipelineModule.__init__(self, 'bamFingerprint', 'Bam Fingerprint')
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
 	
 	def run(self, sample, logfile):
 		dest_dir = os.path.join(sample.dest, 'fingerprint')
