@@ -19,6 +19,12 @@ class MACS2Peakcall(PipelineModule):
 		return ["bed", "eland", "elandmulti", "elandmultipet", "elandexport", "sam", "bam", "bampe", "bowtie"]
 	#end supported_types()
 	
+	def tool_versions(self):
+		return {
+			'macs2': subprocess.check_output("macs2 --version 2>&1 | perl -ne 'if(m/macs2\s+(.+)$/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
+	
 	def run(self, sample, logfile):
 		macs_args = [
 			'macs2',

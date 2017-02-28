@@ -12,6 +12,12 @@ class BamFingerprint(PipelineModule):
 		PipelineModule.__init__(self, 'bamFingerprint', 'Bam Fingerprint')
 	#end __init__()
 	
+	def tool_versions(self):
+		return {
+			'plotFingerprint': subprocess.check_output("plotFingerprint --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
+	
 	def run(self, sample, logfile):
 		dest_dir = os.path.join(sample.dest, 'fingerprint')
 		filetools.ensure_dir(dest_dir)

@@ -18,6 +18,12 @@ class MergeBams(PipelineModule):
 		return ['bam', 'bampe']
 	#end supported_types()
 	
+	def tool_versions(self):
+		return {
+			'samtools': subprocess.check_output("samtools 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
+	
 	def run(self, sample, logfile):
 		outdir = os.path.join(sample.dest, 'merged_bam')
 		filetools.ensure_dir(outdir)

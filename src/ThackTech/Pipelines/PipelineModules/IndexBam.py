@@ -16,6 +16,12 @@ class IndexBam(PipelineModule):
 		return ['bam', 'bampe']
 	#end supported_types()
 	
+	def tool_versions(self):
+		return {
+			'samtools': subprocess.check_output("samtools 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
+	
 	def run(self, sample, logfile):
 		bam = self.resolve_input('alignments', sample)
 		

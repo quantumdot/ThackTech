@@ -16,6 +16,12 @@ class SamToBam(PipelineModule):
 		return ['sam']
 	#end supported_types()
 	
+	def tool_versions(self):
+		return {
+			'samtools': subprocess.check_output("samtools 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
+	
 	def load_modules(self, logfile):
 		pass
 		# try:

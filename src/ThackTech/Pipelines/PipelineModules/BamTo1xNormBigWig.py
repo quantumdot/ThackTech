@@ -16,9 +16,11 @@ class RPKMNormBigWig(PipelineModule):
 		self._name_resolver('bam')
 	#end __init__()
 
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
+	def tool_versions(self):
+		return {
+			'bamCoverage': subprocess.check_output("bamCoverage --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
 	
 	def run(self, sample, logfile):
 		#dest = sample.get_attribute('origional_dest') if sample.has_attribute('origional_dest') else sample.dest

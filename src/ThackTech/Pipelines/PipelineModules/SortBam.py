@@ -13,7 +13,11 @@ class SortBam(PipelineModule):
 		self._name_resolver('alignments')
 	#end __init__()
 
-	
+	def tool_versions(self):
+		return {
+			'samtools': subprocess.check_output("samtools 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
 	
 	def run(self, sample, logfile):
 		bam = self.resolve_input('alignments', sample)

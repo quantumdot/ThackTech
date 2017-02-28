@@ -14,10 +14,6 @@ class ReadOutputManifest(PipelineModule):
 	def __init__(self):
 		PipelineModule.__init__(self, 'ReadOutputManifest', 'Read Output Manifest')
 	#end __init__()
-
-	def supported_types(self):
-		return None
-	#end supported_types()
 	
 	def run(self, sample, logfile):
 		logfile.write("-> Reading sample output manifest....\n")

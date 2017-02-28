@@ -117,7 +117,7 @@ class PipelineModule(object):
 		
 		dictionary is of the form <ToolName> -> <VersionString>
 		"""
-		pass
+		return {}
 	#end show_version()
 	
 	def load_modules(self, logfile):

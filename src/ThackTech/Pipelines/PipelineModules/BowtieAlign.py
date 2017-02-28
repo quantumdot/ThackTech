@@ -26,19 +26,12 @@ class BowtieAlign(PipelineModule):
 
 		self._name_resolver('fastq')
 	#end __init__()
-
-	def supported_types(self):
-		return ['fastq']
-	#end supported_types()
 	
-	def show_version(self, handle=None, fancy=True):
-		handle.write('\nBowtie version is:\n------------------------------------------\n')
-		handle.flush()
-		proc = subprocess.Popen(self.get_parameter_value_as_string('bowtie_path')+' --version', shell=True)
-		proc.communicate()
-		handle.write('------------------------------------------\n\n')
-		handle.flush()
-	#end show_version()
+	def tool_versions(self):
+		return {
+			'bowtie': subprocess.check_output("bowtie --version 2>&1 | perl -ne 'if(m/.*bowtie.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
 	
 	def run(self, sample, logfile):
 		logfile.write("\t-> Preparing Bowtie....\n")

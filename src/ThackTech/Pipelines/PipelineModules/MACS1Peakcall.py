@@ -14,10 +14,12 @@ class MACS1Peakcall(PipelineModule):
 		self.add_parameter(ModuleParameter('bw', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
 		self.add_parameter(ModuleParameter('sigout', 	str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
 	#end __init__()
-
-	def supported_types(self):
-		return ["bed", "eland", "elandmulti", "elandmultipet", "elandexport", "sam", "bam", "bowtie"]
-	#end supported_types()
+	
+	def tool_versions(self):
+		return {
+			'macs': subprocess.check_output("macs --version 2>&1 | perl -ne 'if(m/macs\s+(.+)$/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
 	
 	def run(self, sample, logfile):
 		format = sample.format.upper()
