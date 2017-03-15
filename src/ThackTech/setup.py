@@ -7,7 +7,7 @@ setup(name='ThackTech',
       author='Joshua K. Thackray',
       author_email='thackray@rutgers.edu',
       license='MIT',
-      packages=['ThackTech'],
+      #packages=['ThackTech'],
       install_requires=[
 		  'numpy',
 		  'scipy',
