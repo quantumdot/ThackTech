@@ -15,10 +15,6 @@ class DumpEnv(PipelineModule):
 		
 		#self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep after saying hello."))
 	#end __init__()
-
-	def supported_types(self):
-		return None
-	#end supported_types()
 	
 	def load_modules(self, logfile):
 		# """ Loads any system modules required for this module to function. """

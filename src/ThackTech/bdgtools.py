@@ -191,8 +191,6 @@ def write_bigwig(intervals, chrsizes, outhandle):
 def clip_chrom_sizes(intervals, chromsizes):
 	"""Clip intervals to be within the size bounds defined by chromsizes
 	
-	TODO: complete implementation!
-	
 	Parameters:
 		intervals: (list of BedGraphInterval) intervals to repair
 		chrsizes: (chromtools.ChromSizes) Chromosome size information
@@ -200,16 +198,11 @@ def clip_chrom_sizes(intervals, chromsizes):
 	Returns:
 		list of BedGraphIntervals conforming to chromosome sizes
 	"""
-	trees = {}
-	#init a intervaltree for each chromosome
-	for chrom in chromsizes:
-		trees[chrom] = IntervalTree()
-	
-	#populate the chromosome-specific intervaltrees with the intervals
-	for i in range(len(intervals)):
-		trees[intervals[i].chr].addi(intervals[i].start, intervals[i].stop, intervals[i].score)
+	for interval in intervals:
+		if interval.stop > chromsizes[interval.chr]:
+			interval.stop = chromsizes[interval.chr]
 		
-		
+	return intervals
 #end clip_chrom_sizes()
 
 

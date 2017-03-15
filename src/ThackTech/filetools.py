@@ -113,6 +113,7 @@ def extract(filename, destdir, keeporigional=True, overwrite=False, wait=True):
     destination = os.path.join(destdir, destfilename)
     if os.path.exists(destination) and not overwrite:
         #we were told to not overwrite, and the file exists already!
+        #spawn a dummy process so we can return it...
         p = subprocess.Popen(["echo"])
         if wait:
             p.communicate()
