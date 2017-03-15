@@ -1,0 +1,925 @@
+#!/usr/bin/env python
+import matplotlib as mpl
+mpl.use('Agg')
+import argparse
+import metaseq
+import pybedtools
+from matplotlib import pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
+import pandas as pd
+import multiprocessing
+import os
+import sys
+import collections
+from scipy import stats
+import re
+
+
+
+gopts = {
+    'args': None,
+    'num_bins': 0,
+    'output_base': '',
+    'fig_cols': 0,
+    'fig_rows': 0,
+    'x_axis': None,
+    'plot_axes': {},
+    'extra_artists': [],
+    'color_cycle': ['r','g','b','c','m','y','k']
+}
+
+plot_fonts = {
+    'legend': None,
+    'axis': None
+}
+
+class ProfileSample:
+    def __init__(self, id, sig_id, bed_id, signal_array, sig_label, bed_label):
+        self.id = id
+        self.sig_id = sig_id
+        self.bed_id = bed_id
+        self.signal_array = signal_array
+        self.sig_label = sig_label.replace("\\n", "\n")
+        self.bed_label = bed_label.replace("\\n", "\n")
+        self.show_yaxis = False
+        self.hlines = []
+    #end __init__()
+#end class ProfileSample
+
+# class PlotLayout:
+    # def __init__(self):
+        # self.items = []
+    # #end __init__()
+
+    # def finalize(self):
+        # total_rows = 0
+        # total_cols = 0
+        # groups = set()
+        # for item in self.items:
+            # total_rows = max(total_rows, item.relative_row)
+            # total_cols = max(total_cols, item.relative_col)
+            # for s in item.samples:
+                # groups.add(s.group)
+        # #for g in groups:
+            
+    # #end finalize()
+
+
+
+# class PlotItem:
+    # def __init__(self, type, row, col, group):
+        # self.type = type
+        # self.relative_row = row
+        # self.relative_col = col
+        # self.samples = []
+    # #end __inti__()
+# #end class PlotItem
+
+def main():
+    system_cpu_count = multiprocessing.cpu_count()
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    input_group = parser.add_argument_group('Input Data Options')
+    input_group.add_argument('-b', '--bed', action='append', required='true', help='Bed files to profile against.')
+    input_group.add_argument('-s', '--sig', action='append', required='true', help='Signal files to profile. BigWig, BAM, BED, BigBed files are supported, but all but bigwig will be treated by counting intervals.')
+    input_group.add_argument('-i', '--inp', action='append', default=[], help='Input files to be used for normalization.')
+    
+    labeling_group = parser.add_argument_group('Labeling Options')
+    labeling_group.add_argument('-sl', '--slabel', action='append', default=[], help='Signal labels for each plot. Specify in the same order as the signal files. If not supplied, file basename will be used.')
+    labeling_group.add_argument('-il', '--ilabel', action='append', default=[], help='Interval labels for each plot. Specify in the same order as the interval files. If not supplied, file basename will be used.')
+    labeling_group.add_argument('--title', action='store', default='', help='Title for entire plot')
+    labeling_group.add_argument('--bedscorelabel', action='store', default="Score", help='Label for plotting the score column of intervals.')
+    labeling_group.add_argument('--numticks', action='store', type=int, default=4, help='Number of tick marks to use in the x-axis.')
+    
+    profile_group = parser.add_argument_group('Profiling Options')
+    profile_group.add_argument('--nochromfilter', action='store_true', help='Do not filter bed file for common chromosomes. By default profiling only occurs on chromosomes common to all files (useful for ignoring random or Un* chromosomes).')
+    profile_group.add_argument('--chrignore', action='store', default=None, help='Regex for chromosome strings to filter out of intervals.')
+    profile_group.add_argument('--up', action='store', default=1000, type=int, help='Span upstream (in bp) from selected intervals alignement to profile.')
+    profile_group.add_argument('--down', action='store', default=1000, type=int, help='Span downstream (in bp) from selected intervals alignement to profile.')
+    profile_group.add_argument('--res', action='store', default=10, type=int, help='Profiling resolution in bp.')
+    profile_group.add_argument('--dir', action='store_true', help='If set, the direction (+/-) [strand orientation] is considered in profiling. Strand information should be present in bed file used, and if not present is assumed to be +.')
+    profile_group.add_argument('--align', action='store', choices=['left', 'center', 'right', 'scale'], default='center', help='Method used to align intervals. Left aligns intervals along the 5\' end, while right aligns intervals aling the 3\' end (assuming intervals provide strand information and --dir is specified, otherwise + strand is assumed). Center aligns intervals along the center center point of intervals. Scale will scale all intervals to the same apparent width specified by --scaleregionsize.')
+    profile_group.add_argument('--scaleregionsize', action='store', type=int, default='3000', help='Size of the scaled region (i.e. gene-body) in bp. This option is only useful for "--align scale" option.')
+    profile_group.add_argument('--nan', action='store', choices=['zero', 'ignore'], default='ignore', help='How to handle missing or NaN values.')
+    profile_group.add_argument('--collectionmethod', action='store', choices=['get_as_array', 'ucsc_summarize', 'summarize'], default='get_as_array', help='Method for collecting signal data.')
+    
+    scale_group = parser.add_argument_group('Scaling Options')
+    scale_group.add_argument('--scalegroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
+    scale_group.add_argument('--scalebedgroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
+    scale_group.add_argument('--saturatemin', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemin> percent bottom values.')
+    scale_group.add_argument('--saturatemax', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemax> percent top values.')
+    
+    clustsort_group = parser.add_argument_group('Clustering/Sorting Options')
+    clustsort_group.add_argument('--sort', action='store', default=None, type=int, help='Sample index (0-based) to use for sorting. If not specified than the order of the bed file is used. Mutually exclusive with --kmeans.')
+    clustsort_group.add_argument('--sortmethod', action='store', choices=['mean', 'median', 'max', 'min', 'sum'], default='mean', help='Method used for sorting.')
+    clustsort_group.add_argument('--sortrange', action='store', default=None, help='Range of the profiles (in relative bp) to be used in the sorting operation. Specify in the format "start:stop". Default is to use the entire range.')
+    clustsort_group.add_argument('--kmeans', action='store_true', help='If set, Perform K-means clustering on the data. Mutually exclusive with --sort.')
+    clustsort_group.add_argument('--k', action='store', type=int, help='Number of clusters, k, to fit data to when performing K-means clustering.')
+    clustsort_group.add_argument('--autok', action='store_true', help='Optimize the number of clusters, k, in the dataset. Mutually exclusixe with --k.')
+    clustsort_group.add_argument('--ksamples', action='store', default='all', help='Comma-separated list of 0-based offsets of samples to use for K-means clustering. Use \'all\' to cluster on all samples.')
+    clustsort_group.add_argument('--summarymethod', action='store', choices=['mean', 'median', 'max', 'min', 'sum'], default='mean', help='Method used for producing summary (avg) plot.')
+    clustsort_group.add_argument('--hline', action='store_true', help='Draw horizontal lines to delineate clusters.')
+    clustsort_group.add_argument('--hlineweight', action='store', type=float, default=0.5, help='Horizontal line weight.')
+    clustsort_group.add_argument('--hlinestyle', action='store', default="-", help='Line style for the horizontal lines. See matplotlib axhline documentation for valid values.')
+    
+    output_group = parser.add_argument_group('Output Options')
+    output_group.add_argument('--name', action='store', default='', help='Base name for the plot output.')
+    output_group.add_argument('--format', action='store', default='pdf', choices=['pdf', 'png', 'svg'], help='Format to output the final figure.')
+    output_group.add_argument('--plot', action='append', choices=['avg','heat','kavg','bedscores','truebedscores'], required='true', help='Types of plots to produce. Supply multiple options to produce hybrid plots. avg will produce average profiles, heat will produce heatmaps, kavg will produce average profiles for each class determined by k-means clustering (only available when used with --plot heat AND --kmeans). bedscores will plot the score column for intervals simply, while truebedscores will plot the score column for intervals more accuratly (showing true genomic context of element; mutually exclusive with --plot bedscores).')
+    output_group.add_argument('--dpi', action='store', type=int, default=600, help='DPI resolution of the saved figure.')
+    output_group.add_argument('--width', action='store', type=float, default=8, help='Width (in inches) of the figure.')
+    output_group.add_argument('--height', action='store', type=float, default=6, help='Height (in inches) of the figure.')
+    output_group.add_argument('--avgplotrows', action='store', type=int, default=1, help='Number of rows to use for average profile plots.')
+    output_group.add_argument('--heatplotrows', action='store', type=int, default=3, help='Number of rows to use for heatmap plots.')
+    output_group.add_argument('--rotate', action='store_true', help='By default plots will be arranged with signals going across and intervals going down. --rotate will change the orientation so that intervals go across and signals going down.')
+    
+    plot_group = parser.add_argument_group('General Plotting Options')
+    plot_group.add_argument('--vline', action='store_true', help='Draw a vertical line at the "zero" point.')
+    plot_group.add_argument('--vlineweight', action='store', type=float, default=0.5, help='Vertical line weight.')
+    plot_group.add_argument('--vlinestyle', action='store', default=":", help='Line style for the vertical line. See matplotlib axvline documentation for valid values.')
+    plot_group.add_argument('--fontsize', action='store', type=int, default=8, help='Font size used in plots.')
+    plot_group.add_argument('--legendfontsize', action='store', type=int, default=6, help='Font size used in plot legend.')
+    plot_group.add_argument('--showci', action='store_true', help='Plot confidence interval for average plot.')
+    plot_group.add_argument('--ciwidth', action='store', default='sem', help='Confidence interval width for average plot. sem for Standard Error of the mean, std for Standard deviation, or float for percent CI (i.e. 0.95).')
+    plot_group.add_argument('--genome', action='store', help='UCSC reference genome that intervals and signal are computed with (i.e. mm9, hg19, etc.). This is really only required when using --plot truebedscores.')
+    
+    resources_group = parser.add_argument_group('Resource Options')
+    resources_group.add_argument('--cache', action='store_true', help='If set, profiles are dumped to disk.')
+    resources_group.add_argument('--cachedir', action='store', default=".profiler_cache", help='Location to place cache files.')
+    resources_group.add_argument('-p', '--processors', action='store', dest='cpus', metavar='cpus', default=(system_cpu_count/2), type=int, help='Number of processors to use.')
+    gopts['args'] = args = parser.parse_args()
+    document_args()
+
+    if len(args.slabel) == 0:
+        sys.stderr.write("WARNING: Signal labels were not supplied. Using signal file basenames instead.\n")
+    if len(args.ilabel) == 0:
+        sys.stderr.write("WARNING: Interval labels were not supplied. Using interval file basenames instead.\n")
+    if len(args.slabel) > 0 and len(args.slabel) < len(args.sig):
+        sys.stderr.write("ERROR: Fewer signal labels supplied than there are signals! Signal and label counts must be equal if supplying labels!\n")
+        sys.exit(1)
+    if len(args.ilabel) > 0 and len(args.ilabel) < len(args.bed):
+        sys.stderr.write("ERROR: Fewer interval labels supplied than there are intervals! Interval and label counts must be equal if supplying labels!\n")
+        sys.exit(1)
+    if len(args.inp) > 0 and len(args.inp) < len(args.sig):
+        sys.stderr.write("ERROR: Fewer inputs supplied than there are samples! Sample and input counts must be equal if supplying inputs!\n")
+        sys.exit(1)
+    if len(args.plot) <= 0:
+        sys.stderr.write("ERROR: No plot types were selected!\n")
+        sys.exit(1)
+    if args.cpus <= 0:
+        sys.stderr.write("WARNING: Cannot use fewer than one processor for computation. Setting --processors = 1!\n")
+        args.cpus = 1
+    if args.cpus > system_cpu_count:
+        sys.stderr.write("WARNING: Cannot use more than the number of processors on the system ("+system_cpu_count+") for computation. Setting --processors = "+system_cpu_count+"!\n")
+        args.cpus = system_cpu_count
+    if len(args.bed) > 1 and args.kmeans:
+        sys.stderr.write("ERROR: Cannot perform K-means analysis when using multiple beds!\n")
+        sys.exit(1)
+    if 'kavg' in args.plot and not args.kmeans and not 'heat' in args.plot:
+        sys.stderr.write("WARNING: to plot averages for clusters, --kmeans and --plot heat must be used! Ignoring this directive!\n")
+        args.plot.remove('kavg')
+    
+    
+    if args.align == 'scale':
+        gopts['num_bins'] = (abs(args.up) / args.res, abs(args.scaleregionsize) / args.res, abs(args.down) / args.res)
+        gopts['total_bins'] = sum(gopts['num_bins'])
+        gopts['x_axis'] = np.linspace((-args.up), abs(args.scaleregionsize) + abs(args.down), gopts['total_bins'])
+    else:
+        gopts['num_bins'] = (abs(args.up) + abs(args.down)) / args.res
+        gopts['total_bins'] = gopts['num_bins'] 
+        gopts['x_axis'] = np.linspace((-args.up), args.down, gopts['total_bins'])
+    
+    if (gopts['total_bins'] * args.res) > 2e9:
+        gopts['units'] = [1e9, 'Gb']
+    if (gopts['total_bins'] * args.res) > 2e6:
+        gopts['units'] = [1e6, 'Mb']
+    elif (gopts['total_bins'] * args.res) > 2e3:
+        gopts['units'] = [1e3, 'Kb']
+    else:
+        gopts['units'] = [1, 'bp']
+    gopts['output_base'] = "%s.%du_%dd_%dr_%s%s" % (args.name, args.up, args.down, args.res, (args.align+str(args.scaleregionsize) if args.align == 'scale' else args.align), ('_dir' if args.dir else ''))
+    gopts['savename_notes'] = []
+    
+    
+    
+    gopts['chromsets'] = get_common_chroms(args.bed, args.sig)
+    if not args.nochromfilter:
+        sys.stderr.write("Filtering common chromomsomes....\n")
+        gopts['chromsets'].use = gopts['chromsets'].common
+        sys.stderr.write("=>  Keeping: "+', '.join(gopts['chromsets'].common)+"\n")
+        sys.stderr.write("=> Ignoring: "+', '.join(gopts['chromsets'].uncommon)+"\n")
+        sys.stderr.write("\n")
+    else:
+        gopts['chromsets'].use = gopts['chromsets'].all
+    if len(gopts['chromsets'].use) < 1:
+        sys.stderr.write("ERROR: No valid chromosomes left after filtering for only common chromosomes!\n")
+        sys.stderr.write(" -> Try using the --nochromfilter or --chrignore options.\n")
+        sys.exit(1)
+        
+    if args.chrignore is not None:
+        pattern = re.compile(args.chrignore)
+        filtered_chrs = set()
+        for chr in gopts['chromsets'].use:
+            if pattern.search(chr) is not None:
+                filtered_chrs.add(chr)
+        sys.stderr.write('Filtering chromomsomes matching filter "%s"....\n' % (args.chrignore,))
+        sys.stderr.write("=>  Ignoring: "+', '.join(filtered_chrs)+"\n")
+        gopts['chromsets'].use -= filtered_chrs
+        sys.stderr.write("\n")
+        
+        
+    
+    samples = []
+    for s in xrange(len(args.sig)):
+        for b in xrange(len(args.bed)):
+            sys.stderr.write("Processing %s vs %s....\n" % (args.bed[b], args.sig[s]))
+            sys.stderr.write("-> Preparing intervals.....\n")
+            
+            bedtool1 = expand_bed(args.up, args.down, args.align, args.bed[b], gopts['chromsets'].use)
+            bedtool2 = expand_bed(args.up, args.down, args.align, args.bed[b], gopts['chromsets'].use)#seems to choke using the same instance...... not sure why!!!
+            s_label = args.slabel[s] if len(args.slabel)-1 >= s else os.path.splitext(os.path.basename(args.sig[s]))[0]
+            b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
+            input = args.inp[s] if len(args.inp)-1 >= s else None
+            if input is not None and input.lower() == 'none':
+                input = None
+            
+            signal = get_signal(bedtool1, args.sig[s], bedtool2, input, s_label+b_label)
+            ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
+            sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
+            ps = correct_out_of_bounds_data(ps, args.nan)
+            sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
+            samples.append(ps)
+            sys.stderr.write("\n")
+    
+    gopts['group_count'] = count_groups(args.scalegroups, samples)
+    if args.rotate:
+        gopts['fig_cols'] = len(args.bed) + 1#gopts['group_count']
+        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.sig)) + (args.avgplotrows if 'avg' in args.plot else 0)
+    else:
+        gopts['fig_cols'] = len(args.sig) + gopts['group_count']
+        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.bed)) + (args.avgplotrows if 'avg' in args.plot else 0)
+    
+    if 'bedscores' in args.plot or 'truebedscores' in args.plot:
+        for b in xrange(len(args.bed)):
+            if 'truebedscores' in args.plot:
+                signal = get_bed_score_signal_complex(args.bed[b], args.genome, gopts['chromsets'].use)
+            else:
+                signal = get_bed_score_signal(args.bed[b], gopts['chromsets'].use)
+            #print signal
+            b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
+            samples.append(ProfileSample(len(samples), len(args.sig), b, signal, args.bedscorelabel, b_label))
+        if args.rotate:
+            gopts['fig_rows'] += args.heatplotrows
+        else:
+            gopts['fig_cols'] += 1
+        gopts['savename_notes'].append("bed-score")
+    
+    plt.rcParams['font.size'] = args.fontsize
+    plt.rcParams['legend.fontsize'] = args.legendfontsize
+    
+    fig = plt.figure(figsize=(args.width, args.height), dpi=args.dpi)
+    gopts['extra_artists'].append(fig.suptitle(args.title))
+    
+    #compute sort orders/grouping/clustering
+    if args.kmeans:
+        if args.ksamples == 'all':
+            kindicies = range(len(samples))
+        else:
+            kindicies = [int(i) for i in args.ksamples.split(',')]
+        if args.autok:
+            k = range(1,10)
+        else:
+            k = args.k
+        compute_Kmeans(samples, kindicies, k, args.bed[0], gopts['chromsets'].use)
+        gopts['savename_notes'].append("k%d" %(gopts['k_info']['k'],))
+    else:
+        if args.sortrange is not None:
+            start, stop = args.sortrange.split(':')
+            start = int(int(start) / args.res)
+            stop = int(int(stop) / args.res)
+        else:
+            start = 0
+            stop = -1
+        compute_sorting(samples, args.sort, args.sortmethod, (start, stop))
+        if args.sort is None:
+            gopts['savename_notes'].append("sort-bed")
+        else:
+            gopts['savename_notes'].append("sort%d%s" % (args.sort, args.sortmethod))
+        
+    #compute saturation points and average profile limits
+    compute_group_scales(args.scalegroups, samples, args.saturatemin, args.saturatemax)
+    
+    #generate the subplots....
+    sys.stderr.write("Generating Figure....\n")
+    for s in samples:
+        add_signal_to_figure(s)
+    sys.stderr.write("\n")
+    
+    #if we have multiple bed and multiple signals, add legand outside last avg plot
+    if 'avg' in gopts['args'].plot and len(args.sig) > 1 and len(args.bed) > 1:
+        last_avg_ax = get_plot_axes('leg', 0, 0, 0)
+        leg = last_avg_ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        leg.get_frame().set_linewidth(0.1)
+        gopts['extra_artists'].append(leg)
+    
+    #add colorscale bar if necessary
+    if 'heat' in gopts['args'].plot:
+        make_colormap_strip_for_groups(fig, args.scalegroups, samples)
+    
+    #add sensible x-axis label
+    if args.align == 'center':
+        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from Center of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
+    elif args.align == 'left':
+        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 5' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
+    elif args.align == 'right':
+        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 3' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
+    elif args.align == 'scale':
+        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Upstream (%s); %d%s of Meta-Element; Downstream (%s)" % (gopts['units'][1], (abs(args.scaleregionsize) / gopts['units'][0]), gopts['units'][1], gopts['units'][1]), ha='center', va='center'))
+        
+    #finally save the figure!
+    save_figure(fig, "_".join(gopts['savename_notes']))
+    plt.close(fig)
+    sys.stderr.write('Done!')
+#end main()
+
+def document_args():
+    import time
+    sys.stderr.write("\n")
+    sys.stderr.write("# ARGUMENTS:\n")
+    sys.stderr.write("# Run Start: %s\n" % (time.strftime("%a, %d %b %Y %H:%M:%S"),))
+    sys.stderr.write("# Name: %s\n" % (gopts['args'].name,))
+    
+    sys.stderr.write("# Interval File(s):\n")
+    for i in range(len(gopts['args'].bed)):
+        sys.stderr.write("#\t%d: %s\n" % (i, os.path.abspath(gopts['args'].bed[i]),))
+        
+    sys.stderr.write("# Signal File(s):\n")
+    for i in range(len(gopts['args'].sig)):
+        sys.stderr.write("#\t%d: %s\n" % (i, os.path.abspath(gopts['args'].sig[i]),))
+    
+    sys.stderr.write("# Input File(s):\n")
+    if len(gopts['args'].inp) > 0:
+        for i in range(len(gopts['args'].inp)):
+            if gopts['args'].inp[i].lower() == 'none':
+                sys.stderr.write("#\t%d: None\n" % (i,))
+            else:
+                sys.stderr.write("#\t%d: %s\n" % (i, os.path.abspath(gopts['args'].inp),))
+    else:
+        sys.stderr.write("#\tNone\n")
+        
+    sys.stderr.write("# --------------------------------------------------\n")
+    sys.stderr.write("# Alignment: %s\n" % (gopts['args'].align,))
+    if gopts['args'].align == 'scale':
+        sys.stderr.write("# Span: %dbp Up; %dbp Meta; %dbp Down\n" % (gopts['args'].up, gopts['args'].scaleregionsize, gopts['args'].down))
+    else:
+        sys.stderr.write("# Span: %dbp Up; %dbp Down\n" % (gopts['args'].up, gopts['args'].down))
+    sys.stderr.write("# Resolution: %d bp\n" % (gopts['args'].res,))
+    sys.stderr.write("# Direction: %s\n" % ('ON' if gopts['args'].dir else 'OFF',))
+    sys.stderr.write("# Filter common chromosomes: %s\n" % ('OFF' if gopts['args'].nochromfilter else 'ON',))
+    sys.stderr.write("# Scale Groups: %s\n" % (gopts['args'].scalegroups,))
+    if gopts['args'].kmeans:
+        sys.stderr.write("# Cluster by K-means:\n")
+        if gopts['args'].autok:
+            sys.stderr.write("#    -> K = auto\n")
+        else:
+            sys.stderr.write("#    -> K = %d\n" % (gopts['args'].k,))
+        sys.stderr.write("#    -> Cluster on samples: %s\n" % (gopts['args'].ksamples,))
+    else:
+        if gopts['args'].sort is None:
+            sys.stderr.write("# Sort By: BED order\n")
+        else:
+            sys.stderr.write("# Sort By: %s of signal #%d\n" % (gopts['args'].sortmethod, gopts['args'].sort,))
+    sys.stderr.write("# Saturate Min: %f\n" % (gopts['args'].saturatemin,))
+    sys.stderr.write("# Saturate Max: %f\n" % (gopts['args'].saturatemax,))
+    sys.stderr.write("# Plot Types: %s\n" % (", ".join(gopts['args'].plot),))
+    sys.stderr.write("# Cache Data: %s\n" % ('ON' if gopts['args'].cache else 'OFF',))
+    sys.stderr.write("# Num Threads: %d\n" % (gopts['args'].cpus,))
+    sys.stderr.write("\n")
+#end document_args()
+
+class ChromosomeSets:
+    def __init__(self, all, common, uncommon, use=None):
+        self.all = all
+        self.common = common
+        self.uncommon = uncommon
+        self.use = use
+    #end __init__()
+#end class ChromosomeSets
+
+def get_common_chroms(beds, sigs):
+    common = None
+    all = set()
+    for s in sigs:
+        chroms = get_bigwig_chroms(s)
+        all = all | chroms
+        if common is None:
+            common = chroms
+        else:
+            common = chroms & common
+    for b in beds:
+        chroms = get_bed_chroms(b)
+        all = all | chroms
+        if common is None:
+            common = chroms
+        else:
+            common = chroms & common
+    return ChromosomeSets(all=all, common=common, uncommon=all-common, use=None)
+#end get_common_chroms()
+
+def get_bigwig_chroms(bw_file):
+    import subprocess
+    chroms = subprocess.check_output('bigWigInfo -chroms "'+bw_file+'" | grep -Po "^[\s]+\K([\w]+)"', shell=True)
+    return set(chroms.splitlines())
+#end get_bigwig_chroms()
+
+def get_bed_chroms(bed_file):
+    chroms = set([])
+    bed = pybedtools.BedTool(bed_file)
+    for i in bed:
+        chroms.add(i.chrom)
+    return chroms
+#end get_bed_chroms()
+
+def compute_Kmeans(samples, kindicies, k, bed, white_chroms=None):
+    sys.stderr.write("Computing K-means clustering....\n")
+    sys.stderr.write("-> Considering samples %s (0-based)\n" % (str(kindicies),))
+    sys.stderr.write("-> Using K = %s\n" % (str(k),))
+    
+    pooled = np.hstack(tuple([s.signal_array for s in samples if s.id in kindicies]))
+    ind, breaks = metaseq.plotutils.new_clustered_sortind(pooled, k=k, row_key=np.mean, cluster_key=np.median)
+    
+    if not isinstance(k, int):
+        sys.stderr.write("    => Using auto K - found %d clusters\n" % (len(breaks),))
+    
+    hlines = []
+    for b in breaks:
+        hlines.append(b)
+        
+    for s in samples:
+        s.hlines = hlines
+        s.sort_order = np.argsort(ind)
+    
+    classes = make_interval_classes(ind, breaks, bed, white_chroms)
+    for i in range(len(breaks)):
+        sys.stderr.write("    -> Cluster %d: %d\n" % ((i+1), len(classes[(classes['class_id'] == (i+1))])))
+    
+    sys.stderr.write('\n')
+    gopts['k_info'] = {
+        'k': len(breaks),
+        'ind': ind,
+        'breaks': breaks,
+        'classes': classes
+    }
+    return classes
+#end compute_Kmeans
+
+def make_interval_classes(sort_indicies, breaks, bed, white_chroms=None):
+    intervals = pd.read_csv(bed, sep='\t', comment='#', skip_blank_lines=True, header=None, names=['chrom', 'start', 'end', 'name', 'score', 'strand'])
+    if white_chroms is not None:
+        intervals.drop(intervals[~intervals['chrom'].isin(white_chroms)].index, inplace=True)
+    intervals.reset_index(inplace=True)
+    intervals['sort_order'] = sort_indicies
+    intervals.sort_values(by='sort_order', ascending=True, inplace=True)
+    total_intervals = len(intervals)
+    k = len(breaks)
+    #print breaks
+    classes = []
+    for i in reversed(range(k-1)):
+        size = breaks[i+1] - breaks[i]
+        classes.extend([k-(i+1)] * size)
+    classes.extend([k] * breaks[0])
+    intervals['class_id'] = classes
+    
+    intervals.to_csv(gopts['output_base']+'.kmeans_classes.tsv', sep='\t', index=False)
+    intervals.sort_index(inplace=True)
+    return intervals
+#end make_interval_classes()
+
+def compute_sorting(samples, sort_index, method, range):
+    #print range
+    if sort_index is None:
+        for s in samples:
+            s.sort_order = None
+    else:
+        sort_orders = {} #sort orders indexed by interval id
+        for s in samples:
+            if s.sig_id == sort_index:
+                sort_orders[s.bed_id] = getattr(s.signal_array[:,range[0]:range[1]], method)(axis=1)
+        for s in samples:
+            s.sort_order = sort_orders[s.bed_id]
+#end compute_sorting()
+
+
+
+
+def get_groups(groups, samples):
+    if groups is None:
+        return [list(set(str(s.sig_id) for s in samples))]
+    else:
+        non_covered_samples = set([str(s.sig_id) for s in samples]) - set(groups.replace(";",",").split(","))
+        if len(non_covered_samples) > 0:
+            groups += ";" + ";".join(non_covered_samples)
+        final_groups = []
+        for group in groups.split(";"):
+            final_groups.append([str(s.sig_id) for s in samples if str(s.sig_id) in group.split(",")])
+        return final_groups
+#end get_groups()
+
+def count_groups(groups, samples):
+    return len(get_groups(groups, samples))
+#end count_groups()
+
+def compute_group_scales(groups, samples, min_saturate, max_saturate):
+    groups_list = get_groups(groups, samples)
+    #print groups_list
+    for i in range(len(groups_list)):
+        compute_scales_for_group(i, [s for s in samples if str(s.sig_id) in groups_list[i]], min_saturate, max_saturate)
+#end compute_group_scales()
+
+def compute_scales_for_group(group_id, samples, min_saturate, max_saturate):
+    pooled = np.vstack(tuple([s.signal_array for s in samples]))
+    heat_min = np.percentile(pooled[np.isfinite(pooled)], (min_saturate*100))
+    heat_max = np.percentile(pooled[np.isfinite(pooled)], ((1-max_saturate)*100))
+    avg_min = float('inf')
+    avg_max = float('-inf')
+    for s in samples:
+        mean_array = s.signal_array.mean(axis=0)
+        mean_min = mean_array.min()
+        mean_max = mean_array.max()
+        if mean_min < avg_min:
+            avg_min = mean_min
+        if mean_max > avg_max:
+            avg_max = mean_max
+    
+    avg_max = avg_max + (abs(avg_max) * 0.1)
+    if avg_min >= 0:
+        avg_min = 0
+    else:
+        avg_min = avg_min - (abs(avg_min) * 0.1)
+    
+    for s in samples:
+        s.group = group_id
+        if (gopts['args'].rotate and s.bed_id == samples[0].bed_id) or (not gopts['args'].rotate and s.sig_id == samples[0].sig_id):
+            s.show_yaxis = True
+        s.heat_min = heat_min
+        s.heat_max = heat_max
+        s.avg_min = avg_min
+        s.avg_max = avg_max
+        
+    sys.stderr.write("-> Computed group %d heatmap min/max (%f, %f)\n" % (group_id, heat_min, heat_max))
+    sys.stderr.write("-> Computed group %d average profile min/max (%f, %f)\n" % (group_id, avg_min, avg_max))
+#end compute_scales_for_group()
+
+def get_plot_axes(plot_type, group, bed_id, sig_id):
+    #print "getting axis for %s (%d, %d, %d)\n" % (plot_type, group, bed_id, sig_id)
+    if gopts['args'].rotate:
+        col = bed_id #+ group
+    else:
+        col = sig_id + group
+    
+    if plot_type == 'heat':
+        rowspan = gopts['args'].heatplotrows
+        if gopts['args'].rotate:
+            row = sig_id * gopts['args'].heatplotrows
+        else:
+            row = bed_id * gopts['args'].heatplotrows
+    elif plot_type == 'avg':
+        rowspan = gopts['args'].avgplotrows
+        row = gopts['fig_rows'] - gopts['args'].avgplotrows
+    elif plot_type == 'cbar':
+        #special case: bed_id = min(sig_id) and sig_id = max(sig_id)
+        if gopts['args'].rotate:
+            rowspan = (sig_id - bed_id + 1) * gopts['args'].heatplotrows
+            row = bed_id * gopts['args'].heatplotrows
+            col = gopts['fig_cols']-1
+        else:
+            rowspan = gopts['fig_rows'] - gopts['args'].avgplotrows
+            row = 0
+            col = sig_id + group + 1
+    elif plot_type == 'leg':
+        rowspan = gopts['args'].avgplotrows
+        row = gopts['fig_rows'] - gopts['args'].avgplotrows
+        if 'heat' in gopts['args'].plot:
+            col = gopts['fig_cols'] - 2
+        else:
+            col = gopts['fig_cols'] - 1
+            
+            
+    if (row,col) not in gopts['plot_axes']:
+        ax = plt.subplot2grid((gopts['fig_rows'],gopts['fig_cols']), (row, col), rowspan)
+        ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=gopts['args'].numticks-1))
+        [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
+        gopts['plot_axes'][(row,col)] = ax
+    return gopts['plot_axes'][(row,col)]
+#end get_plot_axes()
+
+def add_signal_to_figure(sample):
+    #avg_profile_row = gopts['fig_rows']-gopts['args'].avgplotrows #3 if 'heat' in gopts['args'].plot else 0
+    sys.stderr.write("-> Plotting data (%d, %d, %d) for %s x %s....\n" % (sample.group, sample.bed_id, sample.sig_id, sample.bed_label, sample.sig_label))
+    
+    if 'heat' in gopts['args'].plot:
+        sys.stderr.write("    -> Generating heatmap...\n")
+        #sys.stderr.write("    -> (%d, %d)\n" % (sample.bed_id*3, sample.sig_id))
+        ax =  get_plot_axes('heat', sample.group, sample.bed_id, sample.sig_id)
+        make_sig_heatmap(ax, sample)
+    if 'avg' in gopts['args'].plot:
+        ax =  get_plot_axes('avg', sample.group, sample.bed_id, sample.sig_id)
+        if 'kavg' in gopts['args'].plot:
+            sys.stderr.write("    -> Generating average profile for clusters...\n")
+            #sys.stderr.write("    -> (%d, %d)\n" % (avg_profile_row,sample.sig_id))
+            clust_colors = ['r','g','b','c','m','y']
+            for i in range(gopts['k_info']['k']):
+                sys.stderr.write("        -> Cluster #%d...\n" % ((i+1),))
+                add_masked_group_to_avg_plot(ax, sample, (gopts['k_info']['classes']['class_id'] != (i+1)), 'cluster %d' % ((i+1),), color=clust_colors[i%len(clust_colors)])
+                
+        sys.stderr.write("    -> Generating average profile...\n")
+        if gopts['args'].rotate:
+            color = gopts['color_cycle'][sample.sig_id % len(gopts['color_cycle'])]
+        else:
+            color = gopts['color_cycle'][sample.bed_id % len(gopts['color_cycle'])]
+        
+        make_average_sig_plot(ax, sample, color)
+        
+        if 'kavg' in gopts['args'].plot:
+            leg = ax.legend(loc='best', bbox_to_anchor=(0.5, -0.1))
+            leg.get_frame().set_linewidth(0.1)
+#end add_signal_to_figure()
+
+def midpoint_generator(bedtool, up, down):
+    for i in bedtool:
+        midpoint = i.start + (i.stop - i.start) / 2
+        if i.strand == '-':
+            start = np.clip(midpoint - down, 0, sys.maxint)
+            stop = midpoint + up
+        else:
+            start = np.clip(midpoint - up, 0, sys.maxint)
+            stop = midpoint + down
+        yield pybedtools.cbedtools.Interval(i.chrom, start, stop, strand=i.strand, name=i.name, score=i.score)
+#end midpoint_generator()
+
+def five_prime_generator(bedtool, up, down):
+    for interval in bedtool:
+        yield pybedtools.featurefuncs.five_prime(interval, upstream=up, downstream=down)#, genome='mm9')
+#end midpoint_generator()
+
+def three_prime_generator(bedtool, up, down):
+    for interval in bedtool:
+        yield pybedtools.featurefuncs.three_prime(interval, upstream=up, downstream=down)#, genome='mm9')
+#end midpoint_generator()
+
+def scaled_interval_generator(bedtool, up, down):
+    for gene in bedtool:
+        if gene.strand == '-':
+            upstream   = pybedtools.cbedtools.Interval(gene.chrom, np.clip((gene.start - down), 0, sys.maxint), gene.start,         strand='-', name=gene.name, score=gene.score)
+            gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='-', name=gene.name, score=gene.score)
+            downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + up),     strand='-', name=gene.name, score=gene.score)
+        else:
+            upstream   = pybedtools.cbedtools.Interval(gene.chrom, np.clip((gene.start - up), 0, sys.maxint),     gene.start,         strand='+', name=gene.name, score=gene.score)
+            gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='+', name=gene.name, score=gene.score)
+            downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + down),    strand='+', name=gene.name, score=gene.score)
+        gene_body.name = gene.name
+        yield (upstream, gene_body, downstream)
+#end scaled_interval_generator()
+
+def expand_bed(up, down, alignment, bed, white_chroms=None):
+    data = None
+    bedtool = pybedtools.BedTool(bed)
+    if white_chroms is not None:
+        bedtool = bedtool.filter(lambda d: d.chrom in white_chroms)
+    
+    if alignment == 'center':
+        sys.stderr.write("-> producing center points...\n")
+        data = midpoint_generator(bedtool, up, down)
+    elif alignment == 'left':
+        sys.stderr.write("-> producing 5' points...\n")
+        data = five_prime_generator(bedtool, up, down)
+    elif alignment == 'right':
+        sys.stderr.write("-> producing 3' points...\n")
+        data = three_prime_generator(bedtool, up, down)
+    elif alignment == 'scale':
+        sys.stderr.write("-> producing scaled regions...\n")
+        data = scaled_interval_generator(bedtool, up, down)
+    
+    return data
+#end expand_bed()
+
+def detect_signal_type(sig_file):
+    ext = os.path.splitext(sig_file)[1][1:].strip().lower()
+    if ext in ['bigwig', 'bw']:
+        return "bigwig"
+    else:
+        return ext
+#end detect_signal_type()
+
+def make_label_filename_safe(label):
+    keepcharacters = ('_','-')
+    return "".join([c for c in label if c.isalnum() or c in keepcharacters]).rstrip()
+#end make_label_filename_safe()
+
+def get_signal(bedtool, sig_file, inp_bed, input_file, label):
+    cache_dir = os.path.abspath(gopts['args'].cachedir)
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+
+    cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], make_label_filename_safe(label)))
+    label_input = label+'_input'
+    
+    sys.stderr.write("-> input is '%s'...\n" %  (input_file,))
+    
+    if not gopts['args'].cache or not os.path.exists(cache_name + '.npz'):
+        sys.stderr.write("-> Loading signal....\n")
+        sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
+        sys.stderr.write("-> Computing signal at intervals....\n")
+        sig_array = sig.array(bedtool, bins=gopts['num_bins'], stranded=gopts['args'].dir, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
+        
+        if input_file is not None:
+            sys.stderr.write("-> Loading input signal....\n")
+            inp_sig = metaseq.genomic_signal(input_file, detect_signal_type(input_file))
+            sys.stderr.write("-> Computing input signal at intervals....\n")
+            input_array = inp_sig.array(inp_bed, bins=gopts['num_bins'], stranded=gopts['args'].dir, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
+            
+        if gopts['args'].cache:
+            sys.stderr.write("-> Persisting data to disk...\n")
+            cache_data = {label: sig_array}
+            if input_file is not None:
+                cache_data[label_input] = input_array
+            metaseq.persistence.save_features_and_arrays(features=bedtool,
+                                                         arrays=cache_data,
+                                                         prefix=cache_name,
+                                                         #link_features=True,
+                                                         overwrite=True)
+    else:
+        sys.stderr.write("-> Loding data from cache....\n")
+        features, arrays = metaseq.persistence.load_features_and_arrays(prefix=cache_name)
+        sig_array = arrays[label]
+        if input_file is not None:
+            input_array = arrays[label_input]
+            
+    if input_file is not None:    
+        sys.stderr.write("-> Normalizing signal to input....\n")
+        sig_array = sig_array - input_array    
+    
+    return sig_array
+#end get_signal()
+
+def get_bed_score_signal(bed, white_chroms=None):
+    elements = pybedtools.BedTool(bed)
+    if white_chroms is not None:
+        elements = elements.filter(lambda d: d.chrom in white_chroms)
+    matrix = []
+    for el in elements:
+        matrix.append([float(el.score)]*gopts['total_bins'])
+    return np.array(matrix)
+#end get_bed_score_signal()
+
+def get_bed_score_signal_complex(bed, genome, white_chroms=None):
+    import subprocess
+    cache_dir = os.path.abspath(gopts['args'].cachedir)
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    bed_basename = os.path.splitext(os.path.basename(bed))[0]
+    bw_name = os.path.join(cache_dir, bed_basename+'.bw')
+    if not os.path.exists(bw_name):
+        cmd = ['python', '/home/josh/scripts/bedToBedGraph.py', '--quiet', '--output', bw_name, '--genome', genome, '--format', 'bw', '--repairoverlaps', '--method', 'mean', '--missingregions', 'zero', bed]
+        #print " ".join(cmd)
+        p = subprocess.Popen(cmd)
+        p.communicate()
+
+    bedtool1 = expand_bed(gopts['args'].up, gopts['args'].down, gopts['args'].align, bed, gopts['chromsets'].use)        
+    signal = get_signal(bedtool1, bw_name, None, None, bed_basename+'_signal')
+    return signal
+#end get_bed_score_signal()
+
+def correct_out_of_bounds_data(sample, method):
+    if method == "ignore":
+        sample.signal_array = np.ma.masked_array(sample.signal_array, np.isnan(sample.signal_array))
+    elif method == "zero":
+        sample.signal_array[np.isnan(sample.signal_array)] = 0
+    return sample
+#end correct_out_of_bounds_data()
+
+def compute_error(sample, method):
+    std = np.std(sample.signal_array, axis=0)
+    n = sample.signal_array.shape[0]
+    sem = std / np.sqrt(n)
+    
+    if method == 'sem':
+        return (sem, sem)
+    elif method == 'std':
+        return (std, std)
+    else:
+        h = sem * stats.t._ppf((1 + float(conf)) / 2., n - 1)
+        return (h, h)
+#end compute_error()
+
+def make_average_sig_plot(ax, sample, color='k'):
+    if gopts['args'].vline:
+        ax.axvline(0, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
+        if gopts['args'].align == 'scale':
+            ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
+    
+    summary = getattr(sample.signal_array, gopts['args'].summarymethod)(axis=0)
+    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
+    ax.plot(gopts['x_axis'], summary, color=color, label=label)
+    
+    if gopts['args'].showci:
+        computed_error = compute_error(sample, gopts['args'].ciwidth)
+        ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
+        ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
+        
+    ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
+    ax.set_ylim(bottom=sample.avg_min, top=sample.avg_max)
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['units'][0]))) # display with the proper units
+    if not sample.show_yaxis:
+        ax.set_yticklabels([])
+        #ax.set_xticklabels([])
+    return ax
+#end make_average_sig_plot()
+
+
+def add_masked_group_to_avg_plot(ax, sample, mask, label, color='k'):
+    #print mask
+    real_mask = np.zeros(sample.signal_array.shape, dtype=np.bool)
+    counts = [0, 0]
+    for maskrow in xrange(mask.shape[0]):
+        if mask[maskrow]:
+            counts[1] = counts[1] + 1
+            real_mask[maskrow,] = True
+        else:
+            counts[0] = counts[0] + 1
+    #print real_mask
+    #print counts
+    if gopts['args'].showci:
+        metaseq.plotutils.ci_plot(gopts['x_axis'], np.ma.array(sample.signal_array, mask=real_mask), gopts['args'].ciwidth, ax, line_kwargs=dict(color=color, label=label), fill_kwargs=dict(color=color, alpha=0.3))
+    else:
+        ax.plot(gopts['x_axis'], np.ma.array(sample.signal_array, mask=real_mask).mean(axis=0), color=color, label=label)
+#end add_masked_group_to_avg_plot
+
+def make_sig_heatmap(ax, sample):
+    #sys.stderr.write("-> saturation: (%d, %d)\n" % (vmin, vmax))
+    sample.mappable = metaseq.plotutils.imshow(
+            sample.signal_array,
+            x=gopts['x_axis'],
+            ax=ax,
+            vmin=sample.heat_min, 
+            vmax=sample.heat_max, 
+            percentile=False,
+            sort_by=sample.sort_order
+    )
+    if gopts['args'].rotate:
+        if sample.sig_id == 0: #first row
+            ax.set_title(sample.bed_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
+        if sample.bed_id == 0: #first column
+            ax.set_ylabel(sample.sig_label)
+    else:
+        if sample.bed_id == 0: #first row
+            ax.set_title(sample.sig_label)
+        if sample.sig_id == 0: #first column
+            ax.set_ylabel(sample.bed_label)
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    if gopts['args'].vline:
+        ax.axvline(0, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
+        if gopts['args'].align == 'scale':
+            ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
+    if gopts['args'].hline:
+        for hl in sample.hlines:
+            ax.axhline(hl, linestyle=gopts['args'].hlinestyle, color='k', linewidth=gopts['args'].hlineweight)
+#end make_sig_heatmap()
+
+def make_colormap_strip_for_groups(fig, groups, samples):
+    groups_list = get_groups(groups, samples)
+    for i in range(len(groups_list)):
+        make_colormap_strip(fig, [s for s in samples if str(s.sig_id) in groups_list[i]])
+#end make_colormap_strip_for_groups()
+
+def make_colormap_strip(fig, samples):
+    import metaseq.colormap_adjust as colormap_adjust
+    cmap = colormap_adjust.smart_colormap(samples[0].heat_min, samples[0].heat_max)
+    norm = mpl.colors.Normalize(vmin=samples[0].heat_min, vmax=samples[0].heat_max)
+    cols = []
+    for s in samples:
+        cols.append(s.sig_id)
+    max_col = max(cols)
+    cbar_axis = get_plot_axes('cbar', samples[0].group, min(cols), max(cols))
+    cur_pos = cbar_axis.get_position()
+    new_pos = [cur_pos.x0, cur_pos.y0, cur_pos.width * 0.25, cur_pos.height]
+    cbar_axis.set_position(new_pos)
+    [i.set_linewidth(0.1) for i in cbar_axis.spines.itervalues()]
+    cb = mpl.colorbar.ColorbarBase(cbar_axis, cmap=cmap, norm=norm)
+    cb.outline.set_linewidth(0.1)
+#end make_colormap_strip()
+
+
+def save_figure(fig, notes):
+    if notes != "":
+        notes = "."+notes
+    savename = "%s%s.%s" % (gopts['output_base'], notes, gopts['args'].format)
+    sys.stderr.write('Saving Figure.....\n')
+    fig.savefig(savename, dpi=gopts['args'].dpi, bbox_extra_artists=gopts['extra_artists'], bbox_inches='tight')
+    sys.stderr.write(' => See %s for results.\n' % (savename,))
+#end save_figure()
+
+if __name__ == "__main__":
+    main()

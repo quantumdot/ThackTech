@@ -15,11 +15,17 @@ class ChromosomeSets:
 #end class ChromosomeSets
 
 def get_bigwig_chroms(bw_file):
+    """Produce the set of unique chromosome names in a bigwig file
+    
+    requires UCSC program bigWigInfo be on the $PATH
+    """
     chroms = subprocess.check_output('bigWigInfo -chroms "'+bw_file+'" | grep -Po "^[\s]+\K([\w]+)"', shell=True)
     return set(chroms.splitlines())
 #end get_bigwig_chroms()
 
 def get_bed_chroms(bed_file):
+    """Produce the set of unique chromosome names in a bed file
+    """
     chroms = set([])
     bed = pybedtools.BedTool(bed_file)
     for i in bed:
@@ -28,11 +34,16 @@ def get_bed_chroms(bed_file):
 #end get_bed_chroms()
 
 def chrom_to_int(chrom):
+    """Converts a chromosome name from (string)chr12 -> (int)12
+    """
     ord3 = lambda x : '%.3d' % ord(x)
     return int(''.join(map(ord3, chrom))) 
 #end chrom_to_int()
 
 def get_common_chroms(beds, sigs):
+    """Produce a ChromosomeSets describing the union, intersection, and the complement of the intersection
+    
+    """
     common_chroms = None
     all_chroms = set()
     for s in sigs:
@@ -56,7 +67,11 @@ def get_common_chroms(beds, sigs):
 
 
 class ChromSizes(dict):
+    """Represents the UCSC Chromosome Sizes file format
     
+    The class inherits and acts like a normal python dict, where keys are 
+    chromosome names and valuse are the size of the associated chromosome.
+    """
     def __init__(self, genome, path=None):
         self.genome = genome
         self.path = path
@@ -67,7 +82,7 @@ class ChromSizes(dict):
     #end __init__()
 
     def write(self, outhandle):
-        """Writes this ChromSizes to outhandle
+        """Writes this ChromSizes to outhandle (file already opened for writing)
         format is:
         {chromosome}[TAB]{Size}[NEWLINE]
         """
@@ -86,6 +101,8 @@ class ChromSizes(dict):
     #end save()
     
     def __parse_chrom_sizes(self):
+        """Parses a chromosome size file from the file path provided
+        """
         with open(self.path, 'r') as infile:
             reader = csv.reader(infile, delimiter='\t')
             for row in reader:
@@ -93,6 +110,10 @@ class ChromSizes(dict):
     #end parse_chrom_sizes()
     
     def __load_UCSC(self):
+        """Loads chromosome size info from UCSC MySQL database
+        
+        REQUIRES MySQL be setup
+        """
         infile = subprocess.check_output(['mysql', 
                                           '--user=genome', 
                                           '--host=genome-mysql.cse.ucsc.edu', 
