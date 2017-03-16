@@ -36,13 +36,13 @@ class SlurmPipelineRunner(PipelineRunner):
 	def run(self, samples):
 		curr_time = int(time.time())
 		
-		with open(os.path.abspath("%s_%d.log" % (self.pipeline.safe_name(), curr_time)), 'w', 0) as logout:
+		with open(os.path.abspath("%s_%d.log" % (self.pipeline.safe_name, curr_time)), 'w', 0) as logout:
 			sample_count = len(samples)
 			if sample_count < 1:
 				logout.write("No samples to run!")
 				return #No samples to run!
 
-			pipeline_pickles = os.path.abspath("pipeline_%s_%d.dill" % (self.pipeline.safe_name(), curr_time))
+			pipeline_pickles = os.path.abspath("pipeline_%s_%d.dill" % (self.pipeline.safe_name, curr_time))
 			with open(pipeline_pickles, 'wb') as f:
 				dill.dump(self.pipeline, f)
 			
@@ -50,8 +50,8 @@ class SlurmPipelineRunner(PipelineRunner):
 			status_pickles = []
 			self.tasks_statuses = GLOBAL_MANAGER.dict()
 			for i in range(len(samples)):
-				sample_pickles.append(os.path.abspath("pipeline_%s_%d_s%d.dill" % (self.pipeline.safe_name(), curr_time, i)))
-				status_pickles.append(os.path.abspath("pipeline_%s_%d_s%d_status.dill" % (self.pipeline.safe_name(), curr_time, i)))
+				sample_pickles.append(os.path.abspath("pipeline_%s_%d_s%d.dill" % (self.pipeline.safe_name, curr_time, i)))
+				status_pickles.append(os.path.abspath("pipeline_%s_%d_s%d_status.dill" % (self.pipeline.safe_name, curr_time, i)))
 				with open(sample_pickles[i], 'wb') as sf:
 					dill.dump(samples[i], sf)
 				with open(status_pickles[i], 'wb') as ssf:
