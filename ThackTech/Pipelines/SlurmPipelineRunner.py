@@ -60,10 +60,10 @@ class SlurmPipelineRunner(PipelineRunner):
 			try:
 				srun_base = [
 					'srun',
-					'--partition', self.partition,
+					'--partition', str(self.partition),
 					'-n', str(self.nodes),
 					'--cpus-per-task', str(self.threads_per_node),
-					'--time', self.time_limit,
+					'--time', str(self.time_limit),
 					#'--export', 'ALL',
 					'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
 					pipeline_pickles
