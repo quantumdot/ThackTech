@@ -8,7 +8,7 @@ from ThackTech import bdgtools, chromtools
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('bed', required=True, help='BED file to convert into bedgraph.')
+    parser.add_argument('bed', help='BED file to convert into bedgraph.')
     parser.add_argument('-o', '--output', help='Specifies the output file. Default is stdout')
     parser.add_argument('-f', '--format', choices=['bdg', 'bw'], default='bdg', help='Output format.')
     parser.add_argument('-g', '--genome', action='store', required=True, help='Genome chromosome sizes. Can specify UCSC genome builds (i.e. hg19, mm9) or the location of a chromosome sizes file (standard UCSC genome sizes format).')
