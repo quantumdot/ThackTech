@@ -18,7 +18,7 @@ setup(name='ThackTech',
 		  'dill',
 		  'multiprocess',
 		  'tabulate',
-		  'sqlite3',
+		  #'sqlite3',
       ],
       scripts=[
           "scripts/bedToBedGraph.py",
