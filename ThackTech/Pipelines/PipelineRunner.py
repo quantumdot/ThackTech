@@ -64,7 +64,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 		}
 		try:
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(0, 'Preparing...')
-			logfile.write('Processing sample "%s" [%s]....\n' % (sample.name, sample.format))
+			logfile.write('Processing sample "%s"....\n' % (sample.name,))
 			logfile.write('-> Pipeline: %s (%d steps)\n' % (pipeline.name, pipeline_size))
 			logfile.write('-> Running on: %s\n' % (' '.join(platform.uname()),))
 			logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
