@@ -4,6 +4,17 @@ import subprocess
 
 
 
+
+def make_str_filename_safe(unsafe_string):
+    """Makes a string safe for use in filenames
+    
+    Removes any chars not alpha-numeric or in the set {-, _}, and replaces them with an empty string
+    """
+    keepcharacters = ('_','-')
+    return "".join([c for c in unsafe_string if c.isalnum() or c in keepcharacters]).rstrip()
+#end make_label_filename_safe()
+
+
 def ensure_dir(path):
     """Creats the directories specified by path if they do not already exist.
     """

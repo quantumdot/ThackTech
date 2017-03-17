@@ -15,6 +15,7 @@ import sys
 import collections
 from scipy import stats
 import re
+from ThackTech import filetools
 
 
 
@@ -713,17 +714,12 @@ def detect_signal_type(sig_file):
         return ext
 #end detect_signal_type()
 
-def make_label_filename_safe(label):
-    keepcharacters = ('_','-')
-    return "".join([c for c in label if c.isalnum() or c in keepcharacters]).rstrip()
-#end make_label_filename_safe()
-
 def get_signal(bedtool, sig_file, inp_bed, input_file, label):
     cache_dir = os.path.abspath(gopts['args'].cachedir)
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
 
-    cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], make_label_filename_safe(label)))
+    cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], filetools.make_str_filename_safe(label)))
     label_input = label+'_input'
     
     sys.stderr.write("-> input is '%s'...\n" %  (input_file,))

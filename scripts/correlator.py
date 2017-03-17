@@ -15,6 +15,8 @@ import sys
 import collections
 from scipy import stats
 import scipy.cluster.hierarchy as sch
+from ThackTech import filetools
+
 
 
 
@@ -464,16 +466,11 @@ def detect_signal_type(sig_file):
         return ext
 #end detect_signal_type()
 
-def make_label_filename_safe(label):
-    keepcharacters = ('_','-')
-    return "".join([c for c in label if c.isalnum() or c in keepcharacters]).rstrip()
-#end make_label_filename_safe()
-
 def get_signal(bedtool, sig_file, label):
     cache_dir = os.path.abspath(gopts['args'].cachedir)
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
-    cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], make_label_filename_safe(label)))
+    cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], filetools.make_label_filename_safe(label)))
     
     if not gopts['args'].cache or not os.path.exists(cache_name + '.npz'):
         sys.stderr.write("-> Loading signal....\n")
