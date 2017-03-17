@@ -20,4 +20,10 @@ setup(name='ThackTech',
 		  'tabulate',
 		  'sqlite3',
       ],
+      scripts=[
+          "scripts/bedToBedGraph.py",
+          "scripts/wigToBedGraph.py",
+          "scripts/cleanBedGraph.py",
+          "scripts/profiler.py"
+      ],
       zip_safe=False)
