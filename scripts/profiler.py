@@ -183,23 +183,33 @@ def main():
         args.plot.remove('kavg')
     
     
-    if args.align == 'scale':
-        gopts['num_bins'] = (abs(args.up) / args.res, abs(args.scaleregionsize) / args.res, abs(args.down) / args.res)
-        gopts['total_bins'] = sum(gopts['num_bins'])
-        gopts['x_axis'] = np.linspace((-args.up), abs(args.scaleregionsize) + abs(args.down), gopts['total_bins'])
-    else:
-        gopts['num_bins'] = (abs(args.up) + abs(args.down)) / args.res
-        gopts['total_bins'] = gopts['num_bins'] 
-        gopts['x_axis'] = np.linspace((-args.up), args.down, gopts['total_bins'])
     
-    if (gopts['total_bins'] * args.res) > 2e9:
-        gopts['units'] = [1e9, 'Gb']
-    if (gopts['total_bins'] * args.res) > 2e6:
-        gopts['units'] = [1e6, 'Mb']
-    elif (gopts['total_bins'] * args.res) > 2e3:
-        gopts['units'] = [1e3, 'Kb']
-    else:
-        gopts['units'] = [1, 'bp']
+    collection_opts = sigcollector.CollectorOptions()
+    collection_opts.align = args.align
+    collection_opts.up = abs(args.up)
+    collection_opts.down = abs(args.down)
+    collection_opts.scaleregionsize = abs(args.scaleregionsize)
+    collection_opts.resolution = abs(args.res)
+    collection_opts.direction = bool(args.dir)
+    collection_opts.validate()
+    
+#     if args.align == 'scale':
+#         gopts['num_bins'] = (abs(args.up) / args.res, abs(args.scaleregionsize) / args.res, abs(args.down) / args.res)
+#         gopts['total_bins'] = sum(gopts['num_bins'])
+#         gopts['x_axis'] = np.linspace((-args.up), abs(args.scaleregionsize) + abs(args.down), gopts['total_bins'])
+#     else:
+#         gopts['num_bins'] = (abs(args.up) + abs(args.down)) / args.res
+#         gopts['total_bins'] = gopts['num_bins'] 
+#         gopts['x_axis'] = np.linspace((-args.up), args.down, gopts['total_bins'])
+#     
+#     if (gopts['total_bins'] * args.res) > 2e9:
+#         gopts['units'] = [1e9, 'Gb']
+#     if (gopts['total_bins'] * args.res) > 2e6:
+#         gopts['units'] = [1e6, 'Mb']
+#     elif (gopts['total_bins'] * args.res) > 2e3:
+#         gopts['units'] = [1e3, 'Kb']
+#     else:
+#         gopts['units'] = [1, 'bp']
     gopts['output_base'] = "%s.%du_%dd_%dr_%s%s" % (args.name, args.up, args.down, args.res, (args.align+str(args.scaleregionsize) if args.align == 'scale' else args.align), ('_dir' if args.dir else ''))
     gopts['savename_notes'] = []
     
@@ -238,15 +248,17 @@ def main():
             sys.stderr.write("Processing %s vs %s....\n" % (args.bed[b], args.sig[s]))
             sys.stderr.write("-> Preparing intervals.....\n")
             
-            bedtool1 = expand_bed(args.up, args.down, args.align, args.bed[b], gopts['chromsets'].use)
-            bedtool2 = expand_bed(args.up, args.down, args.align, args.bed[b], gopts['chromsets'].use)#seems to choke using the same instance...... not sure why!!!
+            bedtool = sigcollector.IntervalProvider(args.bed[b], collection_opts, args.genome, gopts['chromsets'].use)
+            #bedtool1 = expand_bed(args.up, args.down, args.align, , gopts['chromsets'].use)
+            #bedtool2 = expand_bed(args.up, args.down, args.align, args.bed[b], gopts['chromsets'].use)#seems to choke using the same instance...... not sure why!!!
             s_label = args.slabel[s] if len(args.slabel)-1 >= s else os.path.splitext(os.path.basename(args.sig[s]))[0]
             b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
             input = args.inp[s] if len(args.inp)-1 >= s else None
             if input is not None and input.lower() == 'none':
                 input = None
             
-            signal = get_signal(bedtool1, args.sig[s], bedtool2, input, s_label+b_label)
+            signal = get_signal(bedtool, s_label+b_label, args.sig[s], input, cache_dir=(args.cache_dir if args.cache else None), cache_base=args.name)
+            
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             ps = correct_out_of_bounds_data(ps, args.nan)
@@ -400,48 +412,48 @@ def document_args():
     sys.stderr.write("\n")
 #end document_args()
 
-class ChromosomeSets:
-    def __init__(self, all, common, uncommon, use=None):
-        self.all = all
-        self.common = common
-        self.uncommon = uncommon
-        self.use = use
-    #end __init__()
-#end class ChromosomeSets
-
-def get_common_chroms(beds, sigs):
-    common = None
-    all = set()
-    for s in sigs:
-        chroms = get_bigwig_chroms(s)
-        all = all | chroms
-        if common is None:
-            common = chroms
-        else:
-            common = chroms & common
-    for b in beds:
-        chroms = get_bed_chroms(b)
-        all = all | chroms
-        if common is None:
-            common = chroms
-        else:
-            common = chroms & common
-    return ChromosomeSets(all=all, common=common, uncommon=all-common, use=None)
-#end get_common_chroms()
-
-def get_bigwig_chroms(bw_file):
-    import subprocess
-    chroms = subprocess.check_output('bigWigInfo -chroms "'+bw_file+'" | grep -Po "^[\s]+\K([\w]+)"', shell=True)
-    return set(chroms.splitlines())
-#end get_bigwig_chroms()
-
-def get_bed_chroms(bed_file):
-    chroms = set([])
-    bed = pybedtools.BedTool(bed_file)
-    for i in bed:
-        chroms.add(i.chrom)
-    return chroms
-#end get_bed_chroms()
+# class ChromosomeSets:
+#     def __init__(self, all, common, uncommon, use=None):
+#         self.all = all
+#         self.common = common
+#         self.uncommon = uncommon
+#         self.use = use
+#     #end __init__()
+# #end class ChromosomeSets
+# 
+# def get_common_chroms(beds, sigs):
+#     common = None
+#     all = set()
+#     for s in sigs:
+#         chroms = get_bigwig_chroms(s)
+#         all = all | chroms
+#         if common is None:
+#             common = chroms
+#         else:
+#             common = chroms & common
+#     for b in beds:
+#         chroms = get_bed_chroms(b)
+#         all = all | chroms
+#         if common is None:
+#             common = chroms
+#         else:
+#             common = chroms & common
+#     return ChromosomeSets(all=all, common=common, uncommon=all-common, use=None)
+# #end get_common_chroms()
+# 
+# def get_bigwig_chroms(bw_file):
+#     import subprocess
+#     chroms = subprocess.check_output('bigWigInfo -chroms "'+bw_file+'" | grep -Po "^[\s]+\K([\w]+)"', shell=True)
+#     return set(chroms.splitlines())
+# #end get_bigwig_chroms()
+# 
+# def get_bed_chroms(bed_file):
+#     chroms = set([])
+#     bed = pybedtools.BedTool(bed_file)
+#     for i in bed:
+#         chroms.add(i.chrom)
+#     return chroms
+# #end get_bed_chroms()
 
 def compute_Kmeans(samples, kindicies, k, bed, white_chroms=None):
     sys.stderr.write("Computing K-means clustering....\n")
@@ -648,117 +660,117 @@ def add_signal_to_figure(sample):
             leg.get_frame().set_linewidth(0.1)
 #end add_signal_to_figure()
 
-def midpoint_generator(bedtool, up, down):
-    for i in bedtool:
-        midpoint = i.start + (i.stop - i.start) / 2
-        if i.strand == '-':
-            start = np.clip(midpoint - down, 0, sys.maxint)
-            stop = midpoint + up
-        else:
-            start = np.clip(midpoint - up, 0, sys.maxint)
-            stop = midpoint + down
-        yield pybedtools.cbedtools.Interval(i.chrom, start, stop, strand=i.strand, name=i.name, score=i.score)
-#end midpoint_generator()
-
-def five_prime_generator(bedtool, up, down):
-    for interval in bedtool:
-        yield pybedtools.featurefuncs.five_prime(interval, upstream=up, downstream=down)#, genome='mm9')
-#end midpoint_generator()
-
-def three_prime_generator(bedtool, up, down):
-    for interval in bedtool:
-        yield pybedtools.featurefuncs.three_prime(interval, upstream=up, downstream=down)#, genome='mm9')
-#end midpoint_generator()
-
-def scaled_interval_generator(bedtool, up, down):
-    for gene in bedtool:
-        if gene.strand == '-':
-            upstream   = pybedtools.cbedtools.Interval(gene.chrom, np.clip((gene.start - down), 0, sys.maxint), gene.start,         strand='-', name=gene.name, score=gene.score)
-            gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='-', name=gene.name, score=gene.score)
-            downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + up),     strand='-', name=gene.name, score=gene.score)
-        else:
-            upstream   = pybedtools.cbedtools.Interval(gene.chrom, np.clip((gene.start - up), 0, sys.maxint),     gene.start,         strand='+', name=gene.name, score=gene.score)
-            gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='+', name=gene.name, score=gene.score)
-            downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + down),    strand='+', name=gene.name, score=gene.score)
-        gene_body.name = gene.name
-        yield (upstream, gene_body, downstream)
-#end scaled_interval_generator()
-
-def expand_bed(up, down, alignment, bed, white_chroms=None):
-    data = None
-    bedtool = pybedtools.BedTool(bed)
-    if white_chroms is not None:
-        bedtool = bedtool.filter(lambda d: d.chrom in white_chroms)
-    
-    if alignment == 'center':
-        sys.stderr.write("-> producing center points...\n")
-        data = midpoint_generator(bedtool, up, down)
-    elif alignment == 'left':
-        sys.stderr.write("-> producing 5' points...\n")
-        data = five_prime_generator(bedtool, up, down)
-    elif alignment == 'right':
-        sys.stderr.write("-> producing 3' points...\n")
-        data = three_prime_generator(bedtool, up, down)
-    elif alignment == 'scale':
-        sys.stderr.write("-> producing scaled regions...\n")
-        data = scaled_interval_generator(bedtool, up, down)
-    
-    return data
-#end expand_bed()
-
-def detect_signal_type(sig_file):
-    ext = os.path.splitext(sig_file)[1][1:].strip().lower()
-    if ext in ['bigwig', 'bw']:
-        return "bigwig"
-    else:
-        return ext
-#end detect_signal_type()
-
-def get_signal(bedtool, sig_file, inp_bed, input_file, label):
-    cache_dir = os.path.abspath(gopts['args'].cachedir)
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-
-    cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], filetools.make_str_filename_safe(label)))
-    label_input = label+'_input'
-    
-    sys.stderr.write("-> input is '%s'...\n" %  (input_file,))
-    
-    if not gopts['args'].cache or not os.path.exists(cache_name + '.npz'):
-        sys.stderr.write("-> Loading signal....\n")
-        sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
-        sys.stderr.write("-> Computing signal at intervals....\n")
-        sig_array = sig.array(bedtool, bins=gopts['num_bins'], stranded=gopts['args'].dir, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
-        
-        if input_file is not None:
-            sys.stderr.write("-> Loading input signal....\n")
-            inp_sig = metaseq.genomic_signal(input_file, detect_signal_type(input_file))
-            sys.stderr.write("-> Computing input signal at intervals....\n")
-            input_array = inp_sig.array(inp_bed, bins=gopts['num_bins'], stranded=gopts['args'].dir, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
-            
-        if gopts['args'].cache:
-            sys.stderr.write("-> Persisting data to disk...\n")
-            cache_data = {label: sig_array}
-            if input_file is not None:
-                cache_data[label_input] = input_array
-            metaseq.persistence.save_features_and_arrays(features=bedtool,
-                                                         arrays=cache_data,
-                                                         prefix=cache_name,
-                                                         #link_features=True,
-                                                         overwrite=True)
-    else:
-        sys.stderr.write("-> Loding data from cache....\n")
-        features, arrays = metaseq.persistence.load_features_and_arrays(prefix=cache_name)
-        sig_array = arrays[label]
-        if input_file is not None:
-            input_array = arrays[label_input]
-            
-    if input_file is not None:    
-        sys.stderr.write("-> Normalizing signal to input....\n")
-        sig_array = sig_array - input_array    
-    
-    return sig_array
-#end get_signal()
+# def midpoint_generator(bedtool, up, down):
+#     for i in bedtool:
+#         midpoint = i.start + (i.stop - i.start) / 2
+#         if i.strand == '-':
+#             start = np.clip(midpoint - down, 0, sys.maxint)
+#             stop = midpoint + up
+#         else:
+#             start = np.clip(midpoint - up, 0, sys.maxint)
+#             stop = midpoint + down
+#         yield pybedtools.cbedtools.Interval(i.chrom, start, stop, strand=i.strand, name=i.name, score=i.score)
+# #end midpoint_generator()
+# 
+# def five_prime_generator(bedtool, up, down):
+#     for interval in bedtool:
+#         yield pybedtools.featurefuncs.five_prime(interval, upstream=up, downstream=down)#, genome='mm9')
+# #end midpoint_generator()
+# 
+# def three_prime_generator(bedtool, up, down):
+#     for interval in bedtool:
+#         yield pybedtools.featurefuncs.three_prime(interval, upstream=up, downstream=down)#, genome='mm9')
+# #end midpoint_generator()
+# 
+# def scaled_interval_generator(bedtool, up, down):
+#     for gene in bedtool:
+#         if gene.strand == '-':
+#             upstream   = pybedtools.cbedtools.Interval(gene.chrom, np.clip((gene.start - down), 0, sys.maxint), gene.start,         strand='-', name=gene.name, score=gene.score)
+#             gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='-', name=gene.name, score=gene.score)
+#             downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + up),     strand='-', name=gene.name, score=gene.score)
+#         else:
+#             upstream   = pybedtools.cbedtools.Interval(gene.chrom, np.clip((gene.start - up), 0, sys.maxint),     gene.start,         strand='+', name=gene.name, score=gene.score)
+#             gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='+', name=gene.name, score=gene.score)
+#             downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + down),    strand='+', name=gene.name, score=gene.score)
+#         gene_body.name = gene.name
+#         yield (upstream, gene_body, downstream)
+# #end scaled_interval_generator()
+# 
+# def expand_bed(up, down, alignment, bed, white_chroms=None):
+#     data = None
+#     bedtool = pybedtools.BedTool(bed)
+#     if white_chroms is not None:
+#         bedtool = bedtool.filter(lambda d: d.chrom in white_chroms)
+#     
+#     if alignment == 'center':
+#         sys.stderr.write("-> producing center points...\n")
+#         data = midpoint_generator(bedtool, up, down)
+#     elif alignment == 'left':
+#         sys.stderr.write("-> producing 5' points...\n")
+#         data = five_prime_generator(bedtool, up, down)
+#     elif alignment == 'right':
+#         sys.stderr.write("-> producing 3' points...\n")
+#         data = three_prime_generator(bedtool, up, down)
+#     elif alignment == 'scale':
+#         sys.stderr.write("-> producing scaled regions...\n")
+#         data = scaled_interval_generator(bedtool, up, down)
+#     
+#     return data
+# #end expand_bed()
+# 
+# def detect_signal_type(sig_file):
+#     ext = os.path.splitext(sig_file)[1][1:].strip().lower()
+#     if ext in ['bigwig', 'bw']:
+#         return "bigwig"
+#     else:
+#         return ext
+# #end detect_signal_type()
+# 
+# def get_signal(bedtool, sig_file, inp_bed, input_file, label):
+#     cache_dir = os.path.abspath(gopts['args'].cachedir)
+#     if not os.path.exists(cache_dir):
+#         os.makedirs(cache_dir)
+# 
+#     cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], filetools.make_str_filename_safe(label)))
+#     label_input = label+'_input'
+#     
+#     sys.stderr.write("-> input is '%s'...\n" %  (input_file,))
+#     
+#     if not gopts['args'].cache or not os.path.exists(cache_name + '.npz'):
+#         sys.stderr.write("-> Loading signal....\n")
+#         sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
+#         sys.stderr.write("-> Computing signal at intervals....\n")
+#         sig_array = sig.array(bedtool, bins=gopts['num_bins'], stranded=gopts['args'].dir, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
+#         
+#         if input_file is not None:
+#             sys.stderr.write("-> Loading input signal....\n")
+#             inp_sig = metaseq.genomic_signal(input_file, detect_signal_type(input_file))
+#             sys.stderr.write("-> Computing input signal at intervals....\n")
+#             input_array = inp_sig.array(inp_bed, bins=gopts['num_bins'], stranded=gopts['args'].dir, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
+#             
+#         if gopts['args'].cache:
+#             sys.stderr.write("-> Persisting data to disk...\n")
+#             cache_data = {label: sig_array}
+#             if input_file is not None:
+#                 cache_data[label_input] = input_array
+#             metaseq.persistence.save_features_and_arrays(features=bedtool,
+#                                                          arrays=cache_data,
+#                                                          prefix=cache_name,
+#                                                          #link_features=True,
+#                                                          overwrite=True)
+#     else:
+#         sys.stderr.write("-> Loding data from cache....\n")
+#         features, arrays = metaseq.persistence.load_features_and_arrays(prefix=cache_name)
+#         sig_array = arrays[label]
+#         if input_file is not None:
+#             input_array = arrays[label_input]
+#             
+#     if input_file is not None:    
+#         sys.stderr.write("-> Normalizing signal to input....\n")
+#         sig_array = sig_array - input_array    
+#     
+#     return sig_array
+# #end get_signal()
 
 def get_bed_score_signal(bed, white_chroms=None):
     elements = pybedtools.BedTool(bed)
