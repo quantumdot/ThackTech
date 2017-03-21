@@ -296,31 +296,42 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
 #end get_signal()
 
 
-def get_bed_score_signal(bed, white_chroms=None):
-    elements = pybedtools.BedTool(bed)
-    if white_chroms is not None:
-        elements = elements.filter(lambda d: d.chrom in white_chroms)
+def get_bed_score_signal(regions):
     matrix = []
-    for el in elements:
-        matrix.append([float(el.score)]*gopts['total_bins'])
+    matrix_size = regions.co.total_bins
+    for el in regions.provide_intervals():
+        matrix.append([float(el.score)] * matrix_size)
     return np.array(matrix)
 #end get_bed_score_signal()
 
-def get_bed_score_signal_complex(bed, genome, white_chroms=None):
+def get_bed_score_signal_complex(regions, cache_dir=None,   bed, genome, white_chroms=None):
     import subprocess
     cache_dir = os.path.abspath(gopts['args'].cachedir)
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
     bed_basename = os.path.splitext(os.path.basename(bed))[0]
     bw_name = os.path.join(cache_dir, bed_basename+'.bw')
+    
+    
+    
+    
+    
     if not os.path.exists(bw_name):
-        cmd = ['python', '/home/josh/scripts/bedToBedGraph.py', '--quiet', '--output', bw_name, '--genome', genome, '--format', 'bw', '--repairoverlaps', '--method', 'mean', '--missingregions', 'zero', bed]
+        cmd = [
+            'bedToBedGraph.py', '--quiet', '--repairoverlaps',
+            '--output', bw_name, 
+            '--genome', genome, 
+            '--format', 'bw',  
+            '--method', 'mean', 
+            '--missingregions', 'zero', 
+            bed
+        ]
         #print " ".join(cmd)
         p = subprocess.Popen(cmd)
         p.communicate()
 
     bedtool1 = expand_bed(gopts['args'].up, gopts['args'].down, gopts['args'].align, bed, gopts['chromsets'].use)        
-    signal = get_signal(bedtool1, bw_name, None, None, bed_basename+'_signal')
+    signal = get_signal(regions, bed_basename+'_signal', bw_name, None, cache_dir, None, )
     return signal
 #end get_bed_score_signal()
 
