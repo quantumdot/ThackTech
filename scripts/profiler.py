@@ -16,12 +16,13 @@ import collections
 from scipy import stats
 import re
 from ThackTech import filetools
+from ThackTech.Plotting import sigcollector
 
 
 
 gopts = {
     'args': None,
-    'num_bins': 0,
+    'co': None,
     'output_base': '',
     'fig_cols': 0,
     'fig_rows': 0,
@@ -192,6 +193,7 @@ def main():
     collection_opts.resolution = abs(args.res)
     collection_opts.direction = bool(args.dir)
     collection_opts.validate()
+    gopts['co'] = collection_opts
     
 #     if args.align == 'scale':
 #         gopts['num_bins'] = (abs(args.up) / args.res, abs(args.scaleregionsize) / args.res, abs(args.down) / args.res)

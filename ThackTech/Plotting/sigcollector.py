@@ -69,6 +69,8 @@ class IntervalProvider:
     #end provide_intervals()
     
     def generate_origional(self, bedtool):
+        """Generates the origional intervals this provider wraps
+        """
         for interval in bedtool:
             yield interval
     #end generate_midpoints()
@@ -162,6 +164,8 @@ class CollectorOptions:
     
     __allowed_alignments = ['center', 'left', 'right', 'scale']
     def validate(self):
+        """Validate this CollectorOptions to ensure validity
+        """
         assert self.align in self.__allowed_alignments, "Align must be one of {"+", ".join(self.__allowed_alignments)+"}"
         assert self.upstream >= 0, "Upstream must be >= 0!"
         assert self.downstream >= 0, "Downstream must be >= 0!"
@@ -192,6 +196,8 @@ class CollectorOptions:
     
     @property
     def xaxis(self):
+        """Retrun a numpy array appropriate for use as an x-axis for plotting based on this CollectorOptions
+        """
         if self.align == 'scale':
             return np.linspace((-self.upstream), abs(self.scaleregionsize) + abs(self.downstream), self.total_bins)
         else:
@@ -200,6 +206,8 @@ class CollectorOptions:
     
     @property
     def xaxis_label(self):
+        """Get a string that is an appropriate x-axis label
+        """
         unit_txt = self.units[1]
         if args.align == 'center':
             return "Distance from Center of Element (%s)" % (unit_txt,)
@@ -213,7 +221,7 @@ class CollectorOptions:
     
     @property
     def total_bins(self):
-        """Retruns the absolute total number of bins
+        """Returns the absolute total number of bins
         
         """
         if self.align == 'scale':
@@ -242,7 +250,7 @@ class CollectorOptions:
 
 
 
-def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_base=""):
+def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_base="", collectionmethod="get_as_array", cpus=1):
     if cache_dir is not None:
         cache_dir = os.path.abspath(cache_dir)
         filetools.ensure_dir(cache_dir)
@@ -255,13 +263,13 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         sys.stderr.write("-> Loading signal....\n")
         sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
         sys.stderr.write("-> Computing signal at intervals....\n")
-        sig_array = sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
+        sig_array = sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=collectionmethod, processes=cpus, zero_inf=False, zero_nan=False)
         
         if input_file is not None:
             sys.stderr.write("-> Loading input signal....\n")
             inp_sig = metaseq.genomic_signal(input_file, detect_signal_type(input_file))
             sys.stderr.write("-> Computing input signal at intervals....\n")
-            input_array = inp_sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=gopts['args'].collectionmethod, processes=gopts['args'].cpus, zero_inf=False, zero_nan=False)
+            input_array = inp_sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=collectionmethod, processes=cpus, zero_inf=False, zero_nan=False)
             
         if cache_dir is not None:
             sys.stderr.write("-> Persisting data to disk...\n")
@@ -315,5 +323,31 @@ def get_bed_score_signal_complex(bed, genome, white_chroms=None):
     signal = get_signal(bedtool1, bw_name, None, None, bed_basename+'_signal')
     return signal
 #end get_bed_score_signal()
+
+
+def compute_error(data, method, axis=0, ci=0.95):
+    """Compute the error 
+    
+    Parameters:
+        data: array-like
+        method: (string) error method to use, one of {sem, std, ci} for Standard Error, Standard Deviation or Confidence Interval
+        axis: (int) Axis of the array to operate over (0 for column-wise, 1 for row-wise)
+        ci: (float) Only used if method = ci. Confidence interval to compute
+        
+    Returns:
+        two tuple, upper and lower error. i.e. (0.01, 0.01)
+    """
+    std = np.std(data, axis=axis)
+    n = data.shape[axis]
+    sem = std / np.sqrt(n)
+    
+    if method == 'sem':
+        return (sem, sem)
+    elif method == 'std':
+        return (std, std)
+    else: #ci
+        h = sem * stats.t._ppf((1 + float(ci)) / 2., n - 1)
+        return (h, h)
+#end compute_error()
 
 
