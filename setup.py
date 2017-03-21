@@ -25,6 +25,7 @@ setup(  name='ThackTech',
             "scripts/wigToBedGraph.py",
             "scripts/cleanBedGraph.py",
             "scripts/profiler.py",
-            "scripts/correlator.py"
+            "scripts/correlator.py",
+            "scripts/bedstats.py"
         ],
         zip_safe=False)
