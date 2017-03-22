@@ -1,6 +1,7 @@
 import pybedtools
 import numpy as np
 import metaseq
+import subprocess
 from ThackTech import filetools
 
 
@@ -304,35 +305,31 @@ def get_bed_score_signal(regions):
     return np.array(matrix)
 #end get_bed_score_signal()
 
-def get_bed_score_signal_complex(regions, cache_dir=None,   bed, genome, white_chroms=None):
-    import subprocess
-    cache_dir = os.path.abspath(gopts['args'].cachedir)
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    bed_basename = os.path.splitext(os.path.basename(bed))[0]
+
+
+def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collectionmethod="get_as_array", cpus=1):
+    if cache_dir is not None:
+        cache_dir = os.path.abspath(cache_dir)
+        filetools.ensure_dir(cache_dir)
+    
+    bed_basename = os.path.splitext(os.path.basename(regions.bed))[0]
     bw_name = os.path.join(cache_dir, bed_basename+'.bw')
-    
-    
-    
-    
     
     if not os.path.exists(bw_name):
         cmd = [
-            'bedToBedGraph.py', '--quiet', '--repairoverlaps',
+            'bedToBedGraph.py', 
+            '--quiet', 
             '--output', bw_name, 
             '--genome', genome, 
-            '--format', 'bw',  
-            '--method', 'mean', 
+            '--format', 'bw',
+            '--repairoverlaps', '--method', 'mean', 
             '--missingregions', 'zero', 
             bed
         ]
-        #print " ".join(cmd)
         p = subprocess.Popen(cmd)
         p.communicate()
-
-    bedtool1 = expand_bed(gopts['args'].up, gopts['args'].down, gopts['args'].align, bed, gopts['chromsets'].use)        
-    signal = get_signal(regions, bed_basename+'_signal', bw_name, None, cache_dir, None, )
-    return signal
+  
+    return get_signal(regions, bed_basename+'_signal', bw_name, None, cache_dir, cache_base, collectionmethod, cpus)
 #end get_bed_score_signal()
 
 

@@ -262,10 +262,11 @@ def main():
     
     if 'bedscores' in args.plot or 'truebedscores' in args.plot:
         for b in xrange(len(args.bed)):
+            bedtool = sigcollector.IntervalProvider(args.bed[b], collection_opts, args.genome, gopts['chromsets'].use)
             if 'truebedscores' in args.plot:
-                signal = get_bed_score_signal_complex(args.bed[b], args.genome, gopts['chromsets'].use)
+                signal = sigcollector.get_bed_score_signal_complex(bedtool, cache_dir=(args.cache_dir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
             else:
-                signal = get_bed_score_signal(args.bed[b], gopts['chromsets'].use)
+                signal = sigcollector.get_bed_score_signal(bedtool)
             #print signal
             b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
             samples.append(ProfileSample(len(samples), len(args.sig), b, signal, args.bedscorelabel, b_label))
