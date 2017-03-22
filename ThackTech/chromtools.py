@@ -60,7 +60,7 @@ def get_common_chroms(beds, sigs):
             common_chroms = chroms
         else:
             common_chroms = chroms & common_chroms
-    return ChromosomeSets(all=all_chroms, common=common_chroms, uncommon=all-common_chroms, use=None)
+    return ChromosomeSets(all=all_chroms, common=common_chroms, uncommon=all_chroms - common_chroms, use=None)
 #end get_common_chroms()
 
 
