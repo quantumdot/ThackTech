@@ -6,7 +6,7 @@ import csv
 
 
 class ChromosomeSets:
-    def __init__(self, all, common, uncommon, use=None):
+    def __init__(self, all, common, uncommon, use=[]):
         self.all = set(all)
         self.common = set(common)
         self.uncommon = set(uncommon)
@@ -60,7 +60,7 @@ def get_common_chroms(beds, sigs):
             common_chroms = chroms
         else:
             common_chroms = chroms & common_chroms
-    return ChromosomeSets(all=all_chroms, common=common_chroms, uncommon=all_chroms - common_chroms, use=None)
+    return ChromosomeSets(all=all_chroms, common=common_chroms, uncommon=all_chroms - common_chroms, use=[])
 #end get_common_chroms()
 
 
