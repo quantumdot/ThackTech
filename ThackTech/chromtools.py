@@ -48,7 +48,7 @@ def get_common_chroms(beds, sigs):
     all_chroms = set()
     for s in sigs:
         chroms = get_bigwig_chroms(s)
-        all_chroms = all | chroms
+        all_chroms = all_chroms | chroms
         if common_chroms is None:
             common_chroms = chroms
         else:
