@@ -3,6 +3,7 @@ import numpy as np
 import metaseq
 import subprocess
 from ThackTech import filetools
+from ThackTech import chromtools
 
 
 
@@ -26,8 +27,8 @@ class IntervalProvider:
         self.co = collector_opts
         self.white_chroms = white_chroms
         
-        if not isinstance(genome, ChromSizes):
-            self.genome = ChromSizes(genome)
+        if not isinstance(genome, chromtools.ChromSizes):
+            self.genome = chromtools.ChromSizes(genome)
         else:
             self.genome = genome
         
