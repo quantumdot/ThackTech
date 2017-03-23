@@ -114,13 +114,15 @@ class ChromSizes(dict):
         
         REQUIRES MySQL be setup
         """
-        infile = subprocess.check_output(['mysql', 
-                                          '--user=genome', 
-                                          '--host=genome-mysql.cse.ucsc.edu', 
-                                          '-ABN', 
-                                          '-D', self.genome, 
-                                          '-e', 'SELECT chrom, size from chromInfo'
-                                        ], stderr=sys.stderr)
+        args = ['mysql', 
+                '--user=genome', 
+                '--host=genome-mysql.cse.ucsc.edu', 
+                '-ABN', 
+                '-D', str(self.genome), 
+                '-e', 'SELECT chrom, size from chromInfo'
+        ]
+        sys.stderr.write(" ".join(args)+"\n")
+        infile = subprocess.check_output(args, stderr=sys.stderr)
     
         rows = csv.reader(cStringIO.StringIO(infile), delimiter='\t')
         for row in rows:
