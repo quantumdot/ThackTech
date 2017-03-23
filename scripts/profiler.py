@@ -330,14 +330,15 @@ def main():
         make_colormap_strip_for_groups(fig, args.scalegroups, samples)
     
     #add sensible x-axis label
-    if args.align == 'center':
-        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from Center of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
-    elif args.align == 'left':
-        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 5' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
-    elif args.align == 'right':
-        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 3' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
-    elif args.align == 'scale':
-        gopts['extra_artists'].append(fig.text(0.5, 0.04, "Upstream (%s); %d%s of Meta-Element; Downstream (%s)" % (gopts['units'][1], (abs(args.scaleregionsize) / gopts['units'][0]), gopts['units'][1], gopts['units'][1]), ha='center', va='center'))
+    gopts['extra_artists'].append(fig.text(0.5, 0.04, collection_opts.xaxis_label, ha='center', va='center'))
+#     if args.align == 'center':
+#         gopts['extra_artists'].append(fig.text(0.5, 0.04, collection_opts.xaxis_label, ha='center', va='center'))
+#     elif args.align == 'left':
+#         gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 5' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
+#     elif args.align == 'right':
+#         gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 3' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
+#     elif args.align == 'scale':
+#         gopts['extra_artists'].append(fig.text(0.5, 0.04, "Upstream (%s); %d%s of Meta-Element; Downstream (%s)" % (gopts['units'][1], (abs(args.scaleregionsize) / gopts['units'][0]), gopts['units'][1], gopts['units'][1]), ha='center', va='center'))
         
     #finally save the figure!
     save_figure(fig, "_".join(gopts['savename_notes']))
