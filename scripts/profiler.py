@@ -483,7 +483,7 @@ def get_groups(groups, samples):
         final_groups = []
         for group in groups.split(";"):
             final_groups.append([str(s.sig_id) for s in samples if str(s.sig_id) in group.split(",")])
-        return final_groups
+        return [sl for sl in final_groups if len(sl) > 0]
 #end get_groups()
 
 def count_groups(groups, samples):
