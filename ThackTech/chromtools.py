@@ -114,6 +114,7 @@ class ChromSizes(dict):
         
         REQUIRES MySQL be setup
         """
+        assert self.genome is not None, "Genome must be specified!"
         args = ['mysql', 
                 '--user=genome', 
                 '--host=genome-mysql.cse.ucsc.edu', 
@@ -121,7 +122,7 @@ class ChromSizes(dict):
                 '-D', str(self.genome), 
                 '-e', 'SELECT chrom, size from chromInfo'
         ]
-        sys.stderr.write(" ".join(args)+"\n")
+        #sys.stderr.write(" ".join(args)+"\n")
         infile = subprocess.check_output(args, stderr=sys.stderr)
     
         rows = csv.reader(cStringIO.StringIO(infile), delimiter='\t')

@@ -243,7 +243,7 @@ def main():
             if input is not None and input.lower() == 'none':
                 input = None
             
-            signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input, cache_dir=(args.cache_dir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
+            signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
@@ -264,7 +264,7 @@ def main():
         for b in xrange(len(args.bed)):
             bedtool = sigcollector.IntervalProvider(args.bed[b], collection_opts, args.genome, gopts['chromsets'].use)
             if 'truebedscores' in args.plot:
-                signal = sigcollector.get_bed_score_signal_complex(bedtool, cache_dir=(args.cache_dir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
+                signal = sigcollector.get_bed_score_signal_complex(bedtool, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
             else:
                 signal = sigcollector.get_bed_score_signal(bedtool)
             #print signal
