@@ -677,7 +677,7 @@ def make_average_sig_plot(ax, sample, color='k'):
         
     ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
     ax.set_ylim(bottom=sample.avg_min, top=sample.avg_max)
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['units'][0]))) # display with the proper units
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
     if not sample.show_yaxis:
         ax.set_yticklabels([])
         #ax.set_xticklabels([])
