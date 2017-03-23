@@ -213,13 +213,13 @@ class CollectorOptions:
         """Get a string that is an appropriate x-axis label
         """
         unit_txt = self.units[1]
-        if args.align == 'center':
+        if self.align == 'center':
             return "Distance from Center of Element (%s)" % (unit_txt,)
-        elif args.align == 'left':
+        elif self.align == 'left':
             return "Distance from 5' end of Element (%s)" % (unit_txt,)
-        elif args.align == 'right':
+        elif self.align == 'right':
             return "Distance from 3' end of Element (%s)" % (unit_txt,)
-        elif args.align == 'scale':
+        elif self.align == 'scale':
             return "Upstream (%s); %d%s of Meta-Element; Downstream (%s)" % (unit_txt, (abs(self.scaleregionsize) / self.units[0]), unit_txt, unit_txt)
     #end xaxis_label
     
