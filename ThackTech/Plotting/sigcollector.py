@@ -22,7 +22,7 @@ class IntervalProvider:
     
     
     def __init__(self, bedfile, collector_opts, genome=None, white_chroms=None):
-        self.bed = bed
+        self.bed = bedfile
         self.co = collector_opts
         self.white_chroms
         
