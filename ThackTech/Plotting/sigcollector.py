@@ -281,7 +281,7 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
             cache_data = {label: sig_array}
             if input_file is not None:
                 cache_data[label_input] = input_array
-            metaseq.persistence.save_features_and_arrays(features=regions.provide_intervals(),
+            metaseq.persistence.save_features_and_arrays(features=[],#regions.provide_intervals(),
                                                          arrays=cache_data,
                                                          prefix=cache_name,
                                                          #link_features=True,
