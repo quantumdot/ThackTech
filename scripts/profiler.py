@@ -188,8 +188,8 @@ def main():
     
     collection_opts = sigcollector.CollectorOptions()
     collection_opts.align = args.align
-    collection_opts.up = abs(args.up)
-    collection_opts.down = abs(args.down)
+    collection_opts.upstream = abs(args.up)
+    collection_opts.downstream = abs(args.down)
     collection_opts.scaleregionsize = abs(args.scaleregionsize)
     collection_opts.resolution = abs(args.res)
     collection_opts.direction = bool(args.dir)
