@@ -195,6 +195,7 @@ def main():
     collection_opts.direction = bool(args.dir)
     collection_opts.validate()
     gopts['co'] = collection_opts
+    gopts['x_axis'] = collection_opts.xaxis
     
     gopts['output_base'] = "%s.%s" % (args.name, str(collection_opts))
     gopts['savename_notes'] = []
