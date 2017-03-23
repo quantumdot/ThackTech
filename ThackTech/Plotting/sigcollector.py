@@ -51,7 +51,7 @@ class IntervalProvider:
         data = None
         bedtool = pybedtools.BedTool(self.bed)
         if self.white_chroms is not None:
-            bedtool = bedtool.filter(lambda d: d.chrom in white_chroms)
+            bedtool = bedtool.filter(lambda d: d.chrom in self.white_chroms)
         
         if self.co.align == 'center':
             sys.stderr.write("-> producing center points...\n")
