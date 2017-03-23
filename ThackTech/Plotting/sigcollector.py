@@ -139,9 +139,9 @@ class IntervalProvider:
             downstream = self.clamp_coordinates(interval.chrom, downstream[0], downstream[1])
             
             #make the actual interval
-            upstream   = pybedtools.cbedtools.Interval(interval.chrom, upstream[0], upstream[1], strand=interval.strand, name=gene.name, score=gene.score)
-            gene_body  = pybedtools.cbedtools.Interval(interval.chrom, gene_body[0], gene_body[1], strand=interval.strand, name=gene.name, score=gene.score)
-            downstream = pybedtools.cbedtools.Interval(interval.chrom, downstream[0], downstream[1], strand=interval.strand, name=gene.name, score=gene.score)
+            upstream   = pybedtools.cbedtools.Interval(interval.chrom, upstream[0], upstream[1], strand=interval.strand, name=interval.name, score=interval.score)
+            gene_body  = pybedtools.cbedtools.Interval(interval.chrom, gene_body[0], gene_body[1], strand=interval.strand, name=interval.name, score=interval.score)
+            downstream = pybedtools.cbedtools.Interval(interval.chrom, downstream[0], downstream[1], strand=interval.strand, name=interval.name, score=interval.score)
             
             #pybedtools screws up when creating a standalone interval and does not set the name correctly from the constructor
             #re-set the name manually!
