@@ -50,7 +50,7 @@ class IntervalProvider:
     def provide_intervals(self):
         data = None
         bedtool = pybedtools.BedTool(self.bed)
-        if white_chroms is not None:
+        if self.white_chroms is not None:
             bedtool = bedtool.filter(lambda d: d.chrom in white_chroms)
         
         if self.co.align == 'center':
