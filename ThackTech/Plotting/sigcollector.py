@@ -99,11 +99,11 @@ class IntervalProvider:
     def generate_left(self, bedtool):
         for interval in bedtool:
             if self.co.direction and interval.strand == '-':
-                start = feature.stop - self.co.downstream
-                stop  = feature.stop + self.co.upstream
+                start = interval.stop - self.co.downstream
+                stop  = interval.stop + self.co.upstream
             else:
-                start = feature.start - self.co.upstream
-                stop  = feature.start + self.co.downstream
+                start = interval.start - self.co.upstream
+                stop  = interval.start + self.co.downstream
                 
             start, stop = self.clamp_coordinates(interval.chrom, start, stop)
             yield pybedtools.cbedtools.Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
@@ -112,11 +112,11 @@ class IntervalProvider:
     def generate_right(self, bedtool):
         for interval in bedtool:
             if self.co.direction and interval.strand == '-':
-                start = feature.start - self.co.downstream
-                stop  = feature.start + self.co.upstream
+                start = interval.start - self.co.downstream
+                stop  = interval.start + self.co.upstream
             else:
-                start = feature.stop - self.co.upstream
-                stop  = feature.stop + self.co.downstream
+                start = interval.stop - self.co.upstream
+                stop  = interval.stop + self.co.downstream
                 
             start, stop = self.clamp_coordinates(interval.chrom, start, stop)
             yield pybedtools.cbedtools.Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
@@ -324,11 +324,11 @@ def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collect
             'bedToBedGraph.py', 
             '--quiet', 
             '--output', bw_name, 
-            '--genome', genome, 
+            '--genome', regions.genome.genome, 
             '--format', 'bw',
             '--repairoverlaps', '--method', 'mean', 
             '--missingregions', 'zero', 
-            bed
+            regions.bed
         ]
         p = subprocess.Popen(cmd)
         p.communicate()
@@ -336,30 +336,5 @@ def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collect
     return get_signal(regions, bed_basename+'_signal', bw_name, None, cache_dir, cache_base, collectionmethod, cpus)
 #end get_bed_score_signal()
 
-
-def compute_error(data, method, axis=0, ci=0.95):
-    """Compute the error 
-    
-    Parameters:
-        data: array-like
-        method: (string) error method to use, one of {sem, std, ci} for Standard Error, Standard Deviation or Confidence Interval
-        axis: (int) Axis of the array to operate over (0 for column-wise, 1 for row-wise)
-        ci: (float) Only used if method = ci. Confidence interval to compute
-        
-    Returns:
-        two tuple, upper and lower error. i.e. (0.01, 0.01)
-    """
-    std = np.std(data, axis=axis)
-    n = data.shape[axis]
-    sem = std / np.sqrt(n)
-    
-    if method == 'sem':
-        return (sem, sem)
-    elif method == 'std':
-        return (std, std)
-    else: #ci
-        h = sem * stats.t._ppf((1 + float(ci)) / 2., n - 1)
-        return (h, h)
-#end compute_error()
 
 

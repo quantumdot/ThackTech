@@ -12,12 +12,13 @@ import pandas as pd
 import multiprocessing
 import os
 import sys
-import collections
 from scipy import stats
 import re
 from ThackTech import filetools
 from ThackTech.Plotting import sigcollector
 from ThackTech import chromtools
+
+
 
 
 
@@ -219,9 +220,9 @@ def main():
     if args.chrignore is not None:
         pattern = re.compile(args.chrignore)
         filtered_chrs = set()
-        for chr in gopts['chromsets'].use:
-            if pattern.search(chr) is not None:
-                filtered_chrs.add(chr)
+        for chrom in gopts['chromsets'].use:
+            if pattern.search(chrom) is not None:
+                filtered_chrs.add(chrom)
         sys.stderr.write('Filtering chromomsomes matching filter "%s"....\n' % (args.chrignore,))
         sys.stderr.write("=>  Ignoring: "+', '.join(filtered_chrs)+"\n")
         gopts['chromsets'].use -= filtered_chrs
@@ -248,7 +249,7 @@ def main():
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
-            ps = correct_out_of_bounds_data(ps, args.nan)
+            ps = sigcollector.correct_out_of_bounds_data(ps, args.nan)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             samples.append(ps)
             sys.stderr.write("\n")
@@ -331,14 +332,6 @@ def main():
     
     #add sensible x-axis label
     gopts['extra_artists'].append(fig.text(0.5, 0.04, collection_opts.xaxis_label, ha='center', va='center'))
-#     if args.align == 'center':
-#         gopts['extra_artists'].append(fig.text(0.5, 0.04, collection_opts.xaxis_label, ha='center', va='center'))
-#     elif args.align == 'left':
-#         gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 5' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
-#     elif args.align == 'right':
-#         gopts['extra_artists'].append(fig.text(0.5, 0.04, "Distance from 3' end of Element (%s)" % (gopts['units'][1],), ha='center', va='center'))
-#     elif args.align == 'scale':
-#         gopts['extra_artists'].append(fig.text(0.5, 0.04, "Upstream (%s); %d%s of Meta-Element; Downstream (%s)" % (gopts['units'][1], (abs(args.scaleregionsize) / gopts['units'][0]), gopts['units'][1], gopts['units'][1]), ha='center', va='center'))
         
     #finally save the figure!
     save_figure(fig, "_".join(gopts['savename_notes']))
@@ -458,7 +451,7 @@ def make_interval_classes(sort_indicies, breaks, bed, white_chroms=None):
     return intervals
 #end make_interval_classes()
 
-def compute_sorting(samples, sort_index, method, range):
+def compute_sorting(samples, sort_index, method, sort_range):
     #print range
     if sort_index is None:
         for s in samples:
@@ -467,7 +460,7 @@ def compute_sorting(samples, sort_index, method, range):
         sort_orders = {} #sort orders indexed by interval id
         for s in samples:
             if s.sig_id == sort_index:
-                sort_orders[s.bed_id] = getattr(s.signal_array[:,range[0]:range[1]], method)(axis=1)
+                sort_orders[s.bed_id] = getattr(s.signal_array[:,sort_range[0]:sort_range[1]], method)(axis=1)
         for s in samples:
             s.sort_order = sort_orders[s.bed_id]
 #end compute_sorting()
@@ -608,58 +601,6 @@ def add_signal_to_figure(sample):
             leg.get_frame().set_linewidth(0.1)
 #end add_signal_to_figure()
 
-
-
-def get_bed_score_signal(bed, white_chroms=None):
-    elements = pybedtools.BedTool(bed)
-    if white_chroms is not None:
-        elements = elements.filter(lambda d: d.chrom in white_chroms)
-    matrix = []
-    for el in elements:
-        matrix.append([float(el.score)]*gopts['total_bins'])
-    return np.array(matrix)
-#end get_bed_score_signal()
-
-def get_bed_score_signal_complex(bed, genome, white_chroms=None):
-    import subprocess
-    cache_dir = os.path.abspath(gopts['args'].cachedir)
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    bed_basename = os.path.splitext(os.path.basename(bed))[0]
-    bw_name = os.path.join(cache_dir, bed_basename+'.bw')
-    if not os.path.exists(bw_name):
-        cmd = ['python', '/home/josh/scripts/bedToBedGraph.py', '--quiet', '--output', bw_name, '--genome', genome, '--format', 'bw', '--repairoverlaps', '--method', 'mean', '--missingregions', 'zero', bed]
-        #print " ".join(cmd)
-        p = subprocess.Popen(cmd)
-        p.communicate()
-
-    bedtool1 = expand_bed(gopts['args'].up, gopts['args'].down, gopts['args'].align, bed, gopts['chromsets'].use)        
-    signal = get_signal(bedtool1, bw_name, None, None, bed_basename+'_signal')
-    return signal
-#end get_bed_score_signal()
-
-def correct_out_of_bounds_data(sample, method):
-    if method == "ignore":
-        sample.signal_array = np.ma.masked_array(sample.signal_array, np.isnan(sample.signal_array))
-    elif method == "zero":
-        sample.signal_array[np.isnan(sample.signal_array)] = 0
-    return sample
-#end correct_out_of_bounds_data()
-
-def compute_error(sample, method):
-    std = np.std(sample.signal_array, axis=0)
-    n = sample.signal_array.shape[0]
-    sem = std / np.sqrt(n)
-    
-    if method == 'sem':
-        return (sem, sem)
-    elif method == 'std':
-        return (std, std)
-    else:
-        h = sem * stats.t._ppf((1 + float(conf)) / 2., n - 1)
-        return (h, h)
-#end compute_error()
-
 def make_average_sig_plot(ax, sample, color='k'):
     if gopts['args'].vline:
         ax.axvline(0, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
@@ -671,7 +612,7 @@ def make_average_sig_plot(ax, sample, color='k'):
     ax.plot(gopts['x_axis'], summary, color=color, label=label)
     
     if gopts['args'].showci:
-        computed_error = compute_error(sample, gopts['args'].ciwidth)
+        computed_error = sigcollector.compute_error(sample, gopts['args'].ciwidth)
         ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
         ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
         

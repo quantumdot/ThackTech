@@ -20,6 +20,8 @@ def get_bigwig_chroms(bw_file):
     requires UCSC program bigWigInfo be on the $PATH
     """
     chroms = subprocess.check_output('bigWigInfo -chroms "'+bw_file+'" | grep -Po "^[\s]+\K([\w]+)"', shell=True)
+    #chroms = subprocess.check_output(r'bigWigInfo -chroms "%s" | sed -r "s/^[[:space:]]+([[:alnum:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)/\1\t\2/;tx;d;:x"' % (bw_file,), shell=True)
+    #return set([ChromosomeInfo(c.split('\t')) for c in chroms.splitlines()])
     return set(chroms.splitlines())
 #end get_bigwig_chroms()
 
@@ -130,6 +132,32 @@ class ChromSizes(dict):
             self[row[0]] = int(row[1])
     #end fetch_UCSC()
 #end class ChromSizes
+
+
+class ChromosomeInfo(object):
+    def __init__(self, chrom, size=None):
+        if hasattr(chrom, '__iter__'):
+            self.chr = chrom[0]
+            self.size = chrom[1]
+        else:
+            self.chr = chrom
+            self.size = size
+    #end __init__()
+    def __repr__(self):
+        return "ChromosomeInfo(%s, %s)" % (self.chr, self.size)
+    def __str__(self):
+        return self.chr
+    def __ne__(self, other):
+        return (not self.__eq__(other))
+    def __eq__(self, other):
+        if isinstance(other, ChromosomeInfo):
+            return (self.chr == other.chr)
+        else:
+            return False
+    def __hash__(self):
+        return hash(self.__str__())
+    
+#end class ChromosomeInfo
 
 
 

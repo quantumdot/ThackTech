@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-import ThackTech.Common as Common
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -19,7 +19,7 @@ class ChanceAnalysis(PipelineModule):
 	def run(self, sample, logfile):
 		chance_path = '/home/josh/scripts/chance/run_chance_com.sh'
 		dest_dir = os.path.join(sample.dest, 'chance')
-		Common.ensure_dir(dest_dir)
+		filetools.ensure_dir(dest_dir)
 		output_files = {}
 		
 		shared_chance_args = [

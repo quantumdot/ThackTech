@@ -6,7 +6,8 @@ import argparse
 import metaseq
 import pybedtools
 from matplotlib import pyplot as plt
-import matplotlib.ticker as ticker
+from matplotlib import ticker
+from matplotlib.colors import LogNorm
 import numpy as np
 import pandas as pd
 import multiprocessing
@@ -14,8 +15,14 @@ import os
 import sys
 import collections
 from scipy import stats
+import fastcluster
+import time
+import subprocess
+from sklearn import metrics
 import scipy.cluster.hierarchy as sch
-from ThackTech import filetools
+from ThackTech import filetools, chromtools
+from ThackTech.Plotting import stats as ttstats, sigcollector
+
 
 
 
@@ -149,11 +156,25 @@ def main():
         # args.plot.remove('kavg')
     
     
+    
+    collection_opts = sigcollector.CollectorOptions()
+    collection_opts.align = args.align
+    collection_opts.upstream = abs(args.up)
+    collection_opts.downstream = abs(args.down)
+    collection_opts.scaleregionsize = abs(args.scaleregionsize)
+    collection_opts.resolution = abs(args.res)
+    collection_opts.direction = bool(args.dir)
+    collection_opts.validate()
+    
+    
+    
     gopts['output_base'] = "%s.%du_%dd_%s" % (args.name, args.up, args.down, (args.align if args.align == 'scale' else args.align))
     gopts['savename_notes'] = []
     
     
-    chromsets = get_common_chroms(args.bed, args.sig)
+    
+    
+    chromsets = chromtools.get_common_chroms(args.bed, args.sig)
     if not args.nochromfilter:
         sys.stderr.write("Filtering common chromomsomes....\n")
         chromsets.use = chromsets.common
@@ -169,11 +190,11 @@ def main():
             sys.stderr.write("Processing %s vs %s....\n" % (args.bed[b], args.sig[s]))
             sys.stderr.write("-> Preparing intervals.....\n")
             
-            bedtool1 = expand_bed(args.up, args.down, args.align, args.bed[b], [c.chr for c in chromsets.use])
+            bedtool = sigcollector.IntervalProvider(args.bed[b], collection_opts, args.genome, gopts['chromsets'].use)
             s_label = args.slabel[s] if len(args.slabel)-1 >= s else os.path.splitext(os.path.basename(args.sig[s]))[0]
             b_label = os.path.splitext(os.path.basename(args.bed[b]))[0]#args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
-            
-            signal = get_signal(bedtool1, args.sig[s], s_label+b_label)
+
+            signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], None, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
             samples.append(ProfileSample(len(samples), s, b, signal, s_label, b_label))
             sys.stderr.write("\n")
     
@@ -201,13 +222,13 @@ def main():
     
     if args.dump:
         for b in xrange(len(args.bed)):
-            dump_raw_data([s for s in samples if (s.bed_id) == b], expand_bed(args.up, args.down, args.align, args.bed[b], [c.chr for c in chromsets.use]))
+            bedtool = sigcollector.IntervalProvider(args.bed[b], collection_opts, args.genome, gopts['chromsets'].use)
+            dump_raw_data([s for s in samples if (s.bed_id) == b], bedtool)
             
     sys.stderr.write('Done!')
 #end main()
 
 def document_args():
-    import time
     sys.stderr.write("\n")
     sys.stderr.write("# ARGUMENTS:\n")
     sys.stderr.write("# ==================================================\n")
@@ -277,76 +298,6 @@ def document_args():
     sys.stderr.write("\n")
 #end document_args()
 
-
-
-class ChromosomeSets:
-    def __init__(self, all, common, uncommon, use=None):
-        self.all = all
-        self.common = common
-        self.uncommon = uncommon
-        self.use = use
-    #end __init__()
-#end class ChromosomeSets
-
-class ChromosomeInfo(object):
-    def __init__(self, chr, size=None):
-        if hasattr(chr, '__iter__'):
-            self.chr = chr[0]
-            self.size = chr[1]
-        else:
-            self.chr = chr
-            self.size = size
-    #end __init__()
-    def __repr__(self):
-        return "ChromosomeInfo(%s, %s)" % (self.chr, self.size)
-    def __str__(self):
-        return self.chr
-    def __ne__(self, other):
-        return (not self.__eq__(other))
-    def __eq__(self, other):
-        if isinstance(other, ChromosomeInfo):
-            return (self.chr == other.chr)
-        else:
-            return False
-    def __hash__(self):
-        return hash(self.__str__())
-    
-#end class ChromosomeInfo
-
-def get_common_chroms(beds, sigs):
-    common = None
-    all = set()
-    for s in sigs:
-        chroms = get_bigwig_chroms(s)
-        all = all | chroms
-        if common is None:
-            common = chroms
-        else:
-            common = chroms & common
-    for b in beds:
-        chroms = get_bed_chroms(b)
-        all = all | chroms
-        if common is None:
-            common = chroms
-        else:
-            common = chroms & common
-    return ChromosomeSets(all=all, common=common, uncommon=all-common)
-#end get_common_chroms()
-
-def get_bigwig_chroms(bw_file):
-    import subprocess
-    chroms = subprocess.check_output(r'bigWigInfo -chroms "%s" | sed -r "s/^[[:space:]]+([[:alnum:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)/\1\t\2/;tx;d;:x"' % (bw_file,), shell=True)
-    return set([ChromosomeInfo(c.split('\t')) for c in chroms.splitlines()])
-#end get_bigwig_chroms()
-
-def get_bed_chroms(bed_file):
-    chroms = set([])
-    bed = pybedtools.BedTool(bed_file)
-    for i in bed:
-        chroms.add(ChromosomeInfo(i.chrom))
-    return chroms
-#end get_bed_chroms()
-
 def get_groups(groups, samples):
     if groups is None:
         return [list(set([str(s.sig_id) for s in samples]))]
@@ -400,99 +351,38 @@ def compute_data_scale(data):
     elif gopts['args'].scalemetric == 'percentile':
         return (np.percentile(data, (gopts['args'].scalemetricthreshold*100)), np.percentile(data, ((1-gopts['args'].scalemetricthreshold)*100)))
     else: #outliermax
-        use = data[(~is_outlier(data, gopts['args'].scalemetricthreshold))]
+        use = data[(~ttstats.is_outlier(data, gopts['args'].scalemetricthreshold))]
         return (np.min(use), np.max(use))
 #end compute_data_scale()
 
 
-
-def midpoint_generator(bedtool):
-    for interval in bedtool:
-        yield pybedtools.featurefuncs.midpoint(interval)
-#end midpoint_generator()
-
-def five_prime_generator(bedtool, up, down):
-    for interval in bedtool:
-        yield pybedtools.featurefuncs.five_prime(interval, upstream=up, downstream=down)#, genome='mm9')
-#end midpoint_generator()
-
-def three_prime_generator(bedtool, up, down):
-    for interval in bedtool:
-        yield pybedtools.featurefuncs.three_prime(interval, upstream=up, downstream=down)#, genome='mm9')
-#end midpoint_generator()
-
-def scaled_interval_generator(bedtool, up, down):
-    for gene in bedtool:
-        if gene.strand == '-':
-            upstream   = pybedtools.cbedtools.Interval(gene.chrom, (gene.start - down), gene.start,         strand='-', name=gene.name, score=gene.score)
-            gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='-', name=gene.name, score=gene.score)
-            downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + up),     strand='-', name=gene.name, score=gene.score)
-        else:
-            upstream   = pybedtools.cbedtools.Interval(gene.chrom, (gene.start - up),     gene.start,         strand='+', name=gene.name, score=gene.score)
-            gene_body  = pybedtools.cbedtools.Interval(gene.chrom, gene.start,             gene.stop,             strand='+', name=gene.name, score=gene.score)
-            downstream = pybedtools.cbedtools.Interval(gene.chrom, gene.stop,             (gene.stop + down),    strand='+', name=gene.name, score=gene.score)
-        gene_body.name = gene.name
-        yield (upstream, gene_body, downstream)
-#end scaled_interval_generator()
-
-def expand_bed(up, down, alignment, bed, white_chroms=None):
-    data = None
-    bedtool = pybedtools.BedTool(bed)
-    if white_chroms is not None:
-        bedtool = bedtool.filter(lambda d: d.chrom in white_chroms)
-    
-    if alignment == 'center':
-        sys.stderr.write("-> producing center points...\n")
-        data = midpoint_generator(bedtool)
-        data = data.slop(l=up, r=down, s=True, genome='mm9')
-    elif alignment == 'left':
-        sys.stderr.write("-> producing 5' points...\n")
-        data = five_prime_generator(bedtool, up, down)
-    elif alignment == 'right':
-        sys.stderr.write("-> producing 3' points...\n")
-        data = three_prime_generator(bedtool, up, down)
-    elif alignment == 'scale':
-        sys.stderr.write("-> producing scaled regions...\n")
-        data = scaled_interval_generator(bedtool, up, down)
-    
-    return data
-#end expand_bed()
-
-def detect_signal_type(sig_file):
-    ext = os.path.splitext(sig_file)[1][1:].strip().lower()
-    if ext in ['bigwig', 'bw']:
-        return "bigwig"
-    else:
-        return ext
-#end detect_signal_type()
-
-def get_signal(bedtool, sig_file, label):
-    cache_dir = os.path.abspath(gopts['args'].cachedir)
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], filetools.make_label_filename_safe(label)))
-    
-    if not gopts['args'].cache or not os.path.exists(cache_name + '.npz'):
-        sys.stderr.write("-> Loading signal....\n")
-        sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
-        sys.stderr.write("-> Computing signal at intervals....\n")
-        sig_array = sig.array(bedtool, bins=1, method='summarize', processes=gopts['args'].cpus)
-            
-        if gopts['args'].cache:
-            sys.stderr.write("-> Persisting data to disk...\n")
-            cache_data = {label: sig_array}
-            metaseq.persistence.save_features_and_arrays(features=bedtool,
-                                                         arrays=cache_data,
-                                                         prefix=cache_name,
-                                                         #link_features=True,
-                                                         overwrite=True)
-    else:
-        sys.stderr.write("-> Loding data from cache....\n")
-        features, arrays = metaseq.persistence.load_features_and_arrays(prefix=cache_name)
-        sig_array = arrays[label]
-    
-    return sig_array
-#end get_signal()
+# def get_signal(bedtool, sig_file, label):
+#     cache_dir = os.path.abspath(gopts['args'].cachedir)
+#     if not os.path.exists(cache_dir):
+#         os.makedirs(cache_dir)
+#     cache_name = os.path.join(cache_dir, "%s.%s" % (gopts['output_base'], filetools.make_label_filename_safe(label)))
+#     
+#     if not gopts['args'].cache or not os.path.exists(cache_name + '.npz'):
+#         sys.stderr.write("-> Loading signal....\n")
+#         sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
+#         sys.stderr.write("-> Computing signal at intervals....\n")
+#         sig_array = sig.array(bedtool, bins=1, method='summarize', processes=gopts['args'].cpus)
+#             
+#         if gopts['args'].cache:
+#             sys.stderr.write("-> Persisting data to disk...\n")
+#             cache_data = {label: sig_array}
+#             metaseq.persistence.save_features_and_arrays(features=bedtool,
+#                                                          arrays=cache_data,
+#                                                          prefix=cache_name,
+#                                                          #link_features=True,
+#                                                          overwrite=True)
+#     else:
+#         sys.stderr.write("-> Loding data from cache....\n")
+#         features, arrays = metaseq.persistence.load_features_and_arrays(prefix=cache_name)
+#         sig_array = arrays[label]
+#     
+#     return sig_array
+# #end get_signal()
 
 
 def dump_raw_data(samples, bed):
@@ -540,7 +430,7 @@ class PlotPosition:
 
 
 def make_heat_plot(samples):
-    import fastcluster
+    
     
     num_samples = len(samples)
     num_rows = num_samples + 1
@@ -692,7 +582,6 @@ def compute_correlation_matrix(samples, method):
 
 
 def make_1d_hist_plots(samples):
-    from matplotlib.colors import LogNorm
     fig = plt.figure(figsize=(8,8), dpi=gopts['args'].dpi)
     num_samples = len(samples)
     num_rows = num_samples
@@ -712,32 +601,9 @@ def make_1d_hist_plots(samples):
     save_close_figure(fig, ['hist', '%d-bins' % (gopts['args'].histbins,)])
 #end make_1d_hist_plots()
 
-def format_poly_equation(poly, variable="x", precision=3):
-    # joiner[first, negative] = str
-    joiner = {
-        (True, True): '-',
-        (True, False): '',
-        (False, True): ' - ',
-        (False, False): ' + '
-    }
-    cf = ':0.'+str(precision)+'f'
-
-    result = []
-    for power, coeff in enumerate(reversed(poly)):
-        j = joiner[not result, coeff < 0]
-        coeff = abs(coeff)
-        if coeff == 1 and power != 0:
-            coeff = ''
-
-        f = {0: '{}{'+cf+'}', 1: '{}{'+cf+'}{}'}.get(power, '{}{'+cf+'}{}^{}')
-        result.append(f.format(j, coeff, variable, power))
-
-    return ''.join(result) or '0'
-#end format_poly_equation
 
 def make_2d_hist_plots(samples):
-    from matplotlib.colors import LogNorm
-    from sklearn import metrics
+    
     
     fig_size = (8,9)
     fig = plt.figure(figsize=fig_size, dpi=gopts['args'].dpi)
@@ -770,7 +636,7 @@ def make_2d_hist_plots(samples):
                 polynomial_fit = np.poly1d(coefficients)
                 r_squared = metrics.r2_score(normSample_y, polynomial_fit(normSample_x))
                 
-                file.write("%s\t%s\t%s\t%f\n" % (samples[j].sig_label, samples[i].sig_label, format_poly_equation(coefficients), r_squared))
+                file.write("%s\t%s\t%s\t%f\n" % (samples[j].sig_label, samples[i].sig_label, ttstats.format_poly_equation(coefficients), r_squared))
                 
                 #plot the 2D-histogram with colorbar
                 ax = plt.subplot2grid((num_rows,num_cols), ((i-1)*2, j*2), rowspan=2, colspan=2)
@@ -847,39 +713,7 @@ def make_2d_hist_plots(samples):
     save_close_figure(fig, notes)
 #end make_2d_hist_plots()
 
-def is_outlier(points, thresh=3.5):
-    """
-    Returns a boolean array with True if points are outliers and False 
-    otherwise.
 
-    Parameters:
-    -----------
-        points : An numobservations by numdimensions array of observations
-        thresh : The modified z-score to use as a threshold. Observations with
-            a modified z-score (based on the median absolute deviation) greater
-            than this value will be classified as outliers.
-
-    Returns:
-    --------
-        mask : A numobservations-length boolean array.
-
-    References:
-    ----------
-        Boris Iglewicz and David Hoaglin (1993), "Volume 16: How to Detect and
-        Handle Outliers", The ASQC Basic References in Quality Control:
-        Statistical Techniques, Edward F. Mykytka, Ph.D., Editor. 
-    """
-    if len(points.shape) == 1:
-        points = points[:,None]
-    median = np.median(points, axis=0)
-    diff = np.sum((points - median)**2, axis=-1)
-    diff = np.sqrt(diff)
-    med_abs_deviation = np.median(diff)
-
-    modified_z_score = 0.6745 * diff / med_abs_deviation
-
-    return modified_z_score > thresh
-#end is_outlier()
 
 def generate_save_name(format, notes=None):
     if notes is not None and hasattr(notes, '__iter__'):
