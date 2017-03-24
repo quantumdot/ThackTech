@@ -249,7 +249,7 @@ def main():
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
-            ps = ttstats.correct_invalid_data(ps, args.nan)
+            ps.signal_array = ttstats.correct_invalid_data(ps.signal_array, args.nan)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             samples.append(ps)
             sys.stderr.write("\n")
