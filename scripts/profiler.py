@@ -15,7 +15,7 @@ import sys
 from scipy import stats
 import re
 from ThackTech import filetools
-from ThackTech.Plotting import sigcollector
+from ThackTech.Plotting import sigcollector, stats as ttstats
 from ThackTech import chromtools
 
 
@@ -249,7 +249,7 @@ def main():
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
-            ps = sigcollector.correct_out_of_bounds_data(ps, args.nan)
+            ps = ttstats.correct_invalid_data(ps, args.nan)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             samples.append(ps)
             sys.stderr.write("\n")
