@@ -79,40 +79,47 @@ class GenomeInfo(object):
 		if GenomeInfo.__known_references is None:
 			GenomeInfo.__known_references = {}
 			
-			conanocal = []
-			conanocal.append(GenomeInfo('hg18', '2.77e9'))
-			conanocal.append(GenomeInfo('hg19', '2.79e9'))
-			conanocal.append(GenomeInfo('mm9',  '1.91e9'))
-			conanocal.append(GenomeInfo('mm10', '2.15e9'))
-			
-			for c in conanocal:
-				for p in GenomeInfo.__probe_paths:
-					#print "trying path %s for genome %s" % (os.path.join(p, c.name), c.name)
-					if os.path.exists(os.path.join(p, c.name)):
-						#print "Found!"
-						c.try_discover(os.path.join(p, c.name))
-						GenomeInfo.__known_references[c.name] = c
-						break
+# 			conanocal = []
+# 			conanocal.append(GenomeInfo('hg18', '2.77e9'))
+# 			conanocal.append(GenomeInfo('hg19', '2.79e9'))
+# 			conanocal.append(GenomeInfo('mm9',  '1.91e9'))
+# 			conanocal.append(GenomeInfo('mm10', '2.15e9'))
+# 			
+# 			for c in conanocal:
+# 				for p in GenomeInfo.__probe_paths:
+# 					#print "trying path %s for genome %s" % (os.path.join(p, c.name), c.name)
+# 					if os.path.exists(os.path.join(p, c.name)):
+# 						#print "Found!"
+# 						c.try_discover(os.path.join(p, c.name))
+# 						GenomeInfo.__known_references[c.name] = c
+# 						break
+			from ThackTech import conf
+			genome_config = conf.get_config('genomes')
+			for section in genome_config.sections():
+				gi = GenomeInfo(section, genome_config.getint(section, "size"))
+				if genome_config.has_option(section, "goldenpath"):
+					gi.try_discover(genome_config.get(section, "goldenpath"))
+				GenomeInfo.__known_references[gi.name] = gi
+				
 		return GenomeInfo.__known_references
 	#end get_reference_genomes()
 #end class GenomeInfo
 
 
-def crawl_golden_path(root):
-	pass
-	
-	
-	
-#end crawl_golden_path()
 
-GenomeInfo.register_path('/mnt/ref/reference/Homo_sapiens/UCSC')
-GenomeInfo.register_path('/mnt/ref/reference/Mus_musculus/UCSC')
-GenomeInfo.register_path('/mnt/ref/reference/Rattus_norvegicus/UCSC')
-GenomeInfo.register_path('/mnt/ref/reference/Saccharomyces_cerevisiae/UCSC')
-GenomeInfo.register_path('/mnt/ref/reference/PhiX/UCSC')
 
-GenomeInfo.register_path('/home/thackray/reference/Homo_sapiens/UCSC')
-GenomeInfo.register_path('/home/thackray/reference/Mus_musculus/UCSC')
-GenomeInfo.register_path('/home/thackray/reference/Rattus_norvegicus/UCSC')
-GenomeInfo.register_path('/home/thackray/reference/Saccharomyces_cerevisiae/UCSC')
-GenomeInfo.register_path('/home/thackray/reference/PhiX/UCSC')
+# GenomeInfo.register_path('/mnt/ref/reference/Homo_sapiens/UCSC')
+# GenomeInfo.register_path('/mnt/ref/reference/Mus_musculus/UCSC')
+# GenomeInfo.register_path('/mnt/ref/reference/Rattus_norvegicus/UCSC')
+# GenomeInfo.register_path('/mnt/ref/reference/Saccharomyces_cerevisiae/UCSC')
+# GenomeInfo.register_path('/mnt/ref/reference/PhiX/UCSC')
+# 
+# GenomeInfo.register_path('/home/thackray/reference/Homo_sapiens/UCSC')
+# GenomeInfo.register_path('/home/thackray/reference/Mus_musculus/UCSC')
+# GenomeInfo.register_path('/home/thackray/reference/Rattus_norvegicus/UCSC')
+# GenomeInfo.register_path('/home/thackray/reference/Saccharomyces_cerevisiae/UCSC')
+# GenomeInfo.register_path('/home/thackray/reference/PhiX/UCSC')
+
+
+
+
