@@ -1,6 +1,5 @@
 import os
 import sys
-from boto import config
 try:
     import configparser
 except:
