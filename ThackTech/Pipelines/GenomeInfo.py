@@ -96,7 +96,7 @@ class GenomeInfo(object):
 			from ThackTech import conf
 			genome_config = conf.get_config('genomes')
 			for section in genome_config.sections():
-				gi = GenomeInfo(section, genome_config.getint(section, "size"))
+				gi = GenomeInfo(section, int(genome_config.getfloat(section, "size")))
 				if genome_config.has_option(section, "goldenpath"):
 					gi.try_discover(genome_config.get(section, "goldenpath"))
 				GenomeInfo.__known_references[gi.name] = gi
