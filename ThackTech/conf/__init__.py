@@ -19,8 +19,9 @@ def get_config(name):
     config = None
     paths = []
     for loc in __config_dirs_to_search:
-        paths.append(os.path.join(loc,name+".default.ini"))
-        paths.append(os.path.join(loc,name+".ini"))
+        if loc is not None:
+            paths.append(os.path.join(loc, name+".default.ini"))
+            paths.append(os.path.join(loc, name+".ini"))
     
     config.read(paths)    
     return config
