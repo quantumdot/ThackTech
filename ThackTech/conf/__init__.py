@@ -16,7 +16,7 @@ __config_dirs_to_search = [
 
 
 def get_config(name):
-    config = None
+    config = configparser.SafeConfigParser()
     paths = []
     for loc in __config_dirs_to_search:
         if loc is not None:
