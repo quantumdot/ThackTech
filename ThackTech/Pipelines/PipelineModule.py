@@ -189,7 +189,7 @@ class PipelineModule(object):
 		buff += "%s\n" % (self.name,)
 		buff += "%s\n" % ('-'*hash_length,)
 		buff += "Critical: %s\n" % (self.is_critical,)
-		buff += "Processors: $d\n" % (self.processors) 
+		buff += "Processors: %d\n" % (self.processors) 
 		buff += "Description:\n%s\n"  % (textwrap.fill(self.description, hash_length),)
 		buff += "%s\n" % ('-'*hash_length,)
 		buff += "PARAMETERS:"
