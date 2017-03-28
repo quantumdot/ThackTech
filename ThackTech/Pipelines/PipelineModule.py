@@ -184,13 +184,14 @@ class PipelineModule(object):
 	def documentation(self):
 		"""Return a string that documents this module and its parameters and resolvers
 		"""
+		buff = ""
 		hash_length = 40
-		buff = "%s\n"
+		
 		buff += "%s\n" % (self.name,)
 		buff += "%s\n" % ('-'*hash_length,)
-		buff += "Critical: %s\n" % (self.is_critical,)
-		buff += "Processors: %d\n" % (self.processors) 
-		buff += "Description:\n%s\n"  % (textwrap.fill(self.description, hash_length),)
+		buff += "CRITICAL:    %s\n" % (self.is_critical,)
+		buff += "PROCESSORS:  %d\n" % (self.processors) 
+		buff += "%s\n"  % (textwrap.fill("DESCRIPTION: "+self.description, hash_length),)
 		buff += "%s\n" % ('-'*hash_length,)
 		buff += "PARAMETERS:"
 		if len(self.parameters) < 1:
