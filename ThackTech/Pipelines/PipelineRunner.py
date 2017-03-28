@@ -41,12 +41,12 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 	
 	Parameters
 		pipeline:	(AnalysisPipeline) Pipeline to run
-		sample:		(Pipelinecxt.sample) sample to run pipeline on
+		sample:		(PipelineSample) sample to run pipeline on
 		task_statuses: (complicated....) Status information
 	"""
 	#some assertions to make sure we don't go too crazy!
 	assert isinstance(pipeline, AnalysisPipeline), "pipeline parameter must be of type AnalysisPipeline!"
-	assert isinstance(sample, PipelineSample), "sample parameter must be of type Pipelinecxt.sample!"
+	assert isinstance(sample, PipelineSample), "sample parameter must be of type Pipelinesample!"
 	
 	
 	tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
@@ -80,8 +80,8 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 				logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
 				logfile.flush()
 				try:
-					#if not step.is_compatible_with_cxt.sample(sample):
-					#	raise ValueError('%s does not support the "%s" file format!\nThe following types ARE supported: %s\nSkipping processing......\n' % (step.name, cxt.sample.format, ', '.join(step.supported_types())))
+					#if not step.is_compatible_with_sample(sample):
+					#	raise ValueError('%s does not support the "%s" file format!\nThe following types ARE supported: %s\nSkipping processing......\n' % (step.name, sample.format, ', '.join(step.supported_types())))
 				
 					tasks_statuses[sample.name] = tasks_statuses[sample.name].update(float(step.index)/float(pipeline_size), step.module.description)
 					#step.load_modules(logfile)
@@ -133,4 +133,4 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			logfile.write("--------------------------------------------\n\n")
 			logfile.flush()
 			return sample
-#end __execute_pipeline_on_cxt.sample()
+#end __execute_pipeline_on_sample()

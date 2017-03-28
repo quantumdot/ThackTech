@@ -19,15 +19,15 @@ if __name__ == "__main__":
 	
 	if not os.path.exists(args.pipeline):
 		raise ValueError("Path %s not found!" % (args.pipeline,))
-	if not os.path.exists(args.cxt.sample):
-		raise ValueError("Path %s not found!" % (args.cxt.sample,))
+	if not os.path.exists(args.sample):
+		raise ValueError("Path %s not found!" % (args.sample,))
 	if not os.path.exists(args.status):
 		raise ValueError("Path %s not found!" % (args.status,))
 	
 	try:
 		with open(args.pipeline, 'rb') as pf:
 			pipeline_pickle = dill.load(pf)
-		with open(args.cxt.sample, 'rb') as sf:
+		with open(args.sample, 'rb') as sf:
 			sample_pickle = dill.load(sf)
 		with open(args.status, 'rb') as ssf:
 			status_pickle = dill.load(ssf)

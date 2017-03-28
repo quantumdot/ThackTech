@@ -33,11 +33,11 @@ class ModuleRunContext(BaseModuleContext):
     def __init__(self, pipeline_name, step_num, module_name, logfile, sample):
         super(ModuleRunContext, self).__init__(pipeline_name, step_num, module_name)
         self.__logfile = logfile
-        self.__cxt.sample = sample
+        self.__sample = sample
         
     @property
     def sample(self):
-        return self.__cxt.sample
+        return self.__sample
     
     @property
     def log(self):

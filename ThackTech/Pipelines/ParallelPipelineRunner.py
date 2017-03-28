@@ -7,10 +7,10 @@ from ThackTech.Processes import MultiStatusProgressItem, MultiStatusProgressBar
 
 
 class ParallelPipelineRunner(PipelineRunner):
-	"""Run a pipeline against cxt.samples on a single node in parallel
+	"""Run a pipeline against samples on a single node in parallel
 	
 	This PipelineRunner uses the multiprocess worker pool to parallelize running
-	of pipelines on multiple cxt.samples.
+	of pipelines on multiple samples.
 	"""
 	def __init__(self, pipeline, threads=CPU_COUNT):
 		"""Initialize this PipelineRunner
@@ -24,17 +24,17 @@ class ParallelPipelineRunner(PipelineRunner):
 	#end __init__()
 
 	def run(self, samples):
-		"""Run this pipeline runner on the supplied cxt.samples
+		"""Run this pipeline runner on the supplied samples
 		
 		Parameters:
-			cxt.samples: (iterable of Pipelinecxt.sample) cxt.samples to run against
+			samples: (iterable of PipelineSample) samples to run against
 		"""
 		sample_count = len(samples)
 		if sample_count < 1:
-			return #No cxt.samples to run!
+			return #No samples to run!
 		
 		self.tasks_statuses = GLOBAL_MANAGER.dict()
-		for sname in [s.name for s in cxt.samples]:
+		for sname in [s.name for s in samples]:
 			self.tasks_statuses[sname] = MultiStatusProgressItem(sname, 'Queued...')
 		pool = mp.Pool(processes=self.threads)
 		
@@ -42,15 +42,15 @@ class ParallelPipelineRunner(PipelineRunner):
 		progress.update(0, None, self.tasks_statuses)
 		
 		results = []
-		r = [pool.apply_async(_execute_pipeline_on_cxt.sample, (self.pipeline, sample, self.tasks_statuses), callback=results.append) for cxt.sample in cxt.samples]
+		r = [pool.apply_async(_execute_pipeline_on_sample, (self.pipeline, sample, self.tasks_statuses), callback=results.append) for sample in samples]
 		
-		while len(results) < cxt.sample_count:
+		while len(results) < sample_count:
 			time.sleep(0.5)
 			progress.update(len(results), '(%d/%d complete)' % (len(results), sample_count), self.tasks_statuses)
 		
 		pool.close()
 		pool.join()
-		progress.update(cxt.sample_count, 'Done!', self.tasks_statuses)
+		progress.update(sample_count, 'Done!', self.tasks_statuses)
 		progress.finish()
 	#end run()
 #end class ParallelPipelineRunner

@@ -5,11 +5,11 @@ from ThackTech.Pipelines import GenomeInfo, FileInfo, GLOBAL_MANAGER
 
 
 class PipelineSample(object):
-	"""A Pipelinecxt.sample represents an individual cxt.sample that moves through a pipeline.
+	"""A PipelineSample represents an individual sample that moves through a pipeline.
 	
-	A Pipelinecxt.sample serves as a container for cxt.sample data (i.e. state) as it traverses 
-	a pipeline. cxt.samples contain data that identifies the cxt.sample, files associated with this
-	cxt.sample, data regarding the reference genome this cxt.sample uses, and a dict object for storing
+	A PipelineSample serves as a container for sample data (i.e. state) as it traverses 
+	a pipeline. samples contain data that identifies the sample, files associated with this
+	sample, data regarding the reference genome this sample uses, and a dict object for storing
 	arbitrary information.
 	
 	The file and attribute tables are managed by a multiprocessing manager to enable
@@ -18,10 +18,10 @@ class PipelineSample(object):
 	
 	"""
 	def __init__(self, name, genome, dest):
-		"""Initializes a Pipelinecxt.sample object
+		"""Initializes a PipelineSample object
 		
 		Parameters:
-			name:	(string)				Name of this cxt.sample
+			name:	(string)				Name of this sample
 			genome:	(GenomeInfo | string)	String representing known reference genome or directly a GenomeInfo object
 			dest:	(string)				Directory path that serves as the destination for results
 		"""
@@ -103,7 +103,7 @@ class PipelineSample(object):
 	
 	
 	def add_file(self, fileinfo):
-		"""Adds a file to this cxt.sample
+		"""Adds a file to this sample
 		
 		Parameters:
 			fileinfo:	String path to the file, or a FileInfo object
@@ -119,7 +119,7 @@ class PipelineSample(object):
 		Find and return a list of FileInfo objects 
 		that satisfy the supplied predicate. The FileInfo
 		object is supplied to the predicate as the sole argument.
-		>>> cxt.sample.find_files(lambda f: f.ext == 'bam')
+		>>> sample.find_files(lambda f: f.ext == 'bam')
 		
 		Parameters:
 			predicate: Callable that takes a FileInfo as its sole parameter

@@ -33,7 +33,7 @@ from ThackTech.Pipelines import PipelineModules
 __all__ = [	'AnalysisPipeline',
 			'GenomeInfo',
 			'FileInfo',
-			'Pipelinecxt.sample',
+			'PipelineSample',
 			'ModuleParameter',
 			'PipelineModule',
 			'PipelineRunner',

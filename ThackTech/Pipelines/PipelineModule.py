@@ -102,15 +102,15 @@ class PipelineModule(object):
 		When a resolver is initially named, the defualt implementation
 		assigned to the resolver is a lambda that returns None.
 		"""
-		self.resolvers[name] = lambda cxt.sample: None
+		self.resolvers[name] = lambda sample: None
 	#end _name_resolver()
 	
 	def set_resolver(self, name, _callable):
 		self.resolvers[name] = _callable
 	#end set_resolver()
 	
-	def resolve_input(self, name, cxt.sample):
-		return self.resolvers[name](cxt.sample)
+	def resolve_input(self, name, sample):
+		return self.resolvers[name](sample)
 	#end resolve_input()
 	
 	def get_resolver_names(self):
@@ -146,7 +146,7 @@ class PipelineModule(object):
 		!!!!! This method is the most important method to override in concrete implementations !!!!!
 		
 		Context provide particular run specific information, including:
-			-cxt.sample (Pipelinecxt.sample) and sending log information to logfile handle 
+			-sample (PipelineSample) and sending log information to logfile handle 
 			-logfile (file-like)
 			-misc. metadata about step number, pipeline name, etc.
 			
