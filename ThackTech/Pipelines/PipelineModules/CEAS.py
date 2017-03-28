@@ -6,8 +6,8 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 class CEAS(PipelineModule):
 	
-	def __init__(self):
-		super(CEAS, self).__init__('CEAS', 'Cis-Regulatory Annotation System')
+	def __init__(self, **kwargs):
+		super(CEAS, self).__init__('CEAS', 'Cis-Regulatory Annotation System', **kwargs)
 		
 		self.add_parameter(ModuleParameter('ceas_wig_path', str, 'ceas'))
 		self.add_parameter(ModuleParameter('ceas_bw_path', str, '/home/josh/scripts/cistrome/ceasBW'))

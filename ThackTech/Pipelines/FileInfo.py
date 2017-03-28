@@ -1,5 +1,4 @@
 import os
-import sys
 from ThackTech.Pipelines import GLOBAL_MANAGER
 from ThackTech.Pipelines.Context import BaseModuleContext
 
@@ -7,9 +6,19 @@ class FileContext(BaseModuleContext):
 	"""Represents the context of a file within the pipelineing system
     
     """
+    
 	def __init__(self, pipeline_name, step_num, module_name, file_role):
 		super(FileContext, self).__init__(pipeline_name, step_num, module_name)
 		self.__role = file_role
+	
+	@staticmethod
+	def from_origin(role):
+		"""Creates a FileContext that represents the file was added during sample creation
+		
+		This is most often used to identify files that were input into the pipeline
+		"""
+		return FileContext("Pre-Pipeline", -1, "Origin", role)
+	#end from_origin
 	
 	@staticmethod
 	def from_module_context(context, role):

@@ -16,8 +16,8 @@ __register_repenrich_index()
 
 class RepEnrich(PipelineModule):
 	
-	def __init__(self):
-		super(RepEnrich, self).__init__('RepEnrich', 'Estimate Repetitive Element Enrichment')
+	def __init__(self, **kwargs):
+		super(RepEnrich, self).__init__('RepEnrich', 'Estimate Repetitive Element Enrichment', **kwargs)
 		
 		self.add_parameter(ModuleParameter('repenrich_path', str, '/home/josh/scripts/RepEnrich3.py', desc="Location of RepEnrich script."))
 		self.add_parameter(ModuleParameter('cleanup', bool, False, desc="Indicates if cleanup should be performed on intermediary files."))

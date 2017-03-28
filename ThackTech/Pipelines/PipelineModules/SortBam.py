@@ -6,8 +6,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class SortBam(PipelineModule):
 	
-	def __init__(self):
-		super(SortBam, self).__init__('SortBam', 'Sort BAM file')
+	def __init__(self, **kwargs):
+		super(SortBam, self).__init__('SortBam', 'Sort BAM file', **kwargs)
 		self._name_resolver('alignments')
 	#end __init__()
 

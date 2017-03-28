@@ -3,8 +3,8 @@ from ThackTech.Pipelines import PipelineModule
 
 
 class GeneratePlainBed(PipelineModule):
-	def __init__(self):
-		super(GeneratePlainBed, self).__init__('PlainBed', 'Generate bed from peaks')
+	def __init__(self, **kwargs):
+		super(GeneratePlainBed, self).__init__('PlainBed', 'Generate bed from peaks', **kwargs)
 	#end __init__()
 
 	def supported_types(self):

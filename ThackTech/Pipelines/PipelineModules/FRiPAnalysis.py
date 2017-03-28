@@ -6,8 +6,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class FRiPAnalysis(PipelineModule):
 	
-	def __init__(self):
-		super(FRiPAnalysis, self).__init__('FRiP', 'Fraction of Reads in Peaks')
+	def __init__(self, **kwargs):
+		super(FRiPAnalysis, self).__init__('FRiP', 'Fraction of Reads in Peaks', **kwargs)
 		
 		self._name_resolver('peaks')
 	#end __init__()

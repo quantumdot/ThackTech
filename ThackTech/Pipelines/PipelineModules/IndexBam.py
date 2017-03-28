@@ -7,8 +7,8 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 class IndexBam(PipelineModule):
 	
-	def __init__(self):
-		super(IndexBam, self).__init__('IndexBam', 'Index BAM file')
+	def __init__(self, **kwargs):
+		super(IndexBam, self).__init__('IndexBam', 'Index BAM file', **kwargs)
 		self._name_resolver('alignments')
 	#end __init__()
 	

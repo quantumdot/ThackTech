@@ -5,8 +5,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class ReadOutputManifest(PipelineModule):
 	
-	def __init__(self):
-		super(ReadOutputManifest, self).__init__('ReadOutputManifest', 'Read Output Manifest')
+	def __init__(self, **kwargs):
+		super(ReadOutputManifest, self).__init__('ReadOutputManifest', 'Read Output Manifest', **kwargs)
 	#end __init__()
 	
 	def run(self, cxt):

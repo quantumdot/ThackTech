@@ -6,8 +6,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class ChanceAnalysis(PipelineModule):
 	
-	def __init__(self):
-		super(ChanceAnalysis, self).__init__('Chance', 'IPStrength and spectrum analysis')
+	def __init__(self, **kwargs):
+		super(ChanceAnalysis, self).__init__('Chance', 'IPStrength and spectrum analysis', **kwargs)
 	#end __init__()
 	
 	def run(self, cxt):

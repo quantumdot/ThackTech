@@ -5,8 +5,8 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 class ConvertBedgraphToBigWig(PipelineModule):
 
-	def __init__(self):
-		super(ConvertBedgraphToBigWig, self).__init__('BedgraphToBigWig', 'Converting Bedgraph To BigWig')
+	def __init__(self, **kwargs):
+		super(ConvertBedgraphToBigWig, self).__init__('BedgraphToBigWig', 'Converting Bedgraph To BigWig', **kwargs)
 		self.add_parameter(ModuleParameter('bgtobw_path', str,	'bedGraphToBigWig'))
 		self.add_parameter(ModuleParameter('bedtools_path', str,	'bedtools'))
 		self.add_parameter(ModuleParameter('bedclip_path', str,	'bedClip'))

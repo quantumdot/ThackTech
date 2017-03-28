@@ -5,8 +5,8 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 class BowtieAlign(PipelineModule):
 	
-	def __init__(self):
-		super(BowtieAlign, self).__init__('BowtieAlign', 'Alignment using Bowtie')
+	def __init__(self, **kwargs):
+		super(BowtieAlign, self).__init__('BowtieAlign', 'Alignment using Bowtie', **kwargs)
 		
 		self.add_parameter(ModuleParameter('bowtie_path', 		str, 	'bowtie',	desc="Path to the bowtie executable."))
 		

@@ -5,8 +5,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class InsertSizeMetrics(PipelineModule):
 	
-	def __init__(self):
-		super(InsertSizeMetrics, self).__init__('InsertSizeMetrics', 'Calculating Insert Size Metrics')
+	def __init__(self, **kwargs):
+		super(InsertSizeMetrics, self).__init__('InsertSizeMetrics', 'Calculating Insert Size Metrics', **kwargs)
 	#end __init__()
 	
 	def run(self, cxt):

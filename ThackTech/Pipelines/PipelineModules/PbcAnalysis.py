@@ -7,8 +7,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class PbcAnalysis(PipelineModule):
 	
-	def __init__(self):
-		super(PbcAnalysis, self).__init__('PBC', 'Cross-correlation analysis using SPP')
+	def __init__(self, **kwargs):
+		super(PbcAnalysis, self).__init__('PBC', 'Cross-correlation analysis using SPP', **kwargs)
 		self._name_resolver('bam')
 	#end __init__()
 	

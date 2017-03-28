@@ -5,8 +5,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class SamToBam(PipelineModule):
 	
-	def __init__(self):
-		super(SamToBam, self).__init__('SamToBam', 'Convert SAM to BAM')
+	def __init__(self, **kwargs):
+		super(SamToBam, self).__init__('SamToBam', 'Convert SAM to BAM', **kwargs)
 		self._name_resolver('sam')
 	#end __init__()
 	

@@ -8,8 +8,8 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 class PerformIDRAnalysis(PipelineModule):
 	
-	def __init__(self):
-		super(PerformIDRAnalysis, self).__init__('IDR', 'Perform IDR Analysis')
+	def __init__(self, **kwargs):
+		super(PerformIDRAnalysis, self).__init__('IDR', 'Perform IDR Analysis', **kwargs)
 		self._name_resolver('primary_replicates')
 		self._name_resolver('pseudo_replicates')
 		self._name_resolver('pooled_pseudo_replicates')

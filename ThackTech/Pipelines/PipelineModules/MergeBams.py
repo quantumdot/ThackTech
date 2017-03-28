@@ -6,8 +6,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class MergeBams(PipelineModule):
 	
-	def __init__(self):
-		super(MergeBams, self).__init__('MergeBams', 'Merge BAM files')
+	def __init__(self, **kwargs):
+		super(MergeBams, self).__init__('MergeBams', 'Merge BAM files', **kwargs)
 		self._name_resolver('alignments')
 	#end __init__()
 

@@ -3,6 +3,8 @@ from tabulate import tabulate
 from ThackTech.Pipelines import ModuleParameter
 from ThackTech import conf
 import textwrap
+from abc import ABCMeta, abstractmethod
+from _pyio import __metaclass__
 
 
 class PipelineModule(object):
@@ -11,6 +13,8 @@ class PipelineModule(object):
 	
 	
 	"""
+	__metaclass__ = ABCMeta #enable abstract method decarator
+	
 	def __init__(self, name, short_description, critical=False, processors=1):
 		self.name = name
 		self.description = short_description
@@ -19,6 +23,49 @@ class PipelineModule(object):
 		self.processors = processors
 		self._critical = critical
 	#end __init__()
+	
+	
+	
+	def tool_versions(self):
+		"""Return a dict of tool versions used by this module
+		
+		dictionary is of the form <ToolName> -> <VersionString>
+		"""
+		return {}
+	#end show_version()
+	
+	def load_modules(self, logfile):
+		""" Loads any system modules required for this module to function. """
+		pass
+	#end load_modules()
+	
+	@abstractmethod
+	def run(self, context):
+		""" Runs the pipeline module given the supplied context
+		
+		!!!!! This method is the most important method to override in concrete implementations !!!!!
+		
+		Context provide particular run specific information, including:
+			-sample (PipelineSample) and sending log information to logfile handle 
+			-logfile (file-like)
+			-misc. metadata about step number, pipeline name, etc.
+			
+		Parameters:
+			context: (ModuleRunContext) Context to run this module with.
+			
+		Returns:
+			iterable of FileInfo objects representing output files
+		"""
+		pass
+	#end run()
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	def set_critical(self, is_critical):
 		"""Sets if failure of this module is a critical failure.
@@ -128,37 +175,7 @@ class PipelineModule(object):
 		self.processors = cpus
 	#end set_available_processors()
 	
-	def tool_versions(self):
-		"""Return a dict of tool versions used by this module
-		
-		dictionary is of the form <ToolName> -> <VersionString>
-		"""
-		return {}
-	#end show_version()
 	
-	def load_modules(self, logfile):
-		""" Loads any system modules required for this module to function. """
-		pass
-	#end load_modules()
-	
-	def run(self, context):
-		""" Runs the pipeline module given the supplied context
-		
-		!!!!! This method is the most important method to override in concrete implementations !!!!!
-		
-		Context provide particular run specific information, including:
-			-sample (PipelineSample) and sending log information to logfile handle 
-			-logfile (file-like)
-			-misc. metadata about step number, pipeline name, etc.
-			
-		Parameters:
-			context: (ModuleRunContext) Context to run this module with.
-			
-		Returns:
-			iterable of FileInfo objects representing output files
-		"""
-		pass
-	#end run()
 	
 	def _run_subprocess(self, cmd, **kwargs):
 		"""Wrapper around the subprocess.Popen call and provides some extra convience

@@ -4,8 +4,8 @@ from ThackTech.Pipelines import PipelineModule
 
 class DumpEnv(PipelineModule):
 	
-	def __init__(self):
-		super(DumpEnv, self).__init__('DumpEnv', 'Dump environment information')
+	def __init__(self, **kwargs):
+		super(DumpEnv, self).__init__('DumpEnv', 'Dump environment information', **kwargs)
 		
 		#self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep after saying hello."))
 	#end __init__()

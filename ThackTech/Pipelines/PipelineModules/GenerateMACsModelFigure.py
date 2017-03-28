@@ -4,8 +4,8 @@ from ThackTech.Pipelines import PipelineModule
 
 
 class GenerateMACsModelFigure(PipelineModule):
-	def __init__(self):
-		super(GenerateMACsModelFigure, self).__init__('MacsModelFig', 'Generate MACS Model Figure')
+	def __init__(self, **kwargs):
+		super(GenerateMACsModelFigure, self).__init__('MacsModelFig', 'Generate MACS Model Figure', **kwargs)
 	#end __init__()
 
 	def supported_types(self):

@@ -4,8 +4,8 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 class DecompressFiles(PipelineModule):
 	
-	def __init__(self):
-		super(DecompressFiles, self).__init__('DecompressFiles', 'Decompress Files')
+	def __init__(self, **kwargs):
+		super(DecompressFiles, self).__init__('DecompressFiles', 'Decompress Files', **kwargs)
 		self._name_resolver('files')
 		self.add_parameter(ModuleParameter('overwrite',	bool, False, desc="Overwrite the decompressed file if it already exists."))
 	#end __init__()

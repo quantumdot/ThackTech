@@ -4,8 +4,8 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 class ComputeAverageReadLength(PipelineModule):
 	
-	def __init__(self):
-		super(ComputeAverageReadLength, self).__init__('ComputeAverageReadLength', 'Compute Average Read Length')
+	def __init__(self, **kwargs):
+		super(ComputeAverageReadLength, self).__init__('ComputeAverageReadLength', 'Compute Average Read Length', **kwargs)
 		self._name_resolver('fastq')
 		self.add_parameter(ModuleParameter('script_path', str, '/home/josh/scripts/avg_read_len_fq.awk', desc="Location of average read length script."))
 	#end __init__()
