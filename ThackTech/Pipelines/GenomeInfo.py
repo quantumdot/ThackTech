@@ -79,20 +79,6 @@ class GenomeInfo(object):
 		if GenomeInfo.__known_references is None:
 			GenomeInfo.__known_references = {}
 			
-# 			conanocal = []
-# 			conanocal.append(GenomeInfo('hg18', '2.77e9'))
-# 			conanocal.append(GenomeInfo('hg19', '2.79e9'))
-# 			conanocal.append(GenomeInfo('mm9',  '1.91e9'))
-# 			conanocal.append(GenomeInfo('mm10', '2.15e9'))
-# 			
-# 			for c in conanocal:
-# 				for p in GenomeInfo.__probe_paths:
-# 					#print "trying path %s for genome %s" % (os.path.join(p, c.name), c.name)
-# 					if os.path.exists(os.path.join(p, c.name)):
-# 						#print "Found!"
-# 						c.try_discover(os.path.join(p, c.name))
-# 						GenomeInfo.__known_references[c.name] = c
-# 						break
 			from ThackTech import conf
 			genome_config = conf.get_config('genomes')
 			for section in genome_config.sections():

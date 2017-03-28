@@ -1,4 +1,5 @@
 import os
+import subprocess
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
@@ -20,8 +21,15 @@ class Trimmomatic(PipelineModule):
 		#self.add_parameter(ModuleParameter('crop', int, None, nullable=True, desc="Cut the read to a specified length"))
 		#self.add_parameter(ModuleParameter('head_crop', int, None, nullable=True, desc="Cut the specified number of bases from the start of the read"))
 		
+		self.set_parameters_from_config()
 		self._name_resolver('fastq')
 	#end __init__()
+	
+	def tool_versions(self):
+		return {
+			'Trimmomatic': subprocess.check_output("TrimmomaticSE 2>&1", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
 	
 	def run(self, sample, logfile):
 		outdir = os.path.join(sample.dest, 'trimmomatic')

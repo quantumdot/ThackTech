@@ -14,17 +14,21 @@ __config_dirs_to_search = [
     os.environ.get("THACKTECH_CONF")
 ]
 
+__known_configs = {}
 
-def get_config(name):
-    config = configparser.SafeConfigParser()
-    paths = []
-    for loc in __config_dirs_to_search:
-        if loc is not None:
-            paths.append(os.path.join(loc, name+".default.ini"))
-            paths.append(os.path.join(loc, name+".ini"))
-    
-    config.read(paths)    
-    return config
+def get_config(name, force_reparse=False):
+    if name not in __known_configs or force_reparse:
+        config = configparser.SafeConfigParser()
+        paths = []
+        for loc in __config_dirs_to_search:
+            if loc is not None:
+                paths.append(os.path.join(loc, name+".default.ini"))
+                paths.append(os.path.join(loc, name+".ini"))
+        
+        config.read(paths)
+        __known_configs[name] = config
+        
+    return __known_configs[name]
 #end get_config
         
         

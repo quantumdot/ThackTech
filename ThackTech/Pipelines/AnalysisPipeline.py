@@ -1,11 +1,11 @@
 import re
+from ThackTech.Pipelines.Context import ModuleContext
 
 class AnalysisPipeline(object):
 
 	def __init__(self, name="Anonymous Pipeline"):
 		self.name = name
 		self.pipeline = []
-		self.tasks_statuses = None
 	#end __inti__()
 	
 	@property
@@ -16,6 +16,10 @@ class AnalysisPipeline(object):
 		"""
 		return re.sub('[^\w\-_\.]', '_', self.name)
 	#end safe_name()
+	
+	def itersteps(self):
+		return [ModuleContext(self.name, i, self.pipeline[i]) for i in range(len(self))]
+	#end itersteps()
 	
 	def append_module(self, module, critical=False):
 		"""Appends the module to the end of the pipeline

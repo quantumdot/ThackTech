@@ -45,12 +45,6 @@ class ModuleParameter(object):
 		self.value = self.default
 	#end reset()
 	
-# 	def get_value(self):
-# 		"""Gets the current value of this parameter, coerced to the type of this parameter
-# 		"""
-# 		return self._coerce_value(self.value, self.type)
-# 	#end get_value()
-	
 	def get_value_as_type(self, value_type):
 		"""Gets the current value of this parameter, coerced to the type specified
 		"""

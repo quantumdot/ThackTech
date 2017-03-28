@@ -1,8 +1,8 @@
 import os
 import sys
-
-import ThackTech.Common
-from ThackTech import filetools
+import subprocess
+import shlex
+from ThackTech import filetools, Common
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
@@ -10,16 +10,14 @@ class PbcAnalysis(PipelineModule):
 	
 	def __init__(self):
 		PipelineModule.__init__(self, 'PBC', 'Cross-correlation analysis using SPP')
+		self._name_resolver('bam')
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam']
-	#end supported_types()
 	
 	def run(self, sample, logfile):
 		logfile.write('\t-> Running PBC QC...\n')
 		logfile.flush()
 		#compute PBC
+		bam = self.resolve_input('bam', sample)
 		results = self.run_filter_qc(bam, sample.get_attribute('PE'), "-q 30")
 		pbc_dir = os.path.join(sample.dest, 'pbc')
 		filetools.ensure_dir(pbc_dir)
@@ -44,7 +42,7 @@ class PbcAnalysis(PipelineModule):
 			raise Exception('input_bam is required!')
 	
 		if paired_end is None:
-			 raise Exception('paired_end is required!')
+			raise Exception('paired_end is required!')
 	
 		
 	
@@ -69,7 +67,7 @@ class PbcAnalysis(PipelineModule):
 			# ==================
 			tmp_filt_bam_prefix = "tmp.%s" %(filt_bam_prefix) #was tmp.prefix.nmsrt
 			tmp_filt_bam_filename = tmp_filt_bam_prefix + ".bam"
-			out,err = run_pipe([
+			out, err = Common.run_pipe([
 				#filter:  -F 1804 FlAG bits to exclude; -f 2 FLAG bits to reqire; -q 30 exclude MAPQ < 30; -u uncompressed output
 				#exclude FLAG 1804: unmapped, next segment unmapped, secondary alignments, not passing platform q, PCR or optical duplicates
 				#require FLAG 2: properly aligned
@@ -77,13 +75,13 @@ class PbcAnalysis(PipelineModule):
 				#sort:  -n sort by name; - take input from stdin; out to specified filename
 				"samtools sort -n - %s" % (tmp_filt_bam_prefix)])  # Will produce name sorted BAM
 			if err:
-				logger.write("samtools error: %s" %(err))
+				raise RuntimeError("samtools error: %s" %(err))
 			
 			
 			# Remove orphan reads (pair was removed) and read pairs mapping to different chromosomes
 			# Obtain position sorted BAM
 			#print subprocess.check_output('ls -l', shell=True)
-			out,err = run_pipe([
+			out,err = Common.run_pipe([
 				#fill in mate coordinates, ISIZE and mate-related flags
 				#fixmate requires name-sorted alignment; -r removes secondary and unmapped (redundant here because already done above?)
 				#- send output to stdout
@@ -175,7 +173,7 @@ class PbcAnalysis(PipelineModule):
 			"uniq -c",
 			r"""awk 'BEGIN{mt=0;m0=0;m1=0;m2=0} ($1==1){m1=m1+1} ($1==2){m2=m2+1} {m0=m0+1} {mt=mt+$1} END{printf "%d\t%d\t%d\t%d\t%f\t%f\t%f\n",mt,m0,m1,m2,m0/mt,m1/m0,m1/m2}'"""
 		 ])
-		out,err = run_pipe(steps,pbc_file_qc_filename)
+		out,err = Common.run_pipe(steps,pbc_file_qc_filename)
 		if err:
 			raise Exception("PBC file error: %s" %(err))
 		

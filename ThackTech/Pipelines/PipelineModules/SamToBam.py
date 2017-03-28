@@ -11,10 +11,6 @@ class SamToBam(PipelineModule):
 		PipelineModule.__init__(self, 'SamToBam', 'Convert SAM to BAM')
 		self._name_resolver('sam')
 	#end __init__()
-
-	def supported_types(self):
-		return ['sam']
-	#end supported_types()
 	
 	def tool_versions(self):
 		return {

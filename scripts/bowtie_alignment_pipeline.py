@@ -84,7 +84,7 @@ def main():
     performance_group.add_argument('-p', '--threads', type=int, default=cpu_count, help="Number of processors to use for processing.")
     #performance_group.add_argument('--noparallel', action='store_true', help='Completly turn off parallelization of tasks (no use of the thread pool).')
     performance_group.add_argument('--shm', action='store_true', help="Use ramfs for file IO.")
-    performance_group.add_argument('--shm-path', action='store', default='/mnt/ramdisk/bowtie'+'_'+str(os.getuid()), help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
+    performance_group.add_argument('--shm-path', action='store', default='/mnt/ramdisk/bowtie'+'_'+str( os.getuid() ), help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
     performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
     performance_group.add_argument('--runner', action='store', default='parallel', choices=['slurm', 'parallel', 'serial'], help="Which pipeline runner to use.")
     
@@ -193,7 +193,9 @@ def make_read_alignment_pipeline(args, additional_args):
     if (args.qc is not None) and (len(args.qc) > 0):
         if 'pbc' in args.qc:
             from ThackTech.Pipelines.PipelineModules import PbcAnalysis
-            pipeline.append_module(PbcAnalysis.PbcAnalysis())
+            x = PbcAnalysis.PbcAnalysis()
+            x.set_resolver('bam', lambda s: s.get_file())
+            pipeline.append_module()
         
         if 'spp' in args.qc:
             from ThackTech.Pipelines.PipelineModules import SPP

@@ -1,6 +1,7 @@
 import subprocess
 from tabulate import tabulate
 from ThackTech.Pipelines import ModuleParameter
+from ThackTech import conf
 
 
 class PipelineModule(object):
@@ -43,6 +44,20 @@ class PipelineModule(object):
 			raise ValueError('Expecting parameter to be of type ModuleParmater, %s given!' % (type(parameter).__name__,))
 		self.parameters[parameter.name] = parameter
 	#end add_parameter()
+	
+	def set_parameters_from_config(self):
+		"""Reads from the pipeline_modules set of configuration files and sets this modules parameters accordingly
+		
+		Configuration data is interpreted from config files in the following way:
+			files named "pipeline_modules[.default].ini
+			config section name corresponds to module name
+		""" 
+		cfg = conf.get_config('pipeline_modules')
+		if cfg.has_section(self.name):
+			for param in self.parameters.itervalues():
+				if cfg.has_option(self.name, param.name):
+					self.set_parameter(param.name, cfg.get(self.name, param.name))
+	#end set_parameters_from_config()
 	
 	def set_parameter(self, parameter_name, value):
 		if self.has_parameter(parameter_name):

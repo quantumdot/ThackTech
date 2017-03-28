@@ -6,6 +6,7 @@ import time
 from ThackTech import filetools
 from ThackTech.Pipelines.AnalysisPipeline import AnalysisPipeline
 from ThackTech.Pipelines.PipelineSample import PipelineSample
+from ThackTech.Pipelines.Context import ModuleRunContext
 
 
 class PipelineRunner(object):
@@ -71,10 +72,10 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			logfile.write("--------------------------------------------\n\n")
 			
 			
-			for i in range(pipeline_size):
-				step = pipeline.pipeline[i]
+			for step in pipeline.itersteps():
+				#step = pipeline.pipeline[i]
 				status_counts['attempted'] += 1
-				logfile.write('Running pipeline step #%d: %s\n' % (i+1, step.name,))
+				logfile.write('Running pipeline step #%d: %s\n' % (step.step+1, step.name,))
 				logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
 				logfile.flush()
 				try:
@@ -83,6 +84,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 				
 					tasks_statuses[sample.name] = tasks_statuses[sample.name].update(float(i)/float(pipeline_size), step.description)
 					#step.load_modules(logfile)
+					cxt = ModuleRunContext(pipeline.name, i, step.name, logfile, sample)
 					results = step.run(sample, logfile)
 					if results is not None and isinstance(results, dict):
 						for label, path in results.iteritems():

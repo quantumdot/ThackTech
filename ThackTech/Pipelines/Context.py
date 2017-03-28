@@ -2,7 +2,7 @@
 
 
 
-class ModuleContext(object):
+class PipelineModuleContext(object):
 
     def __init__(self, pipeline_name, step_num, module_name):
         self.__pipeline = pipeline_name
@@ -24,6 +24,9 @@ class ModuleContext(object):
     def __str__(self):
         return "%s_%s_%s" % (self.pipeline, self.step, self.module)
 #end class ModuleContext
+
+
+
 
 class ModuleRunContext(ModuleContext):
 
