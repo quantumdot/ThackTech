@@ -2,6 +2,7 @@ import subprocess
 from tabulate import tabulate
 from ThackTech.Pipelines import ModuleParameter
 from ThackTech import conf
+import textwrap
 
 
 class PipelineModule(object):
@@ -184,7 +185,13 @@ class PipelineModule(object):
 		"""Return a string that documents this module and its parameters and resolvers
 		"""
 		hash_length = 40
-		buff = "%s\n%s\n%s\n%s\n" % (self.name, '-'*hash_length, self.description, '-'*hash_length)
+		buff = "%s\n"
+		buff += "%s\n" % (self.name,)
+		buff += "%s\n" % ('-'*hash_length,)
+		buff += "Critical: %s\n" % (self.is_critical,)
+		buff += "Processors: $d\n" % (self.processors) 
+		buff += "Description:\n%s\n"  % (textwrap.fill(self.description, hash_length),)
+		buff += "%s\n" % ('-'*hash_length,)
 		buff += "PARAMETERS:"
 		if len(self.parameters) < 1:
 			buff += "\n\tNo Parameters Declared\n"

@@ -1,5 +1,4 @@
 import os
-import sys
 from ThackTech.Pipelines import GenomeInfo, FileInfo, GLOBAL_MANAGER
 
 
