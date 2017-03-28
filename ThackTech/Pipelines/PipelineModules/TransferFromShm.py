@@ -1,22 +1,15 @@
 import os
 import shutil
 import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class TransferFromShm(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'fromshm', 'Transfer From RAM disk')
+		super(TransferFromShm, self).__init__('fromshm', 'Transfer From RAM disk')
 	#end __init__()
-
-	def supported_types(self):
-		return None
-	#end supported_types()
 	
 	def run(self, cxt):
 		cxt.log.write('-> Moving output to final destination...\n')

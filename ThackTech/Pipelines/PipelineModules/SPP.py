@@ -1,21 +1,14 @@
 import os
-import subprocess
 import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class SPP(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'SPP', 'Cross-correlation analysis using SPP')
+		super(SPP, self).__init__('SPP', 'Cross-correlation analysis using SPP')
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam']
-	#end supported_types()
 	
 	def run(self, cxt):
 		spp_dir = os.path.join(cxt.sample.dest, 'spp')

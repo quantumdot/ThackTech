@@ -1,16 +1,12 @@
 import os
-import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class InsertSizeMetrics(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'InsertSizeMetrics', 'Calculating Insert Size Metrics')
+		super(InsertSizeMetrics, self).__init__('InsertSizeMetrics', 'Calculating Insert Size Metrics')
 	#end __init__()
 	
 	def run(self, cxt):

@@ -1,14 +1,11 @@
 import os
-import subprocess
-import sys
-
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class RemoveDecompressedFiles(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'RemoveDecompressedFiles', 'Remove Decompressed Files')
+		super(RemoveDecompressedFiles, self).__init__('RemoveDecompressedFiles', 'Remove Decompressed Files')
 	#end __init__()
 	
 	def run(self, cxt):

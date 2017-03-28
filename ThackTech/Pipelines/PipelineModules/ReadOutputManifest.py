@@ -1,18 +1,12 @@
 import ast
-import filecmp
 import os
-import shlex
-import subprocess
-import sys
-
-import ThackTech.Common as Common
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class ReadOutputManifest(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'ReadOutputManifest', 'Read Output Manifest')
+		super(ReadOutputManifest, self).__init__('ReadOutputManifest', 'Read Output Manifest')
 	#end __init__()
 	
 	def run(self, cxt):

@@ -1,15 +1,13 @@
 import os
 import subprocess
-import sys
-
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class BamFingerprint(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'bamFingerprint', 'Bam Fingerprint')
+		super(BamFingerprint, self).__init__('bamFingerprint', 'Bam Fingerprint')
 	#end __init__()
 	
 	def tool_versions(self):

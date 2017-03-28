@@ -1,14 +1,12 @@
 import os
 import subprocess
-import sys
-
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
 class MACS1Peakcall(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'MACS1', 'Peak Calling with MACS1')
+		super(MACS1Peakcall, self).__init__('MACS1', 'Peak Calling with MACS1')
 		
 		self.add_parameter(ModuleParameter('duplicates', str, 	'auto',	desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
 		self.add_parameter(ModuleParameter('bw', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))

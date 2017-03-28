@@ -1,16 +1,12 @@
 import os
 import subprocess
-import sys
-
-import ThackTech.Common as Common
-from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
 class Bowtie2Align(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'Bowtie2Align', 'Alignment using Bowtie2')
+		super(Bowtie2Align, self).__init__('Bowtie2Align', 'Alignment using Bowtie2')
 		
 		self.add_parameter(ModuleParameter('bowtie2_path', 		str, 	'bowtie2',	desc="Path to the bowtie2 executable."))
 		

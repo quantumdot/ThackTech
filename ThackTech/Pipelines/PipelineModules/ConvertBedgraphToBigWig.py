@@ -1,23 +1,16 @@
-import glob
 import os
 import subprocess
-import sys
-
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
 class ConvertBedgraphToBigWig(PipelineModule):
 
 	def __init__(self):
-		PipelineModule.__init__(self, 'BedgraphToBigWig', 'Converting Bedgraph To BigWig')
+		super(ConvertBedgraphToBigWig, self).__init__('BedgraphToBigWig', 'Converting Bedgraph To BigWig')
 		self.add_parameter(ModuleParameter('bgtobw_path', str,	'bedGraphToBigWig'))
 		self.add_parameter(ModuleParameter('bedtools_path', str,	'bedtools'))
 		self.add_parameter(ModuleParameter('bedclip_path', str,	'bedClip'))
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
 	
 	
 	def run(self, cxt):

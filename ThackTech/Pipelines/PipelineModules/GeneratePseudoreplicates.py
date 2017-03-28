@@ -1,9 +1,5 @@
 import os
 import random
-import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 import pysam
@@ -12,14 +8,10 @@ import pysam
 class GeneratePseudoreplicates(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'Pseudoreplicates', 'Generate Pseudoreplicates')
+		super(GeneratePseudoreplicates, self).__init__('Pseudoreplicates', 'Generate Pseudoreplicates')
 		self._name_resolver('alignments')
 		self.add_parameter(ModuleParameter('nreplicates', int, 2))
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
 	
 	def run(self, cxt):
 		dest_dir = os.path.join(cxt.sample.dest, 'pseudoreps')

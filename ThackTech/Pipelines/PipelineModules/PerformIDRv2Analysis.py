@@ -1,20 +1,16 @@
 import itertools
 import math
 import os
-import random
 import subprocess
-import sys
-
 import ThackTech.Common as Common
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
-import pysam
 
 
 class PerformIDRv2Analysis(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'IDRv2', 'Perform IDRv2 Analysis')
+		super(PerformIDRv2Analysis, self).__init__('IDRv2', 'Perform IDRv2 Analysis')
 		self._name_resolver('primary_replicates')
 		self._name_resolver('pseudo_replicates')
 		self._name_resolver('pooled_pseudo_replicates')
@@ -44,21 +40,21 @@ class PerformIDRv2Analysis(PipelineModule):
 			count_file.write('Group\tComparison\tThreshold\tNumPeaks\n')
 			
 			#IDR for primary replicates
-			output = self._run_batch_consistency_analysis('primary_replicates', cxt.sample, self.get_parameter_value('primary_replicates_IDR_threshold'), cxt.log)
+			output = self._run_batch_consistency_analysis('primary_replicates', self.get_parameter_value('primary_replicates_IDR_threshold'), cxt)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_N'):
 					count_file.write('%s\t%s\t%f\t%d\n' % ('primary_replicates', key.replace('_N', ''), self.get_parameter_value('primary_replicates_IDR_threshold'), output[key]))
 			
 			#IDR for pseudo self-replicates
-			output = self._run_batch_consistency_analysis('pseudo_replicates',  cxt.sample, self.get_parameter_value('pseudo_replicates_IDR_threshold'), cxt.log)
+			output = self._run_batch_consistency_analysis('pseudo_replicates',  self.get_parameter_value('pseudo_replicates_IDR_threshold'), cxt)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_N'):
 					count_file.write('%s\t%s\t%f\t%d\n' % ('pseudo_replicates', key.replace('_N', ''), self.get_parameter_value('pseudo_replicates_IDR_threshold'), output[key]))
 			
 			#IDR for pseudo pooled-replicates
-			output = self._run_batch_consistency_analysis('pooled_pseudo_replicates',  cxt.sample, self.get_parameter_value('pooled_pseudo_replicates_IDR_threshold'), cxt.log)
+			output = self._run_batch_consistency_analysis('pooled_pseudo_replicates', self.get_parameter_value('pooled_pseudo_replicates_IDR_threshold'), cxt)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_N'):
@@ -69,7 +65,7 @@ class PerformIDRv2Analysis(PipelineModule):
 		return output_files
 	#end run()
 	
-	def _run_batch_consistency_analysis(self, replicate_type, cxt.sample, idr_threshold, cxt.log):
+	def _run_batch_consistency_analysis(self, replicate_type, idr_threshold, cxt):
 		output_files = {}
 		replicate_combinations = list(itertools.combinations(self.resolve_input(replicate_type, cxt.sample), 2))
 		output_prefixes = []

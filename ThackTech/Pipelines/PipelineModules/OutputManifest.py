@@ -1,22 +1,13 @@
-import filecmp
 import os
-import shlex
-import subprocess
-import sys
-
-import ThackTech.Common as Common
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class OutputManifest(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'OutputManifest', 'Generate Output Manifest')
+		super(OutputManifest, self).__init__('OutputManifest', 'Generate Output Manifest')
 	#end __init__()
 
-	def supported_types(self):
-		return None
-	#end supported_types()
 	
 	def run(self, cxt):
 		cxt.log.write("-> Writing cxt.sample output manifest....\n")

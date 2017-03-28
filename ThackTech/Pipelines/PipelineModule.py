@@ -11,13 +11,13 @@ class PipelineModule(object):
 	
 	
 	"""
-	def __init__(self, name, short_description):
+	def __init__(self, name, short_description, critical=False, processors=1):
 		self.name = name
 		self.description = short_description
-		self.processors = 1
 		self.parameters = {}
 		self.resolvers = {}
-		self._critical = False
+		self.processors = processors
+		self._critical = critical
 	#end __init__()
 	
 	def set_critical(self, is_critical):
@@ -215,6 +215,16 @@ class PipelineModule(object):
 			buff += "\n"
 			for resolver in self.resolvers:
 				buff += "\t%s: %s\n" % (resolver, str(self.resolvers[resolver]))
+		buff += '\n'
+		
+		buff += "TOOL VERSIONS:"
+		tools = self.tool_versions()
+		if len(self.resolvers) < 1:
+			buff += "\n\tNo Tools Declared\n"
+		else:
+			buff += "\n"
+			for tool, version in tools:
+				buff += "\t%s: %s\n" % (tool, version)
 		buff += '-' * hash_length
 		buff += '\n'
 		return buff

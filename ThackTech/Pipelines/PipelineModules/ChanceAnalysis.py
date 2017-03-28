@@ -1,20 +1,14 @@
 import os
 import subprocess
-import sys
-
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class ChanceAnalysis(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'Chance', 'IPStrength and spectrum analysis')
+		super(ChanceAnalysis, self).__init__('Chance', 'IPStrength and spectrum analysis')
 	#end __init__()
-
-	def supported_types(self):
-		return ['bed', 'bam', 'bampe', 'sam', 'mat', 'bowtie', 'tagalign']
-	#end supported_types()
 	
 	def run(self, cxt):
 		chance_path = '/home/josh/scripts/chance/run_chance_com.sh'

@@ -7,7 +7,7 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class Trimmomatic(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'Trimmomatic', 'Trim reads with Trimmomatic')
+		super(Trimmomatic, self).__init__('Trimmomatic', 'Trim reads with Trimmomatic')
 		
 		self.add_parameter(ModuleParameter('trim_adapt_fa_SE', str, '/mnt/ref/adapters/TruSeq3-SE.fa'))
 		self.add_parameter(ModuleParameter('trim_adapt_fa_PE', str, '/mnt/ref/adapters/TruSeq3-PE-2.fa'))

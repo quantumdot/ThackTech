@@ -8,13 +8,9 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class IndexBam(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'IndexBam', 'Index BAM file')
+		super(IndexBam, self).__init__('IndexBam', 'Index BAM file')
 		self._name_resolver('alignments')
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
 	
 	def tool_versions(self):
 		return {

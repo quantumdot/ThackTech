@@ -1,8 +1,3 @@
-import os
-import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
@@ -10,14 +5,11 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class DecompressFiles(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'DecompressFiles', 'Decompress Files')
+		super(DecompressFiles, self).__init__('DecompressFiles', 'Decompress Files')
 		self._name_resolver('files')
 		self.add_parameter(ModuleParameter('overwrite',	bool, False, desc="Overwrite the decompressed file if it already exists."))
 	#end __init__()
 
-	def supported_types(self):
-		return None
-	#end supported_types()
 	
 	def run(self, cxt):
 		cxt.sample.add_attribute('decompressed_files', [])

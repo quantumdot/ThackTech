@@ -1,18 +1,14 @@
 import filecmp
 import os
-import shlex
 import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class TransferToShm(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'toshm', 'Transfer To RAM disk')
+		super(TransferToShm, self).__init__('toshm', 'Transfer To RAM disk')
 	#end __init__()
 
 	def supported_types(self):

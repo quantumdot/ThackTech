@@ -1,22 +1,16 @@
 import os
 import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class MergeBams(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'MergeBams', 'Merge BAM files')
+		super(MergeBams, self).__init__('MergeBams', 'Merge BAM files')
 		self._name_resolver('alignments')
 	#end __init__()
 
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
 	
 	def tool_versions(self):
 		return {

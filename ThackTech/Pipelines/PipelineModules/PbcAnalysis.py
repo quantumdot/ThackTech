@@ -1,15 +1,14 @@
 import os
-import sys
 import subprocess
 import shlex
 from ThackTech import filetools, Common
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class PbcAnalysis(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'PBC', 'Cross-correlation analysis using SPP')
+		super(PbcAnalysis, self).__init__('PBC', 'Cross-correlation analysis using SPP')
 		self._name_resolver('bam')
 	#end __init__()
 	

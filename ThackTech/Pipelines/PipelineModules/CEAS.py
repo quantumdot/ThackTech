@@ -1,16 +1,13 @@
 import os
 import subprocess
-import sys
 import re
-
-import ThackTech.Common as Common
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
 class CEAS(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'CEAS', 'Cis-Regulatory Annotation System')
+		super(CEAS, self).__init__('CEAS', 'Cis-Regulatory Annotation System')
 		
 		self.add_parameter(ModuleParameter('ceas_wig_path', str, 'ceas'))
 		self.add_parameter(ModuleParameter('ceas_bw_path', str, '/home/josh/scripts/cistrome/ceasBW'))

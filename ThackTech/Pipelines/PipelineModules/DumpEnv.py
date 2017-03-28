@@ -1,22 +1,16 @@
-import os
-import platform
 from subprocess import PIPE
-import sys
-import time
-
-import ThackTech.Common as Common
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class DumpEnv(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'DumpEnv', 'Dump environment information')
+		super(DumpEnv, self).__init__('DumpEnv', 'Dump environment information')
 		
 		#self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep after saying hello."))
 	#end __init__()
 	
-	def load_modules(self, cxt.log):
+	def load_modules(self, cxt):
 		# """ Loads any system modules required for this module to function. """
 		# cxt.log.write("loading samtools")
 		# o, e = self._run_subprocess("module load samtools/0.1.19", shell=True, stdout=PIPE, stderr=PIPE)

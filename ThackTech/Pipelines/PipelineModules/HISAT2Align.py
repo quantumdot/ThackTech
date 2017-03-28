@@ -1,15 +1,12 @@
 import os
 import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
 
 class HISAT2Align(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'HISAT2Align', 'Alignment using HISAT2')
+		super(HISAT2Align, self).__init__('HISAT2Align', 'Alignment using HISAT2')
 		
 		self.add_parameter(ModuleParameter('hisat2_path', 		str, 	'HISAT2',	desc="Path to the hisat2 executable."))
 		
@@ -27,10 +24,6 @@ class HISAT2Align(PipelineModule):
 
 		self._name_resolver('fastq')
 	#end __init__()
-
-	def supported_types(self):
-		return ['fastq']
-	#end supported_types()
 	
 	def load_modules(self):
 		subprocess.call("module load HISAT2", shell=True)

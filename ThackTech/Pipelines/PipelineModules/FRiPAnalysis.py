@@ -1,16 +1,13 @@
 import os
 import subprocess
-import sys
-
-import ThackTech.Common as Common
 from ThackTech import filetools
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class FRiPAnalysis(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'FRiP', 'Fraction of Reads in Peaks')
+		super(FRiPAnalysis, self).__init__('FRiP', 'Fraction of Reads in Peaks')
 		
 		self._name_resolver('peaks')
 	#end __init__()

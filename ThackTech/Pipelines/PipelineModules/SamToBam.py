@@ -1,14 +1,12 @@
 import os
 import subprocess
-import sys
-
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class SamToBam(PipelineModule):
 	
 	def __init__(self):
-		PipelineModule.__init__(self, 'SamToBam', 'Convert SAM to BAM')
+		super(SamToBam, self).__init__('SamToBam', 'Convert SAM to BAM')
 		self._name_resolver('sam')
 	#end __init__()
 	
@@ -18,7 +16,7 @@ class SamToBam(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def load_modules(self, cxt.log):
+	def load_modules(self, cxt):
 		pass
 		# try:
 			# #from ThackTech.Pipelines import lmodHelper

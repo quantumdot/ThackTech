@@ -1,13 +1,11 @@
 import os
 import subprocess
-import sys
-
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class GenerateMACsModelFigure(PipelineModule):
 	def __init__(self):
-		PipelineModule.__init__(self, 'MacsModelFig', 'Generate MACS Model Figure')
+		super(GenerateMACsModelFigure, self).__init__('MacsModelFig', 'Generate MACS Model Figure')
 	#end __init__()
 
 	def supported_types(self):

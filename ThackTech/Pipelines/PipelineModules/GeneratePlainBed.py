@@ -1,13 +1,10 @@
 import os
-import subprocess
-import sys
-
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule
 
 
 class GeneratePlainBed(PipelineModule):
 	def __init__(self):
-		PipelineModule.__init__(self, 'PlainBed', 'Generate bed from peaks')
+		super(GeneratePlainBed, self).__init__('PlainBed', 'Generate bed from peaks')
 	#end __init__()
 
 	def supported_types(self):
