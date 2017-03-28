@@ -25,53 +25,53 @@ class MACS2Peakcall(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def run(self, sample, logfile):
+	def run(self, cxt):
 		macs_args = [
 			'macs2',
 			'callpeak',
 			'--verbose', '3',
-			'--name', sample.name,
-			'--gsize', sample.genome.gsize,
-			'--format', sample.format.upper(),
+			'--name', cxt.sample.name,
+			'--gsize', cxt.sample.genome.gsize,
+			'--format', cxt.sample.format.upper(),
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
 			'--cutoff-analysis',
 			'--bdg',
-			'--treatment', sample.get_file('source', 'treatment')
+			'--treatment', cxt.sample.get_file('source', 'treatment')
 		]
 
-		if sample.has_file('source', 'control'):
-			macs_args += [ '--control', sample.get_file('source', 'control') ]
+		if cxt.sample.has_file('source', 'control'):
+			macs_args += [ '--control', cxt.sample.get_file('source', 'control') ]
 			
-		if sample.has_attribute('broad') and sample.get_attribute('broad'):
+		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
 			macs_args.append('--broad')
 			macs_args += [ '--broad-cutoff', '0.1' ]
 			
-		logfile.write("Performing peak calling with MACS......\n")
-		#logfile.write("-> "+subprocess.check_output('/bin/bash -c "source /home/josh/scripts/macs2dev/bin/activate && macs2 --version"', shell=True, stderr=subprocess.STDOUT)+"\n")
-		logfile.write("-> "+subprocess.check_output('macs2 --version', shell=True, stderr=subprocess.STDOUT)+"\n")
-		logfile.write("\n..............................................\n")
-		logfile.write(" ".join(macs_args))
-		logfile.write("\n..............................................\n")
-		logfile.flush()		
+		cxt.log.write("Performing peak calling with MACS......\n")
+		#cxt.log.write("-> "+subprocess.check_output('/bin/bash -c "source /home/josh/scripts/macs2dev/bin/activate && macs2 --version"', shell=True, stderr=subprocess.STDOUT)+"\n")
+		cxt.log.write("-> "+subprocess.check_output('macs2 --version', shell=True, stderr=subprocess.STDOUT)+"\n")
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(macs_args))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()		
 
-		self._run_subprocess(macs_args, cwd=sample.dest, stderr=subprocess.STDOUT, stdout=logfile)
+		self._run_subprocess(macs_args, cwd=cxt.sample.dest, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		output_files = {
-			'cutoff_analysis':	os.path.join(sample.dest, sample.name+'_cutoff_analysis.txt'),
-			'treatment_signal':	os.path.join(sample.dest, sample.name+'_treat_pileup.bdg'),
-			'peaks_xls':		os.path.join(sample.dest, sample.name+'_peaks.xls'),
+			'cutoff_analysis':	os.path.join(cxt.sample.dest, cxt.sample.name+'_cutoff_analysis.txt'),
+			'treatment_signal':	os.path.join(cxt.sample.dest, cxt.sample.name+'_treat_pileup.bdg'),
+			'peaks_xls':		os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.xls'),
 		}
-		if os.path.isfile(os.path.join(sample.dest, sample.name+'_model.r')):
-			output_files['model_Rscript'] = os.path.join(sample.dest, sample.name+'_model.r')
-		if sample.has_file('source', 'control'):
-			output_files['control_signal'] = os.path.join(sample.dest, sample.name+'_control_lambda.bdg')
-		if sample.has_attribute('broad') and sample.get_attribute('broad'):
-			output_files['broad_peaks'] = os.path.join(sample.dest, sample.name+'_peaks.broadPeak')
-			output_files['gapped_peaks'] = os.path.join(sample.dest, sample.name+'_peaks.gappedPeak')
+		if os.path.isfile(os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')):
+			output_files['model_Rscript'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')
+		if cxt.sample.has_file('source', 'control'):
+			output_files['control_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_control_lambda.bdg')
+		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
+			output_files['broad_peaks'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.broadPeak')
+			output_files['gapped_peaks'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.gappedPeak')
 		else:
-			output_files['narrow_peaks'] = os.path.join(sample.dest, sample.name+'_peaks.narrowPeak')
-			output_files['summits'] = os.path.join(sample.dest, sample.name+'_summits.bed')
+			output_files['narrow_peaks'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.narrowPeak')
+			output_files['summits'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_summits.bed')
 			
 		return output_files
 	#end run()

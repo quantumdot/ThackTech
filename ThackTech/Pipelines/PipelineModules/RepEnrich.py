@@ -47,33 +47,33 @@ class RepEnrich(PipelineModule):
 		# handle.flush()
 	#end show_version()
 	
-	def run(self, sample, logfile):
-		logfile.write("\t-> Preparing RepEnrich....\n")
-		logfile.flush()
+	def run(self, cxt):
+		cxt.log.write("\t-> Preparing RepEnrich....\n")
+		cxt.log.flush()
 		
-		multimap_fastq = self.resolve_input('multimap_fastq', sample)
+		multimap_fastq = self.resolve_input('multimap_fastq', cxt.sample)
 		if isinstance(multimap_fastq, str):
 			multimap_fastq = [multimap_fastq]
 			
 		repenrich_cmd = [
 			'python', 		self.get_parameter_value_as_string('repenrich_path'),
 			'--noshowprogress',
-			'--progressdir', sample.dest,
+			'--progressdir', cxt.sample.dest,
 			'--workers', 	str(self.processors),
-			'--annotation',	self.resolve_input('annotation_file', sample),
-			'--dest',		sample.dest,
-			'--name',		sample.name,
-			'--setup',		self.resolve_input('setup_folder', sample),
-			'--bam',		self.resolve_input('unique_bam', sample)
+			'--annotation',	self.resolve_input('annotation_file', cxt.sample),
+			'--dest',		cxt.sample.dest,
+			'--name',		cxt.sample.name,
+			'--setup',		self.resolve_input('setup_folder', cxt.sample),
+			'--bam',		self.resolve_input('unique_bam', cxt.sample)
 		] + ['--fastq'] + multimap_fastq
 
 		#OK, we now have all the arguments setup, lets actually run bowtie
-		logfile.write("\t-> RepEnrich: Estimate Repetitive Element Enrichment......")
-		logfile.write("\n..............................................\n")
-		logfile.write(" ".join(repenrich_cmd))
-		logfile.write("\n..............................................\n")
-		logfile.flush()
-		proc = subprocess.Popen(repenrich_cmd, stderr=subprocess.STDOUT, stdout=logfile)
+		cxt.log.write("\t-> RepEnrich: Estimate Repetitive Element Enrichment......")
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(repenrich_cmd))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
+		proc = subprocess.Popen(repenrich_cmd, stderr=subprocess.STDOUT, stdout=cxt.log)
 		proc.communicate()
 		
 		return {

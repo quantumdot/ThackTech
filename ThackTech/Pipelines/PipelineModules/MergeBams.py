@@ -24,20 +24,20 @@ class MergeBams(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def run(self, sample, logfile):
-		outdir = os.path.join(sample.dest, 'merged_bam')
+	def run(self, cxt):
+		outdir = os.path.join(cxt.sample.dest, 'merged_bam')
 		filetools.ensure_dir(outdir)
-		outfile = os.path.join(outdir, sample.name+'.merged.bam')
+		outfile = os.path.join(outdir, cxt.sample.name+'.merged.bam')
 		
-		samtools_cmd = [ 'samtools', 'merge', outfile ] + self.resolve_input('alignments', sample)
+		samtools_cmd = [ 'samtools', 'merge', outfile ] + self.resolve_input('alignments', cxt.sample)
 		
-		logfile.write("-> Merging bam files with samtools......\n")
-		logfile.write("-> "+subprocess.check_output('samtools 2>&1 | grep Version', shell=True, stderr=subprocess.STDOUT)+"")
-		logfile.write("..............................................\n")
-		logfile.write(" ".join(samtools_cmd))
-		logfile.write("\n..............................................\n")
-		logfile.flush()
-		self._run_subprocess(samtools_cmd, cwd=sample.dest, stderr=subprocess.STDOUT, stdout=logfile)
+		cxt.log.write("-> Merging bam files with samtools......\n")
+		cxt.log.write("-> "+subprocess.check_output('samtools 2>&1 | grep Version', shell=True, stderr=subprocess.STDOUT)+"")
+		cxt.log.write("..............................................\n")
+		cxt.log.write(" ".join(samtools_cmd))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
+		self._run_subprocess(samtools_cmd, cwd=cxt.sample.dest, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		return {
 			'merged_bam': outfile

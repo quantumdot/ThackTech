@@ -39,12 +39,12 @@ class Bowtie2Align(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def run(self, sample, logfile):
-		logfile.write("\t-> Preparing Bowtie2....\n")
-		logfile.flush()
+	def run(self, cxt):
+		cxt.log.write("\t-> Preparing Bowtie2....\n")
+		cxt.log.flush()
 		
 		output_result = {}
-		read_files = self.resolve_input('fastq', sample)
+		read_files = self.resolve_input('fastq', cxt.sample)
 				
 		#start constructing our bowtie2 arguments...
 		bowtiecmd = [ 
@@ -54,7 +54,7 @@ class Bowtie2Align(PipelineModule):
 			'-N', self.get_parameter_value_as_string('max_mismatches'), 			
 		]
 		
-		if sample.get_attribute('PE'):
+		if cxt.sample.get_attribute('PE'):
 			bowtiecmd += ['--maxins', 		self.get_parameter_value_as_string('max_insert')]
 			
 		if self.get_parameter_value('max_align') is not None:
@@ -69,21 +69,21 @@ class Bowtie2Align(PipelineModule):
 		
 		#check if we need to output reads that multimap
 		if self.get_parameter_value('multimap'):
-			if sample.get_attribute('PE'):
-				output_result['multimap_1'] = os.path.join(sample.dest, sample.name+'_multimap_1.fastq')
-				output_result['multimap_2'] = os.path.join(sample.dest, sample.name+'_multimap_2.fastq')
+			if cxt.sample.get_attribute('PE'):
+				output_result['multimap_1'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap_1.fastq')
+				output_result['multimap_2'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap_2.fastq')
 			else:
-				output_result['multimap'] = os.path.join(sample.dest, sample.name+'_multimap.fastq')
-			bowtiecmd += ['--max', os.path.join(sample.dest, sample.name+'_multimap.fastq')]
+				output_result['multimap'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap.fastq')
+			bowtiecmd += ['--max', os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap.fastq')]
 		
 		#check if we need to output reads that fail to align
 		if self.get_parameter_value('unaligned'):
-			if sample.get_attribute('PE'):
-				output_result['unaligned_1'] = os.path.join(sample.dest, sample.name+'_unaligned_1.fastq')
-				output_result['unaligned_2'] = os.path.join(sample.dest, sample.name+'_unaligned_2.fastq')
+			if cxt.sample.get_attribute('PE'):
+				output_result['unaligned_1'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned_1.fastq')
+				output_result['unaligned_2'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned_2.fastq')
 			else:
-				output_result['unaligned'] = os.path.join(sample.dest, sample.name+'_unaligned.fastq')
-			bowtiecmd += ['--un', os.path.join(sample.dest, sample.name+'_unaligned.fastq')]
+				output_result['unaligned'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned.fastq')
+			bowtiecmd += ['--un', os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned.fastq')]
 		
 		#hook in any additional args the user may want to supply to bowtie2
 		bowtiecmd += self.get_parameter_value('additional_args')
@@ -94,24 +94,24 @@ class Bowtie2Align(PipelineModule):
 		########################################
 		
 		#specify the reference genome index
-		bowtiecmd += ['-x', sample.genome.get_index('Bowtie2Index')]
+		bowtiecmd += ['-x', cxt.sample.genome.get_index('Bowtie2Index')]
 		#add the input file arguments
-		if sample.get_attribute('PE'):
+		if cxt.sample.get_attribute('PE'):
 			bowtiecmd += ['-1', read_files[0], '-2', read_files[1]]
 		else:
 			bowtiecmd += ['-U', read_files[0]]
 		#specify the destination SAM file
-		output_result['sam'] = os.path.join(sample.dest, sample.name+'.sam')
+		output_result['sam'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.sam')
 		bowtiecmd += ['-S', output_result['sam']]
 
 		
 		#OK, we now have all the arguments setup, lets actually run bowtie2
-		logfile.write("\t-> Performing alignment with bowtie2......")
-		logfile.write("\n..............................................\n")
-		logfile.write(" ".join(bowtiecmd))
-		logfile.write("\n..............................................\n")
-		logfile.flush()
-		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=logfile)
+		cxt.log.write("\t-> Performing alignment with bowtie2......")
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(bowtiecmd))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
+		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		return output_result
 	#end run()

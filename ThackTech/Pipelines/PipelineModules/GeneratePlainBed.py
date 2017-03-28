@@ -14,22 +14,22 @@ class GeneratePlainBed(PipelineModule):
 		return None
 	#end supported_types()
 	
-	def run(self, sample, logfile):
+	def run(self, cxt):
 		try_paths = [
-			os.path.join(sample.dest, sample.name+'_peaks.narrowPeak'),
-			os.path.join(sample.dest, sample.name+'_peaks.broadPeak'),
-			os.path.join(sample.dest, sample.name+'_peaks.gappedPeak')
+			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.narrowPeak'),
+			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.broadPeak'),
+			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.gappedPeak')
 		]
 		
 		for path in try_paths:
 			if os.path.isfile(path):
 				with open(path, 'r') as encodepeaks:
-					with open(os.path.join(sample.dest, sample.name+'_peaks.bed'), 'w') as outfile:
-						self._run_subprocess(['cut', '-f', '1-6'], stdin=encodepeaks, stderr=logfile, stdout=outfile, cwd=sample.dest)
+					with open(os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed'), 'w') as outfile:
+						self._run_subprocess(['cut', '-f', '1-6'], stdin=encodepeaks, stderr=cxt.log, stdout=outfile, cwd=cxt.sample.dest)
 				return {
-					'simple_bed': os.path.join(sample.dest, sample.name+'_peaks.bed')
+					'simple_bed': os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed')
 				}
-		logfile.write('no conversion necessary...\n')
-		logfile.flush()
+		cxt.log.write('no conversion necessary...\n')
+		cxt.log.flush()
 	#end run()
 #end class GeneratePlainBed

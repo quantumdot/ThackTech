@@ -91,7 +91,7 @@ class MetricContainer(object):
             ax.set_xlim(right=limit)
 
 
-class SampleContainer(object):
+class cxt.sampleContainer(object):
     def __init__(self, name):
         self.name = name
         self.metrics = {}
@@ -110,17 +110,17 @@ def main():
     parser.add_argument('--xkcd', action='store_true', help="Create the plots in the xkcd style")
     parser.add_argument('--D2', action='store_true', help="Produce a 2D plot using bed scores and lengths.")
     parser.add_argument('--log', action='store_true', help="Use log scale in the frequency axis of histograms.")
-    parser.add_argument('--squeeze', action=AutoAction, default=[None], type=str, nargs='*', help="Force the axis max limits to be the same amongst all samples. If not specified then each sample will have independent ranges. If specified with no argument or 'auto', the range will be deduced from all the max of all samples for each distribution. You may also specify a number that will be used for the range. Multiple values affect each distribution in [alphebitical] order. You may mix 'auto' and numbers.")
+    parser.add_argument('--squeeze', action=AutoAction, default=[None], type=str, nargs='*', help="Force the axis max limits to be the same amongst all cxt.samples. If not specified then each cxt.sample will have independent ranges. If specified with no argument or 'auto', the range will be deduced from all the max of all cxt.samples for each distribution. You may also specify a number that will be used for the range. Multiple values affect each distribution in [alphebitical] order. You may mix 'auto' and numbers.")
     args = parser.parse_args()
 
     #print args
     #exit()
 
-    samples = []
+    cxt.samples = []
     for b in args.bed:
-        samples.append(parse_bed(b))
+        cxt.samples.append(parse_bed(b))
 
-    metrics = sorted(samples[0].metrics.keys())
+    metrics = sorted(cxt.samples[0].metrics.keys())
     limits = {}
     mi = 0
     for mk in metrics:
@@ -129,14 +129,14 @@ def main():
             limits[mk] = None
         elif args.squeeze[mi] == 'auto':
             #automatic squeezing
-            limits[mk] = find_auto_limit(samples, mk)
+            limits[mk] = find_auto_limit(cxt.samples, mk)
         else:
             #we should have gotten a number from the user
             limits[mk] = float(args.squeeze[mi])
         mi = clamp(mi+1, 0, len(args.squeeze)-1)
         
-    for s in samples:
-        process_sample(s, args, limits)
+    for s in cxt.samples:
+        process_cxt.sample(s, args, limits)
 #end main()
 
 def clamp(val, minval, maxval):
@@ -145,9 +145,9 @@ def clamp(val, minval, maxval):
     return val
 #end clamp()
 
-def find_auto_limit(samples, metric):
+def find_auto_limit(cxt.samples, metric):
     limit = 0
-    for s in samples:
+    for s in cxt.samples:
         limit = max(limit, s.metrics[metric].stats.max)
     return limit
 #end find_auto_limit()
@@ -156,7 +156,7 @@ def parse_bed(bedfile):
     sys.stdout.write("Reading "+bedfile+".....\n")
     bed = pybedtools.BedTool(bedfile)
     savename = os.path.splitext(os.path.basename(bedfile))[0]
-    sample = SampleContainer(savename)
+    cxt.sample = cxt.sampleContainer(savename)
 
     #initialize some vars...
     lengths = numpy.empty(bed.count(), dtype=int)
@@ -166,16 +166,16 @@ def parse_bed(bedfile):
         lengths[i] = interval.length
         scores[i] = interval.score
         i += 1
-    sample.addMetric('Length', lengths)
-    sample.addMetric('Score', scores)
-    return sample
+    cxt.sample.addMetric('Length', lengths)
+    cxt.sample.addMetric('Score', scores)
+    return cxt.sample
 #end parse_bed()
 
 
-def process_sample(sample, args, limits):
+def process_cxt.sample(cxt.sample, args, limits):
 
-    sys.stdout = Tee(sample.name+'.stats.txt', 'w')
-    sys.stdout.write("\nProcessing "+sample.name+".bed....\n\n")
+    sys.stdout = Tee(cxt.sample.name+'.stats.txt', 'w')
+    sys.stdout.write("\nProcessing "+cxt.sample.name+".bed....\n\n")
 
     #allow xkcd style graphs
     if args.xkcd:
@@ -188,8 +188,8 @@ def process_sample(sample, args, limits):
     if args.D2:
         gridsize = (4,1)
 
-    lengths = sample.metrics['Length']
-    scores  = sample.metrics['Score']
+    lengths = cxt.sample.metrics['Length']
+    scores  = cxt.sample.metrics['Score']
 
     #plot the lengths    
     ax1 = plt.subplot2grid(gridsize, (0,0))
@@ -214,7 +214,7 @@ def process_sample(sample, args, limits):
         plt.title("Interval Length vs. Interval Scores")
         plt.xlabel("Interval Length")
 
-    imgname = sample.name+'.stats'+'.'+args.format
+    imgname = cxt.sample.name+'.stats'+'.'+args.format
     plt.savefig(imgname)
     sys.stdout.write("See graphical output at: "+imgname+"\n\n")
     sys.stdout.release() #release the logger!

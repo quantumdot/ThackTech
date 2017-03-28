@@ -65,7 +65,7 @@ class AlignmentPipelineSample(PipelineSample):
             raise IOError('Unable to find '+('PE ' if self.get_attribute('PE') else '')+'reads for '+self.name)
         self.add_file('source', 'fastq', files)
     #end find_files()
-#end PipelineSample
+#end Pipelinesample
 
 
 def main():
@@ -95,7 +95,7 @@ def main():
 
     sys.stdout.write('Reading sample manifest.....\n')
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
-    samples = [AlignmentPipelineSample(s, 'fastq') for s in sample_manifest.to_dict(orient='records')]
+    samples = [AlignmentPipelinesample(s) for s in sample_manifest.to_dict(orient='records')]
     sample_count = len(samples)
     sys.stdout.write('\t-> Found %d item%s for processing.....\n' % (len(sample_manifest.index), ('s' if len(sample_manifest.index) > 1 else '')))
 
@@ -344,7 +344,7 @@ def make_read_alignment_pipeline(args, additional_args):
                     # '--outRawCounts', os.path.join(fpt_dir, sample['Basename']+'.fingerprint_counts.txt'),
                     # '--numberOfProcessors', str(args.threads),
                     # '--binSize', '500', #default
-                    # '--numberOfSamples', '1000000', #2x default (default is 0.5e6)
+                    # '--numberOfsamples', '1000000', #2x default (default is 0.5e6)
                     # #'--verbose'
                 # ]
                 # sys.stdout.write("\t-> BAM fingerprint analysis......")

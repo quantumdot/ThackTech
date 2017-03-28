@@ -11,10 +11,10 @@ class RemoveDecompressedFiles(PipelineModule):
 		PipelineModule.__init__(self, 'RemoveDecompressedFiles', 'Remove Decompressed Files')
 	#end __init__()
 	
-	def run(self, sample, logfile):
-		for f in sample.get_attribute('decompressed_files'):
-			logfile.write("\t-> Removing decompressed file %s....\n" % (f,))
-			logfile.flush()
+	def run(self, cxt):
+		for f in cxt.sample.get_attribute('decompressed_files'):
+			cxt.log.write("\t-> Removing decompressed file %s....\n" % (f,))
+			cxt.log.flush()
 			os.remove(f)
 	#end run()
 #end class GeneratePseudoreplicates

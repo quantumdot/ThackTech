@@ -11,9 +11,9 @@ class Sleep(PipelineModule):
 	#end __init__()
 
 	
-	def run(self, sample, logfile):
-		logfile.write("About to sleep for %d seconds.\n" % (self.get_parameter_value('sleep_time'),))
-		logfile.flush()
+	def run(self, cxt):
+		cxt.log.write("About to sleep for %d seconds.\n" % (self.get_parameter_value('sleep_time'),))
+		cxt.log.flush()
 		time.sleep(self.get_parameter_value('sleep_time'))
 	#end run()
 #end class HelloWorld

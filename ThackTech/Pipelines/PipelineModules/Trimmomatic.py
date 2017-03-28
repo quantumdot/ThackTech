@@ -31,41 +31,41 @@ class Trimmomatic(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def run(self, sample, logfile):
-		outdir = os.path.join(sample.dest, 'trimmomatic')
+	def run(self, cxt):
+		outdir = os.path.join(cxt.sample.dest, 'trimmomatic')
 		filetools.ensure_dir(outdir) 
 
-		trimlog_loc = os.path.join(outdir, sample.name+'.trimlog')
+		trimlog_loc = os.path.join(outdir, cxt.sample.name+'.trimlog')
 		trimmomatic_args = [
-			'Trimmomatic' + ('PE' if sample.get_attribute('PE') else 'SE'),
+			'Trimmomatic' + ('PE' if cxt.sample.get_attribute('PE') else 'SE'),
 			'-threads', str(self.processors),
 			'-trimlog', trimlog_loc
 		]
 		out_sequences = []
-		read_files = self.resolve_input('fastq', sample)
-		if sample.get_attribute('PE'):
+		read_files = self.resolve_input('fastq', cxt.sample)
+		if cxt.sample.get_attribute('PE'):
 			#Input Files
 			trimmomatic_args.append(read_files[0])
 			trimmomatic_args.append(read_files[1])
 			#Output Files
-			trimmomatic_args.append(os.path.join(outdir, sample.name+'_R1.filtered.paired.fastq.gz'))
-			trimmomatic_args.append(os.path.join(outdir, sample.name+'_R1.filtered.unpaired.fastq.gz'))
-			trimmomatic_args.append(os.path.join(outdir, sample.name+'_R2.filtered.paired.fastq.gz'))
-			trimmomatic_args.append(os.path.join(outdir, sample.name+'_R2.filtered.unpaired.fastq.gz'))
+			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'))
+			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.unpaired.fastq.gz'))
+			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'))
+			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.unpaired.fastq.gz'))
 			#files to return - properly paired and filtered sequences passing QC
-			out_sequences.append(os.path.join(outdir, sample.name+'_R1.filtered.paired.fastq.gz'))
-			out_sequences.append(os.path.join(outdir, sample.name+'_R2.filtered.paired.fastq.gz'))
+			out_sequences.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'))
+			out_sequences.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'))
 		else:
 			#Input Files
 			trimmomatic_args.append(read_files[0])
 			#Output Files
-			trimmomatic_args.append(os.path.join(outdir, sample.name+'.filtered.fastq.gz'))
+			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'))
 			#files to return - filtered sequences passing QC
-			out_sequences.append(os.path.join(outdir, sample.name+'.filtered.fastq.gz'))
+			out_sequences.append(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'))
 		#########################
 		#  Trimming Parameters  #
 		#########################
-		if sample.get_attribute('PE'):
+		if cxt.sample.get_attribute('PE'):
 			#ILLUMINACLIP:<fastaWithAdaptersEtc>:<seed mismatches>:<palindrome clipthreshold>:<simple clip threshold>:<minAdapterLength>:<keepBothReads>
 			trimmomatic_args.append('ILLUMINACLIP:%s:%d:%d:%d:%d:%s' % (self.get_parameter_value('trim_adapt_fa_PE'), 2, 30, 10, 2, 'true'))
 		else:
@@ -88,16 +88,16 @@ class Trimmomatic(PipelineModule):
 			
 		
 		
-		logfile.write("\t-> Performing trimming of source sequences......")
-		logfile.write("\n..............................................\n")
-		logfile.write(" ".join(trimmomatic_args))
-		logfile.write("\n..............................................\n")
-		logfile.flush()
+		cxt.log.write("\t-> Performing trimming of source sequences......")
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(trimmomatic_args))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
 		self._run_subprocess(trimmomatic_args)
 		
 		
-		logfile.write("\t-> Compressing Trim Log......")
-		logfile.flush()
+		cxt.log.write("\t-> Compressing Trim Log......")
+		cxt.log.flush()
 		self._run_subprocess(['tar', 'cfz', trimlog_loc+'.tar.gz', trimlog_loc])
 		
 		

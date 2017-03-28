@@ -7,6 +7,7 @@ from ThackTech import filetools
 from ThackTech.Pipelines.AnalysisPipeline import AnalysisPipeline
 from ThackTech.Pipelines.PipelineSample import PipelineSample
 from ThackTech.Pipelines.Context import ModuleRunContext
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class PipelineRunner(object):
@@ -40,12 +41,12 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 	
 	Parameters
 		pipeline:	(AnalysisPipeline) Pipeline to run
-		sample:		(PipelineSample) Sample to run pipeline on
+		sample:		(Pipelinecxt.sample) sample to run pipeline on
 		task_statuses: (complicated....) Status information
 	"""
 	#some assertions to make sure we don't go too crazy!
 	assert isinstance(pipeline, AnalysisPipeline), "pipeline parameter must be of type AnalysisPipeline!"
-	assert isinstance(sample, PipelineSample), "sample parameter must be of type PipelineSample!"
+	assert isinstance(sample, PipelineSample), "sample parameter must be of type Pipelinecxt.sample!"
 	
 	
 	tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
@@ -75,22 +76,31 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			for step in pipeline.itersteps():
 				#step = pipeline.pipeline[i]
 				status_counts['attempted'] += 1
-				logfile.write('Running pipeline step #%d: %s\n' % (step.step+1, step.name,))
+				logfile.write('Running pipeline step #%d: %s\n' % (step.index+1, step.module.name,))
 				logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
 				logfile.flush()
 				try:
-					#if not step.is_compatible_with_sample(sample):
-					#	raise ValueError('%s does not support the "%s" file format!\nThe following types ARE supported: %s\nSkipping processing......\n' % (step.name, sample.format, ', '.join(step.supported_types())))
+					#if not step.is_compatible_with_cxt.sample(sample):
+					#	raise ValueError('%s does not support the "%s" file format!\nThe following types ARE supported: %s\nSkipping processing......\n' % (step.name, cxt.sample.format, ', '.join(step.supported_types())))
 				
-					tasks_statuses[sample.name] = tasks_statuses[sample.name].update(float(i)/float(pipeline_size), step.description)
+					tasks_statuses[sample.name] = tasks_statuses[sample.name].update(float(step.index)/float(pipeline_size), step.module.description)
 					#step.load_modules(logfile)
-					cxt = ModuleRunContext(pipeline.name, i, step.name, logfile, sample)
-					results = step.run(sample, logfile)
-					if results is not None and isinstance(results, dict):
-						for label, path in results.iteritems():
-							sample.add_file(step.name, label, path)
+					cxt = ModuleRunContext(pipeline.name, step.index, step.module.name, logfile, sample)
+					results = step.module.run(cxt)
+					
+					if results is not None:
+						
+						if isinstance(results, dict):
+							#support the old-style of returning output
+							#this may be removed in the future!
+							for label, path in results.iteritems():
+								sample.add_file(FileInfo(path, FileContext.from_module_context(cxt, label)))
+						else:
+							for f in results:
+								sample.add_file(f)
+						
 				except Exception as e:
-					if step.is_critical():
+					if step.module.is_critical:
 						status_counts['critical'] += 1
 						raise #this step was critical and failed, rethrow to the outer try and halt the pipeline!
 					else:
@@ -123,4 +133,4 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			logfile.write("--------------------------------------------\n\n")
 			logfile.flush()
 			return sample
-#end __execute_pipeline_on_sample()
+#end __execute_pipeline_on_cxt.sample()

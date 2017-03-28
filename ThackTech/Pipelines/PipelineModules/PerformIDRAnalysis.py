@@ -32,29 +32,29 @@ class PerformIDRAnalysis(PipelineModule):
 		return None
 	#end supported_types()
 	
-	def run(self, sample, logfile):
-		dest_dir = os.path.join(sample.dest, 'idr')
+	def run(self, cxt):
+		dest_dir = os.path.join(cxt.sample.dest, 'idr')
 		filetools.ensure_dir(dest_dir)
 		output_files = {}
 		
-		consistancy_output = os.path.join(dest_dir, sample.name+'_idr_npeaks.txt')
+		consistancy_output = os.path.join(dest_dir, cxt.sample.name+'_idr_npeaks.txt')
 		with open(consistancy_output, 'a') as count_file:
 			count_file.write('Group\tComparison\tThreshold\tNumPeaks\n')
-			output = self._run_batch_consistency_analysis('primary_replicates', sample, dest_dir, sample.has_attribute('broad'), logfile)
+			output = self._run_batch_consistency_analysis('primary_replicates', cxt.sample, dest_dir, cxt.sample.has_attribute('broad'), cxt.log)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_overlapping_peaks'):
 					n = self._get_num_consistant_peaks(output_files[key], self.get_parameter_value('primary_replicates_IDR_threshold'))
 					count_file.write('%s\t%f\t%d\n' % ('primary_replicates', key.replace('_overlapping_peaks', ''), self.get_parameter_value('primary_replicates_IDR_threshold'), n))
 			
-			output = self._run_batch_consistency_analysis('pseudo_replicates',  sample, dest_dir, sample.has_attribute('broad'), logfile)
+			output = self._run_batch_consistency_analysis('pseudo_replicates',  cxt.sample, dest_dir, cxt.sample.has_attribute('broad'), cxt.log)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_overlapping_peaks'):
 					n = self._get_num_consistant_peaks(output_files[key], self.get_parameter_value('pseudo_replicates_IDR_threshold'))
 					count_file.write('%s\t%f\t%d\n' % ('pseudo_replicates', key.replace('_overlapping_peaks', ''), self.get_parameter_value('pseudo_replicates_IDR_threshold'), n))
 					
-			output = self._run_batch_consistency_analysis('pooled_pseudo_replicates',  sample, dest_dir, sample.has_attribute('broad'), logfile)
+			output = self._run_batch_consistency_analysis('pooled_pseudo_replicates',  cxt.sample, dest_dir, cxt.sample.has_attribute('broad'), cxt.log)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_overlapping_peaks'):
@@ -70,9 +70,9 @@ class PerformIDRAnalysis(PipelineModule):
 		return int(result)
 	#end _get_num_consistant_peaks()
 	
-	def _run_batch_consistency_analysis(self, replicate_type, sample, dest, broad, logfile):
+	def _run_batch_consistency_analysis(self, replicate_type, cxt.sample, dest, broad, cxt.log):
 		output_files = {}
-		replicate_combinations = list(itertools.combinations(self.resolve_input(replicate_type, sample), 2))
+		replicate_combinations = list(itertools.combinations(self.resolve_input(replicate_type, cxt.sample), 2))
 		output_prefixes = []
 		for pair in replicate_combinations:
 			rep1_bn = Common.basename_noext(pair[0])
@@ -89,12 +89,12 @@ class PerformIDRAnalysis(PipelineModule):
 				'T' if broad else 'F',
 				self.get_parameter_value('ranking_measure')
 			]
-			logfile.write('-> Performing IDR analysis on %s VS %s\n' % (rep1_bn, rep2_bn))
-			logfile.write("..............................................\n")
-			logfile.write(" ".join(idr_cmd))
-			logfile.write("\n..............................................\n")
-			logfile.flush()
-			proc = subprocess.Popen(idr_cmd, cwd='/home/josh/scripts/idrCode/', stderr=subprocess.STDOUT, stdout=logfile)
+			cxt.log.write('-> Performing IDR analysis on %s VS %s\n' % (rep1_bn, rep2_bn))
+			cxt.log.write("..............................................\n")
+			cxt.log.write(" ".join(idr_cmd))
+			cxt.log.write("\n..............................................\n")
+			cxt.log.flush()
+			proc = subprocess.Popen(idr_cmd, cwd='/home/josh/scripts/idrCode/', stderr=subprocess.STDOUT, stdout=cxt.log)
 			proc.communicate()
 
 			output_files[output_name + '_EM_fitting_output'] 	= outprefix + '-em.sav'
@@ -111,12 +111,12 @@ class PerformIDRAnalysis(PipelineModule):
 			str(len(replicate_combinations)),
 			os.path.join(dest, replicate_type)
 		] + output_prefixes
-		logfile.write('-> Generating IDR plots for %s\n' % (replicate_type,))
-		logfile.write("..............................................\n")
-		logfile.write(" ".join(idr_plot_cmd))
-		logfile.write("\n..............................................\n")
-		logfile.flush()
-		proc = subprocess.Popen(idr_cmd, cwd='/home/josh/scripts/idrCode/', stderr=subprocess.STDOUT, stdout=logfile)
+		cxt.log.write('-> Generating IDR plots for %s\n' % (replicate_type,))
+		cxt.log.write("..............................................\n")
+		cxt.log.write(" ".join(idr_plot_cmd))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
+		proc = subprocess.Popen(idr_cmd, cwd='/home/josh/scripts/idrCode/', stderr=subprocess.STDOUT, stdout=cxt.log)
 		proc.communicate()
 		output_files[replicate_type + '_IDR_plot'] = os.path.join(dest, replicate_type+'-plot.ps')
 		

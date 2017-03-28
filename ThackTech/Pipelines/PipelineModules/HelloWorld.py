@@ -8,8 +8,8 @@ class HelloWorld(PipelineModule):
 		PipelineModule.__init__(self, 'HelloWorld', 'Say "Hello World".')
 	#end __init__()
 	
-	def run(self, sample, logfile):
-		logfile.write("Hello World from:\n%s\n" % (platform.uname(),))
-		logfile.flush()
+	def run(self, cxt):
+		cxt.log.write("Hello World from:\n%s\n" % (platform.uname(),))
+		cxt.log.flush()
 	#end run()
 #end class HelloWorld

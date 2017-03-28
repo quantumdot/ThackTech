@@ -17,10 +17,10 @@ class ComputeAverageReadLength(PipelineModule):
 		return None
 	#end supported_types()
 	
-	def run(self, sample, logfile):	
-		read_length = subprocess.check_output(['awk', '-f', self.get_parameter_value_as_string('script_path'), self.resolve_input('fastq', sample)])
-		logfile.write("-> Average Read Length = %d\n" % (int(read_length),))
-		logfile.flush()
-		sample.add_attribute('avgreadlength', int(read_length))
+	def run(self, cxt):	
+		read_length = subprocess.check_output(['awk', '-f', self.get_parameter_value_as_string('script_path'), self.resolve_input('fastq', cxt.sample)])
+		cxt.log.write("-> Average Read Length = %d\n" % (int(read_length),))
+		cxt.log.flush()
+		cxt.cxt.sample.add_attribute('avgreadlength', int(read_length))
 	#end run()
 #end class GeneratePseudoreplicates

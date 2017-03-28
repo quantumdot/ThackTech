@@ -19,15 +19,15 @@ class TransferToShm(PipelineModule):
 		return None
 	#end supported_types()
 	
-	def run(self, sample, logfile):
-		logfile.write('-> Copying source files to RAM disk....\n')
-		paths = sample.get_file_group('source')
-		sample.add_attribute('origional_sources', paths)
-		sample.add_attribute('origional_dest', sample.dest)
-		shmdest = os.path.join(self.get_parameter_value('shm_path'), sample.name)
+	def run(self, cxt):
+		cxt.log.write('-> Copying source files to RAM disk....\n')
+		paths = cxt.sample.get_file_group('source')
+		cxt.sample.add_attribute('origional_sources', paths)
+		cxt.sample.add_attribute('origional_dest', cxt.sample.dest)
+		shmdest = os.path.join(self.get_parameter_value('shm_path'), cxt.sample.name)
 		filetools.ensure_dir(shmdest)
 		
-		logfile.flush()
+		cxt.log.flush()
 		procs = []
 		newpaths = {}
 		for key in paths:
@@ -35,30 +35,30 @@ class TransferToShm(PipelineModule):
 			filename = os.path.basename(fullpath)
 			dir = os.path.dirname(fullpath)
 			basename, ext = os.path.splitext(filename)
-			logfile.write('-> preparing to move %s\n' % (fullpath,))
+			cxt.log.write('-> preparing to move %s\n' % (fullpath,))
 			
 			dest = os.path.join(shmdest, filename)
 			newpaths[key] = dest
 			#check if the file exists, and if so do the files look alike
 			#if the file exists and looks the same, we can skip copying it over (but we still return the shm path) 
 			if os.path.isfile(dest) and filecmp.cmp(fullpath, dest):
-				logfile.write('    -> It appears that the file already exists on RAMFS. Skipping copying of this file\n')
-				logfile.flush()
+				cxt.log.write('    -> It appears that the file already exists on RAMFS. Skipping copying of this file\n')
+				cxt.log.flush()
 			else:
 				if ext == '.bam':
 					#dont forget the index!
 					if os.path.isfile(fullpath+'.bai'):
-						procs.append(subprocess.Popen(['cp', '-p', '-t', shmdest, fullpath+'.bai'], stderr=subprocess.STDOUT, stdout=logfile))
+						procs.append(subprocess.Popen(['cp', '-p', '-t', shmdest, fullpath+'.bai'], stderr=subprocess.STDOUT, stdout=cxt.log))
 					elif os.path.isfile(os.path.join(dir, basename+'.bai')):
-						procs.append(subprocess.Popen(['cp', '-p', '-t', shmdest, os.path.join(dir, basename+'.bai')], stderr=subprocess.STDOUT, stdout=logfile))
+						procs.append(subprocess.Popen(['cp', '-p', '-t', shmdest, os.path.join(dir, basename+'.bai')], stderr=subprocess.STDOUT, stdout=cxt.log))
 					
-				procs.append(subprocess.Popen(['cp', '-p', '-t', shmdest, fullpath], stderr=subprocess.STDOUT, stdout=logfile))
+				procs.append(subprocess.Popen(['cp', '-p', '-t', shmdest, fullpath], stderr=subprocess.STDOUT, stdout=cxt.log))
 			
-			sample.add_file('source', key, dest)
+			cxt.sample.add_file('source', key, dest)
 		if len(procs) > 0:
 			for p in procs:
 				p.communicate()
 		
-		sample.dest = shmdest
+		cxt.sample.dest = shmdest
 	#end run()
 #end class TransferToShm

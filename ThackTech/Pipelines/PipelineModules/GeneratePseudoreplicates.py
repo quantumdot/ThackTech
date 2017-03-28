@@ -21,10 +21,10 @@ class GeneratePseudoreplicates(PipelineModule):
 		return ['bam', 'bampe']
 	#end supported_types()
 	
-	def run(self, sample, logfile):
-		dest_dir = os.path.join(sample.dest, 'pseudoreps')
+	def run(self, cxt):
+		dest_dir = os.path.join(cxt.sample.dest, 'pseudoreps')
 		filetools.ensure_dir(dest_dir)
-		alignments = self.resolve_input('alignments', sample)
+		alignments = self.resolve_input('alignments', cxt.sample)
 		samfile = pysam.AlignmentFile(alignments, 'rb')
 		
 		replicates = []
@@ -32,7 +32,7 @@ class GeneratePseudoreplicates(PipelineModule):
 		out_files = {}
 		for i in range(rep_count):
 			key = 'pr' + str(i+1)
-			out_files[key] = os.path.join(dest_dir, sample.name+'.'+key+'.bam')
+			out_files[key] = os.path.join(dest_dir, cxt.sample.name+'.'+key+'.bam')
 			replicates.append(pysam.AlignmentFile(out_files[key], 'wb', template=samfile))
 		
 		for read in samfile.fetch():

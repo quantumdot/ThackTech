@@ -102,15 +102,15 @@ class PipelineModule(object):
 		When a resolver is initially named, the defualt implementation
 		assigned to the resolver is a lambda that returns None.
 		"""
-		self.resolvers[name] = lambda sample: None
+		self.resolvers[name] = lambda cxt.sample: None
 	#end _name_resolver()
 	
 	def set_resolver(self, name, _callable):
 		self.resolvers[name] = _callable
 	#end set_resolver()
 	
-	def resolve_input(self, name, sample):
-		return self.resolvers[name](sample)
+	def resolve_input(self, name, cxt.sample):
+		return self.resolvers[name](cxt.sample)
 	#end resolve_input()
 	
 	def get_resolver_names(self):
@@ -140,8 +140,22 @@ class PipelineModule(object):
 		pass
 	#end load_modules()
 	
-	def run(self, sample, logfile):
-		""" Runs the pipeline module on the provided PipelineSample and sending log information to logfile handle """
+	def run(self, context):
+		""" Runs the pipeline module given the supplied context
+		
+		!!!!! This method is the most important method to override in concrete implementations !!!!!
+		
+		Context provide particular run specific information, including:
+			-cxt.sample (Pipelinecxt.sample) and sending log information to logfile handle 
+			-logfile (file-like)
+			-misc. metadata about step number, pipeline name, etc.
+			
+		Parameters:
+			context: (ModuleRunContext) Context to run this module with.
+			
+		Returns:
+			iterable of FileInfo objects representing output files
+		"""
 		pass
 	#end run()
 	

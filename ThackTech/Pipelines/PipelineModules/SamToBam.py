@@ -18,36 +18,36 @@ class SamToBam(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def load_modules(self, logfile):
+	def load_modules(self, cxt.log):
 		pass
 		# try:
 			# #from ThackTech.Pipelines import lmodHelper
-			# #logfile.write(lmodHelper.module("load", "samtools/0.1.19"))
+			# #cxt.log.write(lmodHelper.module("load", "samtools/0.1.19"))
 			# from env_modules_python import module
-			# logfile.write(module("load", "samtools/0.1.19"))
-			# logfile.flush()
+			# cxt.log.write(module("load", "samtools/0.1.19"))
+			# cxt.log.flush()
 		# except:
 			# pass
 	#end load_modules()
 	
-	def run(self, sample, logfile):
-		logfile.write("\t-> Postprocessing with samtools...\n")
-		#self.load_modules(logfile)
+	def run(self, cxt):
+		cxt.log.write("\t-> Postprocessing with samtools...\n")
+		#self.load_modules(cxt.log)
 		#print os.environ
-		sam = self.resolve_input('sam', sample)
+		sam = self.resolve_input('sam', cxt.sample)
 		bam = os.path.splitext(sam)[0]+'.bam'
 
 		#convert SAM to BAM: -b => output BAM; -S => input is SAM; -@ => multithreading!
-		logfile.write("\t-> Converting SAM to BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
-		logfile.flush()
+		cxt.log.write("\t-> Converting SAM to BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
+		cxt.log.flush()
 		self._run_subprocess(['samtools', 'view', '-b', '-S', '-@', str(self.processors), '-o', bam, sam])#samtools view -bS -@ $nump "${dest}${alnname}.sam" > "${dest}${alnname}.bam"
 		
 		#remove the SAM file as it is no longer needed
 		os.remove(sam)
 		
 		#Sort our BAM file by genomic location: -@ => multithreading!
-		logfile.write("\t-> Sorting BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
-		logfile.flush()
+		cxt.log.write("\t-> Sorting BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
+		cxt.log.flush()
 		sorted_bam = os.path.splitext(bam)[0]+'_sorted'
 		self._run_subprocess(['samtools', 'sort', '-@', str(self.processors), bam, sorted_bam])#samtools sort -@ $nump "${dest}${alnname}.bam" "${dest}${alnname}_sorted"
 		
@@ -57,8 +57,8 @@ class SamToBam(PipelineModule):
 		#shutil.move() #mv "${dest}${alnname}_sorted.bam" "${dest}${alnname}.bam"
 		
 		#index our sorted BAM file
-		logfile.write("\t-> Indexing BAM...\n")
-		logfile.flush()
+		cxt.log.write("\t-> Indexing BAM...\n")
+		cxt.log.flush()
 		self._run_subprocess(['samtools', 'index', bam])#samtools index "${dest}${alnname}.bam"
 		
 		return {

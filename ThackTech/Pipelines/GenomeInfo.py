@@ -68,10 +68,10 @@ class GenomeInfo(object):
 	#end get_index()
 	
 	__known_references = None
-	__probe_paths = []
-	@staticmethod
-	def register_path(path):
-		GenomeInfo.__probe_paths.append(path)
+	#__probe_paths = []
+	#@staticmethod
+	#def register_path(path):
+	#	GenomeInfo.__probe_paths.append(path)
 	#end register_path()
 	
 	@staticmethod

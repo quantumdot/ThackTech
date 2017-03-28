@@ -1,11 +1,4 @@
-# import os
-# import sys
-# import time
-# import platform
-# import traceback
-# import re
-# #from multiprocessing import Pool, Manager 
-# #from multiprocessing import Manager
+
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
 import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
 # import subprocess
@@ -40,7 +33,7 @@ from ThackTech.Pipelines import PipelineModules
 __all__ = [	'AnalysisPipeline',
 			'GenomeInfo',
 			'FileInfo',
-			'PipelineSample',
+			'Pipelinecxt.sample',
 			'ModuleParameter',
 			'PipelineModule',
 			'PipelineRunner',

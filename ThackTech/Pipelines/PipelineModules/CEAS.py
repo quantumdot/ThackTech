@@ -47,54 +47,50 @@ class CEAS(PipelineModule):
 			return buff
 	#end show_version()
 	
-	def supported_types(self):
-		return None
-	#end supported_types()
-	
-	def run(self, sample, logfile):
-		signal_file = self.resolve_input('signal', sample)
+	def run(self, cxt):
+		signal_file = self.resolve_input('signal', cxt.sample)
 		signal_compressed = False
 		
 		#check for compressed files
 		if os.path.splitext(signal_file)[1] == '.gz':
 			signal_compressed = True
-			logfile.write("Decompressing signal file......\n")
-			proc = subprocess.Popen(['gunzip', '--keep', signal_file], cwd=sample.dest)
+			cxt.log.write("Decompressing signal file......\n")
+			proc = subprocess.Popen(['gunzip', '--keep', signal_file], cwd=cxt.sample.dest)
 			proc.communicate()
 			signal_file = os.path.splitext(signal_file)[0]
 		
 		if os.path.splitext(signal_file)[1].lower() in ['.bw', '.bigwig']:
 			ceas_exe = self.get_parameter_value('ceas_bw_path')
-			self.get_parameter('additional_args').value + ['-l', sample.genome.chrsize]
+			self.get_parameter('additional_args').value + ['-l', cxt.sample.genome.chrsize]
 		else:
 			ceas_exe = self.get_parameter_value('ceas_wig_path')
 
 		ceas_args = [
 			ceas_exe,
-			'-b', self.resolve_input('peaks', sample),
+			'-b', self.resolve_input('peaks', cxt.sample),
 			'-w',  signal_file,
-			'-g', ('/mnt/ref/ceas/%s.refGene' % (sample.genome.name,)),
-			'--name', sample.name
+			'-g', ('/mnt/ref/ceas/%s.refGene' % (cxt.sample.genome.name,)),
+			'--name', cxt.sample.name
 		] + self.get_parameter_value('additional_args')
 			
 		#Run CEAS
-		logfile.write("Performing Cis-regulatory Element Annotation......\n")
-		self.show_version(logfile, True, ceas_exe)
-		logfile.write("\n..............................................\n")
-		logfile.write(" ".join(ceas_args))
-		logfile.write("\n..............................................\n")
-		logfile.flush()	
+		cxt.log.write("Performing Cis-regulatory Element Annotation......\n")
+		self.show_version(cxt.log, True, ceas_exe)
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(ceas_args))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()	
 
-		self._run_subprocess(ceas_args, cwd=sample.dest, stderr=subprocess.STDOUT, stdout=logfile)
+		self._run_subprocess(ceas_args, cwd=cxt.sample.dest, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		#generate the model figure
-		fig_path = os.path.join(sample.dest, sample.name+'.R')
+		fig_path = os.path.join(cxt.sample.dest, cxt.sample.name+'.R')
 		if os.path.exists(fig_path):
-			logfile.write('\t-> Generating PDF of results.....\n')
-			logfile.flush()
+			cxt.log.write('\t-> Generating PDF of results.....\n')
+			cxt.log.flush()
 			with open(fig_path, 'r') as rmodel:
 				with open(os.devnull, 'w') as devnull:
-					self._run_subprocess(['R', '--quiet', '--vanilla'], stdin=rmodel, stderr=subprocess.STDOUT, stdout=devnull, cwd=sample.dest)
+					self._run_subprocess(['R', '--quiet', '--vanilla'], stdin=rmodel, stderr=subprocess.STDOUT, stdout=devnull, cwd=cxt.sample.dest)
 
 		if signal_compressed:
 			os.remove(signal_file)

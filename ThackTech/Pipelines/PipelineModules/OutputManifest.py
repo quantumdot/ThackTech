@@ -18,10 +18,10 @@ class OutputManifest(PipelineModule):
 		return None
 	#end supported_types()
 	
-	def run(self, sample, logfile):
-		logfile.write("-> Writing sample output manifest....\n")
-		logfile.flush()
-		dest = os.path.join(sample.dest, sample.name+'_output_manifest.tsv')
+	def run(self, cxt):
+		cxt.log.write("-> Writing cxt.sample output manifest....\n")
+		cxt.log.flush()
+		dest = os.path.join(cxt.sample.dest, cxt.sample.name+'_output_manifest.tsv')
 		if os.path.exists(dest):
 			write_headers = False
 		else:
@@ -30,9 +30,9 @@ class OutputManifest(PipelineModule):
 		with open(dest, 'a') as output_manifest:
 			if write_headers:
 				output_manifest.write('module\tlabel\tpath\n')
-			for groupkey in sample.files.keys():
-				for labelkey in sample.files[groupkey].keys():
-					val = sample.files[groupkey][labelkey]
+			for groupkey in cxt.sample.files.keys():
+				for labelkey in cxt.sample.files[groupkey].keys():
+					val = cxt.sample.files[groupkey][labelkey]
 					if isinstance(val, str):
 						out_val = "'%s'" % (val,)
 					else:

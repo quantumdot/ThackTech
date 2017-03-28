@@ -22,28 +22,28 @@ class RPKMNormBigWig(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def run(self, sample, logfile):
-		#dest = sample.get_attribute('origional_dest') if sample.has_attribute('origional_dest') else sample.dest
-		sample_basename = "%s.%s.%s" % (sample.name, 'rpkm_norm', ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw'))
+	def run(self, cxt):
+		#dest = cxt.sample.get_attribute('origional_dest') if cxt.sample.has_attribute('origional_dest') else cxt.sample.dest
+		cxt.sample_basename = "%s.%s.%s" % (cxt.sample.name, 'rpkm_norm', ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw'))
 		bamcoverage_args = [
 			'bamCoverage',
-			'--bam', self.resolve_input('bam', sample),
-			'--outFileName', os.path.join(sample.dest, sample_basename),
+			'--bam', self.resolve_input('bam', cxt.sample),
+			'--outFileName', os.path.join(cxt.sample.dest, cxt.sample_basename),
 			'--outFileFormat', self.get_parameter_value_as_string('output_format'),
 			'--binSize', self.get_parameter_value_as_string('bin_size'),
 			'--normalizeUsingRPKM',
 			'--numberOfProcessors', str(self.processors),
 			'--verbose'
 		]
-		logfile.write('Generating normalized signal track....')
-		logfile.write("\n..............................................\n")
-		logfile.write(" ".join(bamcoverage_args))
-		logfile.write("\n..............................................\n")
-		logfile.flush()
-		self._run_subprocess(bamcoverage_args, cwd=sample.dest, stderr=subprocess.STDOUT, stdout=logfile)
+		cxt.log.write('Generating normalized signal track....')
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(bamcoverage_args))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
+		self._run_subprocess(bamcoverage_args, cwd=cxt.sample.dest, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		return {
-			'rpkm_norm_bw': os.path.join(sample.dest, sample_basename)
+			'rpkm_norm_bw': os.path.join(cxt.sample.dest, cxt.sample_basename)
 		}
 	#end run()
 #end class RPKMNormBigWig

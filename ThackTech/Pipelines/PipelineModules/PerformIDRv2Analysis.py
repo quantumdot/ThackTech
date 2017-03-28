@@ -33,45 +33,45 @@ class PerformIDRv2Analysis(PipelineModule):
 		return None
 	#end supported_types()
 	
-	def run(self, sample, logfile):
-		curr_dest = sample.dest
-		sample.dest = os.path.join(sample.dest, 'idr')
-		filetools.ensure_dir(sample.dest)
+	def run(self, cxt):
+		curr_dest = cxt.sample.dest
+		cxt.sample.dest = os.path.join(cxt.sample.dest, 'idr')
+		filetools.ensure_dir(cxt.sample.dest)
 		output_files = {}
 		
-		consistancy_output = os.path.join(sample.dest, sample.name+'_idr_npeaks.txt')
+		consistancy_output = os.path.join(cxt.sample.dest, cxt.sample.name+'_idr_npeaks.txt')
 		with open(consistancy_output, 'a') as count_file:
 			count_file.write('Group\tComparison\tThreshold\tNumPeaks\n')
 			
 			#IDR for primary replicates
-			output = self._run_batch_consistency_analysis('primary_replicates', sample, self.get_parameter_value('primary_replicates_IDR_threshold'), logfile)
+			output = self._run_batch_consistency_analysis('primary_replicates', cxt.sample, self.get_parameter_value('primary_replicates_IDR_threshold'), cxt.log)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_N'):
 					count_file.write('%s\t%s\t%f\t%d\n' % ('primary_replicates', key.replace('_N', ''), self.get_parameter_value('primary_replicates_IDR_threshold'), output[key]))
 			
 			#IDR for pseudo self-replicates
-			output = self._run_batch_consistency_analysis('pseudo_replicates',  sample, self.get_parameter_value('pseudo_replicates_IDR_threshold'), logfile)
+			output = self._run_batch_consistency_analysis('pseudo_replicates',  cxt.sample, self.get_parameter_value('pseudo_replicates_IDR_threshold'), cxt.log)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_N'):
 					count_file.write('%s\t%s\t%f\t%d\n' % ('pseudo_replicates', key.replace('_N', ''), self.get_parameter_value('pseudo_replicates_IDR_threshold'), output[key]))
 			
 			#IDR for pseudo pooled-replicates
-			output = self._run_batch_consistency_analysis('pooled_pseudo_replicates',  sample, self.get_parameter_value('pooled_pseudo_replicates_IDR_threshold'), logfile)
+			output = self._run_batch_consistency_analysis('pooled_pseudo_replicates',  cxt.sample, self.get_parameter_value('pooled_pseudo_replicates_IDR_threshold'), cxt.log)
 			output_files.update(output)
 			for key in output:
 				if key.endswith('_N'):
 					count_file.write('%s\t%s\t%f\t%d\n' % ('pooled_pseudo_replicates', key.replace('_N', ''), self.get_parameter_value('pooled_pseudo_replicates_IDR_threshold'), output[key]))
 		
 		output_files['consistancy_output'] = consistancy_output
-		sample.dest = curr_dest #replace the sample destination
+		cxt.sample.dest = curr_dest #replace the cxt.sample destination
 		return output_files
 	#end run()
 	
-	def _run_batch_consistency_analysis(self, replicate_type, sample, idr_threshold, logfile):
+	def _run_batch_consistency_analysis(self, replicate_type, cxt.sample, idr_threshold, cxt.log):
 		output_files = {}
-		replicate_combinations = list(itertools.combinations(self.resolve_input(replicate_type, sample), 2))
+		replicate_combinations = list(itertools.combinations(self.resolve_input(replicate_type, cxt.sample), 2))
 		output_prefixes = []
 		for pair in replicate_combinations:
 			rep1_bn = filetools.basename_noext(pair[0])
@@ -79,8 +79,8 @@ class PerformIDRv2Analysis(PipelineModule):
 			
 			peak_type = os.path.splitext(pair[0])[1][1:]
 			output_name = rep1_bn+'_VS_'+rep2_bn
-			pooled_common_peaks_IDR_filename = os.path.join(sample.dest, output_name+'.pooled_common_IDRv2.'+peak_type)
-			idr_log_output = os.path.join(sample.dest, output_name+'.IDR.log')
+			pooled_common_peaks_IDR_filename = os.path.join(cxt.sample.dest, output_name+'.pooled_common_IDRv2.'+peak_type)
+			idr_log_output = os.path.join(cxt.sample.dest, output_name+'.IDR.log')
 			idr_cmd = [ 
 				'idr',
 				'--verbose',
@@ -90,27 +90,27 @@ class PerformIDRv2Analysis(PipelineModule):
 				'--output-file', pooled_common_peaks_IDR_filename,
 				'--log-output-file', idr_log_output,
 				'--soft-idr-threshold', str(idr_threshold),
-				'--samples', pair[0], pair[1]
+				'--cxt.samples', pair[0], pair[1]
 			]
 			
 
-			logfile.write('-> Performing IDR analysis on %s VS %s\n' % (rep1_bn, rep2_bn))
-			logfile.write("-> "+subprocess.check_output(['idr', '--version'], stderr=subprocess.STDOUT))
-			logfile.write("..............................................\n")
-			logfile.write(" ".join(idr_cmd))
-			logfile.write("\n..............................................\n")
-			logfile.flush()
-			proc = subprocess.Popen(idr_cmd, stderr=subprocess.STDOUT, stdout=logfile)
+			cxt.log.write('-> Performing IDR analysis on %s VS %s\n' % (rep1_bn, rep2_bn))
+			cxt.log.write("-> "+subprocess.check_output(['idr', '--version'], stderr=subprocess.STDOUT))
+			cxt.log.write("..............................................\n")
+			cxt.log.write(" ".join(idr_cmd))
+			cxt.log.write("\n..............................................\n")
+			cxt.log.flush()
+			proc = subprocess.Popen(idr_cmd, stderr=subprocess.STDOUT, stdout=cxt.log)
 			proc.communicate()
 
 			output_files[output_name + '_pooled_common_peaks_IDR'] = pooled_common_peaks_IDR_filename
 			output_files[output_name + '_EM_parameters_log'] = idr_log_output
-			output_files[output_name + '_IDR_plot']	= os.path.join(sample.dest, output_name+'.png')
+			output_files[output_name + '_IDR_plot']	= os.path.join(cxt.sample.dest, output_name+'.png')
 			
 		
 		
 			awk_string = r"""awk 'BEGIN{OFS="\t"} $12>=%2.2f {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'""" % (-math.log10(idr_threshold))
-			final_IDR_thresholded_filename =  os.path.join(sample.dest, output_name + '.IDR%2.2f.%s' % (idr_threshold, peak_type))
+			final_IDR_thresholded_filename =  os.path.join(cxt.sample.dest, output_name + '.IDR%2.2f.%s' % (idr_threshold, peak_type))
 			Common.run_pipe([
 				'cat %s' % (pooled_common_peaks_IDR_filename),
 				awk_string,
@@ -118,7 +118,7 @@ class PerformIDRv2Analysis(PipelineModule):
 				#'gzip -c'
 			], final_IDR_thresholded_filename)
 
-			npeaks_pass_filename = os.path.join(sample.dest, output_name + '-npeaks-aboveIDR.txt')
+			npeaks_pass_filename = os.path.join(cxt.sample.dest, output_name + '-npeaks-aboveIDR.txt')
 			wc_output = subprocess.check_output(['wc', '-l', final_IDR_thresholded_filename])
 			with open(npeaks_pass_filename, 'w') as fh:
 				fh.write(wc_output)

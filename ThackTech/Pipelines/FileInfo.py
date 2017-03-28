@@ -1,15 +1,29 @@
 import os
 import sys
 from ThackTech.Pipelines import GLOBAL_MANAGER
-from ThackTech.Pipelines.Context import ModuleContext
+from ThackTech.Pipelines.Context import BaseModuleContext
 
-class FileContext(ModuleContext):
+class FileContext(BaseModuleContext):
 	"""Represents the context of a file within the pipelineing system
     
     """
 	def __init__(self, pipeline_name, step_num, module_name, file_role):
 		super(FileContext, self).__init__(pipeline_name, step_num, module_name)
 		self.__role = file_role
+	
+	@staticmethod
+	def from_module_context(context, role):
+		"""Creates a FileContext from the supplied BaseModuleContext derivitive
+		
+		Parameters:
+			context: (BaseModuleContext) Context to construct a new FileContext from
+			role: (string) Role this file plays within the module context
+			
+		Returns:
+			FileContext
+		"""
+		return FileContext(context.pipeline, context.step, context.module, role)
+	#end from_module_context
 
 	@property
 	def role(self):

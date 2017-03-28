@@ -18,11 +18,11 @@ class TransferFromShm(PipelineModule):
 		return None
 	#end supported_types()
 	
-	def run(self, sample, logfile):
-		logfile.write('-> Moving output to final destination...\n')
-		logfile.flush()
+	def run(self, cxt):
+		cxt.log.write('-> Moving output to final destination...\n')
+		cxt.log.flush()
 		#first remove the input files, so we can do an easy move....
-		for key, value in sample.get_file_group('source').iteritems():
+		for key, value in cxt.sample.get_file_group('source').iteritems():
 			if value.endswith('.bam'):
 				#dont forget about the index file!
 				if os.path.isfile(value+'.bai'):
@@ -32,20 +32,20 @@ class TransferFromShm(PipelineModule):
 			os.remove(value)
 			
 
-		true_dest = sample.get_attribute('origional_dest')
+		true_dest = cxt.sample.get_attribute('origional_dest')
 		filetools.ensure_dir(true_dest)
-		self._run_subprocess('cp -pr -t '+true_dest+' '+os.path.join(sample.dest, '*'), shell=True, stderr=subprocess.STDOUT, stdout=logfile)
+		self._run_subprocess('cp -pr -t '+true_dest+' '+os.path.join(cxt.sample.dest, '*'), shell=True, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
-		for groupkey in sample.files.keys():
+		for groupkey in cxt.sample.files.keys():
 			if groupkey == 'source':
-				orig_sources = sample.get_attribute('origional_sources')
+				orig_sources = cxt.sample.get_attribute('origional_sources')
 				for label in orig_sources:
-					sample.add_file('source', label, orig_sources[label])
+					cxt.sample.add_file('source', label, orig_sources[label])
 			else:
-				for labelkey in sample.files[groupkey].keys():
-					sample.add_file(groupkey, labelkey, os.path.join(true_dest, os.path.basename(sample.files[groupkey][labelkey])))
+				for labelkey in cxt.sample.files[groupkey].keys():
+					cxt.sample.add_file(groupkey, labelkey, os.path.join(true_dest, os.path.basename(cxt.sample.files[groupkey][labelkey])))
 		
-		shutil.rmtree(sample.dest) #cleanup shm
-		sample.dest = true_dest
+		shutil.rmtree(cxt.sample.dest) #cleanup shm
+		cxt.sample.dest = true_dest
 	#end run()
 #end class TransferToShm

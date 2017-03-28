@@ -21,15 +21,15 @@ class MACS1Peakcall(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def run(self, sample, logfile):
-		format = sample.format.upper()
+	def run(self, cxt):
+		format = cxt.sample.format.upper()
 		if format == "BAMPE":
 			format = "BAM"
 
 		macs_args = [
 			'macs',
-			'--name', sample.name,
-			'--gsize', sample.genome.gsize,
+			'--name', cxt.sample.name,
+			'--gsize', cxt.sample.genome.gsize,
 			'--format', format,
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
@@ -37,19 +37,19 @@ class MACS1Peakcall(PipelineModule):
 			'--single-profile', 
 			'--diag',
 			('--bdg' if self.get_parameter_value_as_string('sigout') == 'bdg' else '--wig'),
-			'--treatment', sample.get_file('source', 'treatment')
+			'--treatment', cxt.sample.get_file('source', 'treatment')
 		]
 
-		if sample.has_file('source', 'control'):
-			macs_args += [ '--control', sample.get_file('source', 'control') ]
+		if cxt.sample.has_file('source', 'control'):
+			macs_args += [ '--control', cxt.sample.get_file('source', 'control') ]
 			
-		logfile.write("Performing peak calling with MACS......\n")
-		logfile.write("-> "+subprocess.check_output(['macs', '--version'], stderr=subprocess.STDOUT)+"")
-		logfile.write("\n..............................................\n")
-		logfile.write(" ".join(macs_args))
-		logfile.write("\n..............................................\n")
-		logfile.flush()	
-		self._run_subprocess(macs_args, cwd=sample.dest, stderr=subprocess.STDOUT, stdout=logfile)
+		cxt.log.write("Performing peak calling with MACS......\n")
+		cxt.log.write("-> "+subprocess.check_output(['macs', '--version'], stderr=subprocess.STDOUT)+"")
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(macs_args))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()	
+		self._run_subprocess(macs_args, cwd=cxt.sample.dest, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		if self.get_parameter_value_as_string('sigout') == 'bdg':
 			signal_output_ext = '.bdg.gz'
@@ -58,16 +58,16 @@ class MACS1Peakcall(PipelineModule):
 			signal_output_ext = '.wig.gz'
 			signal_folder = '_MACS_wiggle'
 		output_files = {
-			'peaks_xls':		os.path.join(sample.dest, sample.name+'_peaks.xls'),
-			'neg_peaks_xls':	os.path.join(sample.dest, sample.name+'_negative_peaks.xls'),
-			'peaks':			os.path.join(sample.dest, sample.name+'_peaks.bed'),
-			'summits':			os.path.join(sample.dest, sample.name+'_summits.bed'),
-			'treatment_signal':	os.path.join(sample.dest, sample.name+signal_folder, 'treat', sample.name+'_treat_afterfiting_all'+signal_output_ext)
+			'peaks_xls':		os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.xls'),
+			'neg_peaks_xls':	os.path.join(cxt.sample.dest, cxt.sample.name+'_negative_peaks.xls'),
+			'peaks':			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed'),
+			'summits':			os.path.join(cxt.sample.dest, cxt.sample.name+'_summits.bed'),
+			'treatment_signal':	os.path.join(cxt.sample.dest, cxt.sample.name+signal_folder, 'treat', cxt.sample.name+'_treat_afterfiting_all'+signal_output_ext)
 		}
-		if os.path.isfile(os.path.join(sample.dest, sample.name+'_model.r')):
-			output_files['model_Rscript'] = os.path.join(sample.dest, sample.name+'_model.r')
-		if sample.has_file('source', 'control'):
-			output_files['control_signal'] = os.path.join(sample.dest, sample.name+signal_folder, 'control', sample.name+'_control_afterfiting_all'+signal_output_ext)
+		if os.path.isfile(os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')):
+			output_files['model_Rscript'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')
+		if cxt.sample.has_file('source', 'control'):
+			output_files['control_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+signal_folder, 'control', cxt.sample.name+'_control_afterfiting_all'+signal_output_ext)
 		return output_files
 	#end run()
 #end class MACS1Peakcall

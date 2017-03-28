@@ -1,5 +1,4 @@
 import re
-from ThackTech.Pipelines.Context import ModuleContext
 
 class AnalysisPipeline(object):
 
@@ -18,7 +17,7 @@ class AnalysisPipeline(object):
 	#end safe_name()
 	
 	def itersteps(self):
-		return [ModuleContext(self.name, i, self.pipeline[i]) for i in range(len(self))]
+		return [AnalysisPipelineStep(self.name, i, self.pipeline[i]) for i in range(len(self))]
 	#end itersteps()
 	
 	def append_module(self, module, critical=False):
@@ -55,3 +54,27 @@ class AnalysisPipeline(object):
 	def __len__(self):
 		return len(self.pipeline)
 #end class AnalysisPipeline
+
+
+class AnalysisPipelineStep(object):
+
+	def __init__(self, pipeline_name, index, module_instance):
+		self.__pipeline = pipeline_name
+		self.__index = index
+		self.__module = module_instance
+	
+	@property
+	def pipeline(self):
+		return self.__pipeline
+	
+	@property
+	def index(self):
+		return self.__index
+	
+	@property
+	def module(self):
+		return self.__module
+	
+	def __str__(self):
+		return "%s_%s_%s" % (self.pipeline, self.step, self.module.name)
+#end class ModuleContext

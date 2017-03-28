@@ -39,7 +39,7 @@ gopts = {
 }
 
 
-class ProfileSample:
+class Profilecxt.sample:
 
     def __init__(self, id, sig_id, bed_id, signal_array, sig_label, bed_label):
         self.id = id
@@ -52,7 +52,7 @@ class ProfileSample:
         self.hlines = []
     #end __init__()
     
-#end class ProfileSample
+#end class Profilecxt.sample
 
 
 def main():
@@ -67,7 +67,7 @@ def main():
     parser.add_argument('--title', action='store', default='', help='Title for entire plot')
     
     profile_group = parser.add_argument_group('Profiling Options')
-    profile_group.add_argument('--scalegroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
+    profile_group.add_argument('--scalegroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of cxt.samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in cxt.sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits cxt.samples, then the omitted cxt.samples will each be scaled independently.')
     profile_group.add_argument('--scalemethod', action='store', choices=['max', 'pooled'], default='max', help='Method used when scaling signal groups. "max" will use the maximum of each individual within the group, while "pooled" will pool data first then compute the scale.')
     profile_group.add_argument('--scalemetric', action='store', choices=['max', 'outliermax', 'percentile'], default='outliermax', help='Metric used when scaling signal groups. "max" will use the real maximum, "outliermax" will use the maximum after removing outliers using a z-scoring method (Hoaglin et. al. 1993), and "percentile" will compute the max at the given percentile.')
     default_scalemetricthreshold = {'outliermax': 3.5, 'percentile': 0.01 }
@@ -96,7 +96,7 @@ def main():
     corr_group.add_argument('--corrdistancemetric', action='store', choices=distance_metrics, default=distance_metrics[0], help='For dendrogram computation, distance metric to use. See scipy.spatial.distance.pdist documentation for details on metrics.')
     
     heat_group = parser.add_argument_group('Heat Plotting Options')
-    heat_group.add_argument('--heatsort', action='store', type=int, default=None, help='0-based index of the sample to sort by for heat plot.')
+    heat_group.add_argument('--heatsort', action='store', type=int, default=None, help='0-based index of the cxt.sample to sort by for heat plot.')
     heat_group.add_argument('--heatdendro', action='store_true', help='For heat plot, show dendrogram.')
     heat_group.add_argument('--heatlinkagemethod', action='store', choices=linkage_methods, default=linkage_methods[0], help='For dendrogram computation,linkage method to use. See scipy.cluster.hierarchy.linkage documentation for details on methods.')
     heat_group.add_argument('--heatdistancemetric', action='store', choices=distance_metrics, default=distance_metrics[0], help='For dendrogram computation, distance metric to use. See scipy.spatial.distance.pdist documentation for details on metrics.')
@@ -137,7 +137,7 @@ def main():
         # sys.stderr.write("ERROR: Fewer interval labels supplied than there are intervals! Interval and label counts must be equal if supplying labels!\n")
         # sys.exit(1)
     # if len(args.inp) > 0 and len(args.inp) < len(args.sig):
-        # sys.stderr.write("ERROR: Fewer inputs supplied than there are samples! Sample and input counts must be equal if supplying inputs!\n")
+        # sys.stderr.write("ERROR: Fewer inputs supplied than there are cxt.samples! cxt.sample and input counts must be equal if supplying inputs!\n")
         # sys.exit(1)
     if len(args.plot) <= 0:
         sys.stderr.write("ERROR: No plot types were selected!\n")
@@ -184,7 +184,7 @@ def main():
     else:
         chromsets.use = chromsets.all
     
-    samples = []
+    cxt.samples = []
     for s in xrange(len(args.sig)):
         for b in xrange(len(args.bed)):
             sys.stderr.write("Processing %s vs %s....\n" % (args.bed[b], args.sig[s]))
@@ -195,10 +195,10 @@ def main():
             b_label = os.path.splitext(os.path.basename(args.bed[b]))[0]#args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
 
             signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], None, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
-            samples.append(ProfileSample(len(samples), s, b, signal, s_label, b_label))
+            cxt.samples.append(Profilecxt.sample(len(cxt.samples), s, b, signal, s_label, b_label))
             sys.stderr.write("\n")
     
-    gopts['group_count'] = 0 #count_groups(args.scalegroups, samples)
+    gopts['group_count'] = 0 #count_groups(args.scalegroups, cxt.samples)
     gopts['fig_cols'] = len(args.sig) + gopts['group_count']
     gopts['fig_rows'] = len(args.sig) #((args.heatplotrows if 'heat' in args.plot else 0) * len(args.bed)) + (args.avgplotrows if 'avg' in args.plot else 0)
     plt.rcParams['font.size'] = args.fontsize
@@ -207,23 +207,23 @@ def main():
     #compute saturation points and average profile limits
     if (args.scalemetric in default_scalemetricthreshold) and (args.scalemetricthreshold is None):
         args.scalemetricthreshold = default_scalemetricthreshold[args.scalemetric]
-    compute_group_scales(args.scalegroups, samples)
+    compute_group_scales(args.scalegroups, cxt.samples)
     
     
     
     if 'hist' in args.plot:
-        make_1d_hist_plots(samples)
+        make_1d_hist_plots(cxt.samples)
     if '2dhist' in args.plot:
-        make_2d_hist_plots(samples)
+        make_2d_hist_plots(cxt.samples)
     if 'corrmatrix' in args.plot:
-        make_correlation_plot(samples)
+        make_correlation_plot(cxt.samples)
     if 'heat' in args.plot:
-        make_heat_plot(samples)
+        make_heat_plot(cxt.samples)
     
     if args.dump:
         for b in xrange(len(args.bed)):
             bedtool = sigcollector.IntervalProvider(args.bed[b], collection_opts, args.genome, gopts['chromsets'].use)
-            dump_raw_data([s for s in samples if (s.bed_id) == b], bedtool)
+            dump_raw_data([s for s in cxt.samples if (s.bed_id) == b], bedtool)
             
     sys.stderr.write('Done!')
 #end main()
@@ -291,53 +291,53 @@ def document_args():
         
     if 'heat' in gopts['args'].plot:
         pass
-        #make_heat_plot(samples)
+        #make_heat_plot(cxt.samples)
     
     
     
     sys.stderr.write("\n")
 #end document_args()
 
-def get_groups(groups, samples):
+def get_groups(groups, cxt.samples):
     if groups is None:
-        return [list(set([str(s.sig_id) for s in samples]))]
+        return [list(set([str(s.sig_id) for s in cxt.samples]))]
     else:
-        non_covered_samples = set([str(s.sig_id) for s in samples]) - set(groups.replace(";",",").split(","))
-        if len(non_covered_samples) > 0:
-            groups += ";" + ";".join(non_covered_samples)
+        non_covered_cxt.samples = set([str(s.sig_id) for s in cxt.samples]) - set(groups.replace(";",",").split(","))
+        if len(non_covered_cxt.samples) > 0:
+            groups += ";" + ";".join(non_covered_cxt.samples)
         final_groups = []
         for group in groups.split(";"):
-            final_groups.append([str(s.sig_id) for s in samples if str(s.sig_id) in group.split(",")])
+            final_groups.append([str(s.sig_id) for s in cxt.samples if str(s.sig_id) in group.split(",")])
         return final_groups
 #end get_groups()
 
-def count_groups(groups, samples):
-    return len(get_groups(groups, samples))
+def count_groups(groups, cxt.samples):
+    return len(get_groups(groups, cxt.samples))
 #end count_groups()
 
-def compute_group_scales(groups, samples):
-    groups_list = get_groups(groups, samples)
+def compute_group_scales(groups, cxt.samples):
+    groups_list = get_groups(groups, cxt.samples)
     for i in range(len(groups_list)):
-        compute_scales_for_group(i, [s for s in samples if str(s.sig_id) in groups_list[i]])
+        compute_scales_for_group(i, [s for s in cxt.samples if str(s.sig_id) in groups_list[i]])
 #end compute_group_scales()
 
-def compute_scales_for_group(group_id, samples):
+def compute_scales_for_group(group_id, cxt.samples):
     if gopts['args'].scalemethod == 'pooled':
-        if len(samples) > 1:
-            pooled = np.vstack(tuple([s.signal_array for s in samples]))
+        if len(cxt.samples) > 1:
+            pooled = np.vstack(tuple([s.signal_array for s in cxt.samples]))
         else:
-            pooled = samples[0].signal_array
+            pooled = cxt.samples[0].signal_array
         pooled_min, pooled_max = compute_data_scale(pooled)
     else:
         pooled_max = sys.float_info.min
         pooled_min = 0
-        for s in samples:
+        for s in cxt.samples:
             localmin, localmax = compute_data_scale(s.signal_array)
             pooled_min = min(pooled_min, localmin)
             pooled_max = max(pooled_max, localmax)
     
     pooled_min = 0
-    for s in samples:
+    for s in cxt.samples:
         s.group = group_id
         s.min = pooled_min
         s.max = pooled_max
@@ -385,36 +385,36 @@ def compute_data_scale(data):
 # #end get_signal()
 
 
-def dump_raw_data(samples, bed):
+def dump_raw_data(cxt.samples, bed):
     intervals = list(bed)
     with open(generate_save_name('tsv', 'dump'), "w") as file:
         file.write('Chr\tStart\tStop\tName\tBedScore\tStrand')
-        for s in samples:
+        for s in cxt.samples:
             file.write('\t%s' % (s.sig_label,))
         if 'heat' in gopts['args'].plot and gopts['args'].heatsort is not None:
             file.write('\tHeatOrder')
         file.write('\n')#end header row
         
-        for i in range(len(samples[0].signal_array)):
+        for i in range(len(cxt.samples[0].signal_array)):
             file.write('%s\t%d\t%d\t%s\t%s\t%s' % (intervals[i].chrom, intervals[i].start, intervals[i].stop, intervals[i].name, str(intervals[i].score), intervals[i].strand))
-            for s in samples:
+            for s in cxt.samples:
                 file.write('\t%f' % (s.signal_array[i],))
             if 'heat' in gopts['args'].plot and gopts['args'].heatsort is not None:
-                file.write('\t%d' % (samples[0].heatsort[i],))
+                file.write('\t%d' % (cxt.samples[0].heatsort[i],))
             file.write('\n')
 #end dump_raw_data()
 
 
-def compute_sorting(samples, sort_index, method):
+def compute_sorting(cxt.samples, sort_index, method):
     if sort_index is None:
-        for s in samples:
+        for s in cxt.samples:
             s.sort_order = None
     else:
         sort_orders = {} #sort orders indexed by interval id
-        for s in samples:
+        for s in cxt.samples:
             if s.sig_id == sort_index:
                 sort_orders[s.bed_id] = getattr(s.signal_array, method)(axis=1)
-        for s in samples:
+        for s in cxt.samples:
             s.sort_order = sort_orders[s.bed_id]
 #end compute_sorting()
 
@@ -429,32 +429,32 @@ class PlotPosition:
 #end class PlotPosition
 
 
-def make_heat_plot(samples):
+def make_heat_plot(cxt.samples):
     
     
-    num_samples = len(samples)
-    num_rows = num_samples + 1
-    num_cols = num_samples + 2
-    heat_loc = PlotPosition(1, 1, num_samples, num_samples)
-    tden_loc = PlotPosition(0, 1, 1, num_samples)
-    lden_loc = PlotPosition(1, 0, num_samples, 1)
-    cbar_loc = PlotPosition(1, num_cols-1, num_samples, 1)
+    num_cxt.samples = len(cxt.samples)
+    num_rows = num_cxt.samples + 1
+    num_cols = num_cxt.samples + 2
+    heat_loc = PlotPosition(1, 1, num_cxt.samples, num_cxt.samples)
+    tden_loc = PlotPosition(0, 1, 1, num_cxt.samples)
+    lden_loc = PlotPosition(1, 0, num_cxt.samples, 1)
+    cbar_loc = PlotPosition(1, num_cols-1, num_cxt.samples, 1)
     
-    data = np.hstack(tuple([(s.signal_array / s.max) for s in samples]))
+    data = np.hstack(tuple([(s.signal_array / s.max) for s in cxt.samples]))
     
     fig = plt.figure(figsize=(9,8), dpi=gopts['args'].dpi)
     
     if gopts['args'].heatsort is not None:
         order = np.argsort(data[:,gopts['args'].heatsort])
         data = data[order,:]
-        samples[0].heatsort = np.argsort(order)
+        cxt.samples[0].heatsort = np.argsort(order)
     
     if gopts['args'].heatdendro:
         #top dendrogram
         ax1 = plt.subplot2grid((num_rows,num_cols), tden_loc.pos, rowspan=tden_loc.rs, colspan=tden_loc.cs)
         Y = fastcluster.linkage(np.rot90(data), method=gopts['args'].heatlinkagemethod, metric=gopts['args'].heatdistancemetric)
         data = data[:,sch.leaves_list(Y)]#reorder the correlation matrix to reflect dendrogram ordering
-        Z1 = sch.dendrogram(Y, labels=[s.sig_label for s in samples], leaf_font_size=8)
+        Z1 = sch.dendrogram(Y, labels=[s.sig_label for s in cxt.samples], leaf_font_size=8)
         ax1.set_yticks([])
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
@@ -477,7 +477,7 @@ def make_heat_plot(samples):
     heatmap = axheat.pcolormesh(data, vmax=1, cmap=plt.cm.get_cmap(gopts['args'].cmap))
     axheat.set_frame_on(False)
     axheat.xaxis.tick_top()
-    axheat.set_xticklabels([s.sig_label for s in samples], minor=False)
+    axheat.set_xticklabels([s.sig_label for s in cxt.samples], minor=False)
     axheat.set_yticks([])
     axheat.set_xticks([])
     axheat.set_ylim(0, data.shape[0])
@@ -493,19 +493,19 @@ def make_heat_plot(samples):
 
 
 
-def make_correlation_plot(samples):
+def make_correlation_plot(cxt.samples):
 
-    corr_matrix = compute_correlation_matrix(samples, gopts['args'].corrmethod)
+    corr_matrix = compute_correlation_matrix(cxt.samples, gopts['args'].corrmethod)
     
-    num_samples = len(samples)
-    num_rows = len(samples) + 2
-    num_cols = len(samples) + 3
-    labels = [s.sig_label for s in samples]
+    num_cxt.samples = len(cxt.samples)
+    num_rows = len(cxt.samples) + 2
+    num_cols = len(cxt.samples) + 3
+    labels = [s.sig_label for s in cxt.samples]
 
     if gopts['args'].corrdendro:
         # Compute and plot first dendrogram.
         fig = plt.figure(figsize=(9,8), dpi=gopts['args'].dpi)
-        ax1 = plt.subplot2grid((num_rows,num_cols), (2, 0), rowspan=num_samples, colspan=2)
+        ax1 = plt.subplot2grid((num_rows,num_cols), (2, 0), rowspan=num_cxt.samples, colspan=2)
         Y = sch.linkage(corr_matrix[:,:,0], method=gopts['args'].corrlinkagemethod, metric=gopts['args'].corrdistancemetric)
         Z1 = sch.dendrogram(Y, orientation='right', labels=labels, leaf_font_size=8)
         ax1.set_xticks([])
@@ -515,7 +515,7 @@ def make_correlation_plot(samples):
         ax1.spines['left'].set_visible(False)
 
         # Compute and plot second dendrogram.
-        ax2 = plt.subplot2grid((num_rows,num_cols), (0, 2), rowspan=2, colspan=num_samples)
+        ax2 = plt.subplot2grid((num_rows,num_cols), (0, 2), rowspan=2, colspan=num_cxt.samples)
         Y = sch.linkage(corr_matrix[:,:,0], method=gopts['args'].corrlinkagemethod, metric=gopts['args'].corrdistancemetric)
         Z2 = sch.dendrogram(Y, labels=labels, leaf_rotation=90, leaf_font_size=8)
         ax2.set_yticks([])
@@ -531,13 +531,13 @@ def make_correlation_plot(samples):
         corr_matrix = corr_matrix[:,idx2]
 
     # Plot distance matrix.
-    axmatrix = plt.subplot2grid((num_rows,num_cols), (2, 2), rowspan=num_samples, colspan=num_samples)
+    axmatrix = plt.subplot2grid((num_rows,num_cols), (2, 2), rowspan=num_cxt.samples, colspan=num_cxt.samples)
     im = axmatrix.matshow(corr_matrix[:,:,0], aspect='auto', origin='lower', cmap=plt.cm.get_cmap(gopts['args'].cmap), interpolation='nearest')
     axmatrix.set_xticks([])
     axmatrix.set_yticks([])
 
     # Plot colorbar.
-    axcolor = plt.subplot2grid((num_rows,num_cols), (2, num_samples+2), rowspan=num_samples, colspan=1)
+    axcolor = plt.subplot2grid((num_rows,num_cols), (2, num_cxt.samples+2), rowspan=num_cxt.samples, colspan=1)
     plt.colorbar(im, cax=axcolor)
     axcolor.set_ylabel("%s Correlation" % (gopts['args'].corrmethod.capitalize(),))
     
@@ -564,27 +564,27 @@ def make_correlation_plot(samples):
 #end make_correlation_plot()
 
 
-def compute_correlation_matrix(samples, method):
-    num_samples = len(samples)
-    matrix = np.zeros((num_samples, num_samples), dtype=(float,2))
+def compute_correlation_matrix(cxt.samples, method):
+    num_cxt.samples = len(cxt.samples)
+    matrix = np.zeros((num_cxt.samples, num_cxt.samples), dtype=(float,2))
     
     with open(generate_save_name('tsv', ['corr', method]), "w") as file:
-        file.write('Sample_1\tSample_2\t%s R\tp\n' % (method,))
-        for i in range(num_samples):
-            for j in range(num_samples):
+        file.write('cxt.sample_1\tcxt.sample_2\t%s R\tp\n' % (method,))
+        for i in range(num_cxt.samples):
+            for j in range(num_cxt.samples):
                 if method == 'spearman':
-                    matrix[i,j] = stats.spearmanr(samples[i].signal_array, samples[j].signal_array, axis=None)
+                    matrix[i,j] = stats.spearmanr(cxt.samples[i].signal_array, cxt.samples[j].signal_array, axis=None)
                 else:
-                    matrix[i,j] = stats.pearsonr(samples[i].signal_array, samples[j].signal_array)
-                file.write("%s\t%s\t%f\t%f\n" % (samples[i].sig_label, samples[j].sig_label, matrix[i,j][0], matrix[i,j][1]))
+                    matrix[i,j] = stats.pearsonr(cxt.samples[i].signal_array, cxt.samples[j].signal_array)
+                file.write("%s\t%s\t%f\t%f\n" % (cxt.samples[i].sig_label, cxt.samples[j].sig_label, matrix[i,j][0], matrix[i,j][1]))
     return matrix
 #end compute_correlation_matrix()
 
 
-def make_1d_hist_plots(samples):
+def make_1d_hist_plots(cxt.samples):
     fig = plt.figure(figsize=(8,8), dpi=gopts['args'].dpi)
-    num_samples = len(samples)
-    num_rows = num_samples
+    num_cxt.samples = len(cxt.samples)
+    num_rows = num_cxt.samples
     num_cols = 1
     
     if gopts['args'].histlog:
@@ -592,24 +592,24 @@ def make_1d_hist_plots(samples):
     else:
         norm = mpl.colors.Normalize(vmin=0.0,vmax=1.0)
     
-    for i in range(num_samples):#row
+    for i in range(num_cxt.samples):#row
         ax = plt.subplot2grid((num_rows,num_cols), (i, 0), colspan=num_cols)
-        normSample1 = samples[i].signal_array.ravel()
-        ax.hist(normSample1, gopts['args'].histbins, normed=norm, range=[samples[i].min, samples[i].max])
-        ax.set_ylabel(samples[i].sig_label)
+        normcxt.sample1 = cxt.samples[i].signal_array.ravel()
+        ax.hist(normcxt.sample1, gopts['args'].histbins, normed=norm, range=[cxt.samples[i].min, cxt.samples[i].max])
+        ax.set_ylabel(cxt.samples[i].sig_label)
     
     save_close_figure(fig, ['hist', '%d-bins' % (gopts['args'].histbins,)])
 #end make_1d_hist_plots()
 
 
-def make_2d_hist_plots(samples):
+def make_2d_hist_plots(cxt.samples):
     
     
     fig_size = (8,9)
     fig = plt.figure(figsize=fig_size, dpi=gopts['args'].dpi)
-    num_samples = len(samples)
-    num_rows = len(samples) *2  #(exclude diagional)
-    num_cols = len(samples) * 2 - 1 #(exclude diagional, but include colorbar)
+    num_cxt.samples = len(cxt.samples)
+    num_rows = len(cxt.samples) *2  #(exclude diagional)
+    num_cols = len(cxt.samples) * 2 - 1 #(exclude diagional, but include colorbar)
     smooth = True
     notes = ['2dhist', '%d-bins' % (gopts['args'].histbins,)]
     if gopts['args'].hist2dregression:
@@ -624,25 +624,25 @@ def make_2d_hist_plots(samples):
         norm = mpl.colors.Normalize(vmin=0.0,vmax=1.0)
     
     with open(generate_save_name('tsv', notes), "w") as file:
-        file.write('Sample_1\tSample_2\tmodel\tr^2\n')
-        for i in range(num_samples):#row
+        file.write('cxt.sample_1\tcxt.sample_2\tmodel\tr^2\n')
+        for i in range(num_cxt.samples):#row
             for j in range(i):#col
-                normSample_y = samples[i].signal_array.ravel() #to be plotted on the y-axis
-                normSample_x = samples[j].signal_array.ravel() #to be plotted on the x-axis
-                #print samples[i].sig_label, samples[i].signal_array.mean(axis=0)
+                normcxt.sample_y = cxt.samples[i].signal_array.ravel() #to be plotted on the y-axis
+                normcxt.sample_x = cxt.samples[j].signal_array.ravel() #to be plotted on the x-axis
+                #print cxt.samples[i].sig_label, cxt.samples[i].signal_array.mean(axis=0)
                 
                 #compute the polyfit
-                coefficients = np.polyfit(normSample_x, normSample_y, gopts['args'].hist2dregdegree)
+                coefficients = np.polyfit(normcxt.sample_x, normcxt.sample_y, gopts['args'].hist2dregdegree)
                 polynomial_fit = np.poly1d(coefficients)
-                r_squared = metrics.r2_score(normSample_y, polynomial_fit(normSample_x))
+                r_squared = metrics.r2_score(normcxt.sample_y, polynomial_fit(normcxt.sample_x))
                 
-                file.write("%s\t%s\t%s\t%f\n" % (samples[j].sig_label, samples[i].sig_label, ttstats.format_poly_equation(coefficients), r_squared))
+                file.write("%s\t%s\t%s\t%f\n" % (cxt.samples[j].sig_label, cxt.samples[i].sig_label, ttstats.format_poly_equation(coefficients), r_squared))
                 
                 #plot the 2D-histogram with colorbar
                 ax = plt.subplot2grid((num_rows,num_cols), ((i-1)*2, j*2), rowspan=2, colspan=2)
-                H, xedges, yedges, img = ax.hist2d(normSample_x, normSample_y, bins=gopts['args'].histbins, range=[[samples[j].min, samples[j].max],[samples[i].min, samples[i].max]], norm=norm, cmap=plt.cm.get_cmap(gopts['args'].cmap))#, alpha=0.1, s=10, linewidths=0)
+                H, xedges, yedges, img = ax.hist2d(normcxt.sample_x, normcxt.sample_y, bins=gopts['args'].histbins, range=[[cxt.samples[j].min, cxt.samples[j].max],[cxt.samples[i].min, cxt.samples[i].max]], norm=norm, cmap=plt.cm.get_cmap(gopts['args'].cmap))#, alpha=0.1, s=10, linewidths=0)
                 #plot the polyfit
-                xlin = np.linspace(0, samples[j].max, gopts['args'].histbins)
+                xlin = np.linspace(0, cxt.samples[j].max, gopts['args'].histbins)
                 if gopts['args'].hist2dregression:
                     ax.plot(xlin, polynomial_fit(xlin), '-', c='k')
                 
@@ -654,21 +654,21 @@ def make_2d_hist_plots(samples):
                 
                 #plt.colorbar(H[3], ax=ax)
                 #make it pretty and informative
-                #ax.set_title(sample1.sig_label + ' vs. ' + sample2.sig_label)
-                if i == num_samples-1:
-                    ax.set_xlabel(samples[j].sig_label)
+                #ax.set_title(cxt.sample1.sig_label + ' vs. ' + cxt.sample2.sig_label)
+                if i == num_cxt.samples-1:
+                    ax.set_xlabel(cxt.samples[j].sig_label)
                     for label in ax.get_xticklabels(): 
                         label.set_rotation(90) 
                 else:
                     ax.set_xticklabels([])
                     
                 if j == 0:
-                    ax.set_ylabel(samples[i].sig_label)
+                    ax.set_ylabel(cxt.samples[i].sig_label)
                 else:
                     ax.set_yticklabels([])
         
         # Plot colorbar.
-        axcolor = plt.subplot2grid((num_rows,num_cols), (0, num_samples-1), rowspan=(num_samples-1)*2, colspan=1)
+        axcolor = plt.subplot2grid((num_rows,num_cols), (0, num_cxt.samples-1), rowspan=(num_cxt.samples-1)*2, colspan=1)
         plt.colorbar(img, cax=axcolor, norm=norm)
         axcolor.set_ylabel("Relative Frequency")
         
@@ -680,32 +680,32 @@ def make_2d_hist_plots(samples):
         plt.close()
         fig = plt.figure(figsize=fig_size, dpi=gopts['args'].dpi)
         
-        for i in range(num_samples):#row
+        for i in range(num_cxt.samples):#row
             for j in range(i):#col
                 item = histograms[(i-1, j)]
                 ax = plt.subplot2grid((num_rows,num_cols), ((i-1)*2, j*2), rowspan=2, colspan=2)
-                img = ax.imshow(item['H'], origin="upper", interpolation="gaussian", aspect='auto', extent=[samples[j].min, samples[j].max, samples[i].min, samples[i].max], norm=norm, cmap=plt.cm.get_cmap(gopts['args'].cmap))
-                ax.set_ylim(samples[i].min, samples[i].max)
-                ax.set_xlim(samples[j].min, samples[j].max)
+                img = ax.imshow(item['H'], origin="upper", interpolation="gaussian", aspect='auto', extent=[cxt.samples[j].min, cxt.samples[j].max, cxt.samples[i].min, cxt.samples[i].max], norm=norm, cmap=plt.cm.get_cmap(gopts['args'].cmap))
+                ax.set_ylim(cxt.samples[i].min, cxt.samples[i].max)
+                ax.set_xlim(cxt.samples[j].min, cxt.samples[j].max)
                 if gopts['args'].hist2dregression:
                     ax.plot(item['fit_x'], item['fit_y'], '-', c='k')
                 
                 #plt.colorbar(H[3], ax=ax)
                 #make it pretty and informative
-                #ax.set_title(sample1.sig_label + ' vs. ' + sample2.sig_label)
-                if i == num_samples-1:
-                    ax.set_xlabel(samples[j].sig_label)
+                #ax.set_title(cxt.sample1.sig_label + ' vs. ' + cxt.sample2.sig_label)
+                if i == num_cxt.samples-1:
+                    ax.set_xlabel(cxt.samples[j].sig_label)
                     for label in ax.get_xticklabels(): 
                         label.set_rotation(90) 
                 else:
                     ax.set_xticklabels([])
                     
                 if j == 0:
-                    ax.set_ylabel(samples[i].sig_label)
+                    ax.set_ylabel(cxt.samples[i].sig_label)
                 else:
                     ax.set_yticklabels([])
         # Plot colorbar.
-        axcolor = plt.subplot2grid((num_rows,num_cols), (0, num_cols-1), rowspan=(num_samples-1)*2, colspan=1)
+        axcolor = plt.subplot2grid((num_rows,num_cols), (0, num_cols-1), rowspan=(num_cxt.samples-1)*2, colspan=1)
         plt.colorbar(img, cax=axcolor, norm=norm)
         axcolor.set_ylabel("Relative Frequency")
 

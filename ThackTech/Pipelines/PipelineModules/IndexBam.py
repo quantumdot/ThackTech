@@ -22,18 +22,18 @@ class IndexBam(PipelineModule):
 		}
 	#end tool_versions()
 	
-	def run(self, sample, logfile):
-		bam = self.resolve_input('alignments', sample)
+	def run(self, cxt):
+		bam = self.resolve_input('alignments', cxt.sample)
 		
 		index_cmd = ['samtools', 'index', bam]
 		
-		logfile.write('-> Indexing BAM "%s"...\n' % (bam,))
-		logfile.write("-> "+subprocess.check_output('samtools 2>&1 | grep Version', shell=True, stderr=subprocess.STDOUT)+"")
-		logfile.write("..............................................\n")
-		logfile.write(" ".join(index_cmd))
-		logfile.write("\n..............................................\n")
-		logfile.flush()
+		cxt.log.write('-> Indexing BAM "%s"...\n' % (bam,))
+		cxt.log.write("-> "+subprocess.check_output('samtools 2>&1 | grep Version', shell=True, stderr=subprocess.STDOUT)+"")
+		cxt.log.write("..............................................\n")
+		cxt.log.write(" ".join(index_cmd))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
 		
-		self._run_subprocess(index_cmd, stderr=subprocess.STDOUT, stdout=logfile)
+		self._run_subprocess(index_cmd, stderr=subprocess.STDOUT, stdout=cxt.log)
 	#end run()
 #end class GeneratePseudoreplicates

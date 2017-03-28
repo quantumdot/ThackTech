@@ -5,6 +5,7 @@ from: http://scipy.org/Cookbook/SignalSmooth
 """
 
 import numpy as np
+from scipy import signal
 
 
 def smooth(x, window_len=10, window='hanning'):
@@ -64,7 +65,7 @@ def smooth(x, window_len=10, window='hanning'):
 
 #*********** part2: 2d
 
-from scipy import signal
+
 
 def gauss_kern(size, sizey=None):
     """ Returns a normalized 2D gauss kernel array for convolutions """

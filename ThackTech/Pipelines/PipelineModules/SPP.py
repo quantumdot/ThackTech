@@ -17,19 +17,19 @@ class SPP(PipelineModule):
 		return ['bam']
 	#end supported_types()
 	
-	def run(self, sample, logfile):
-		spp_dir = os.path.join(sample.dest, 'spp')
+	def run(self, cxt):
+		spp_dir = os.path.join(cxt.sample.dest, 'spp')
 		filetools.ensure_dir(spp_dir)
 		spp_results = os.path.join(spp_dir, 'spp_results.tsv')
 		sys.stdout.flush()
 		
 		#compute cross-correlation scores
-		if sample.get_attribute('PE'):
+		if cxt.sample.get_attribute('PE'):
 			first_mate_bam = self.extract_first_mate()
 			os.remove(first_mate_bam)
 			os.remove(first_mate_bam+'.bai')
 		else:
-			first_mate_bam = sample.get_file()
+			first_mate_bam = cxt.sample.get_file()
 			
 		sys.stdout.write('\t-> Completed Cross-correlation analysis...\n')
 		sys.stdout.flush()

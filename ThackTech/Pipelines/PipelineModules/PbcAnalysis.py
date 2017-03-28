@@ -13,26 +13,26 @@ class PbcAnalysis(PipelineModule):
 		self._name_resolver('bam')
 	#end __init__()
 	
-	def run(self, sample, logfile):
-		logfile.write('\t-> Running PBC QC...\n')
-		logfile.flush()
+	def run(self, cxt):
+		cxt.log.write('\t-> Running PBC QC...\n')
+		cxt.log.flush()
 		#compute PBC
-		bam = self.resolve_input('bam', sample)
-		results = self.run_filter_qc(bam, sample.get_attribute('PE'), "-q 30")
-		pbc_dir = os.path.join(sample.dest, 'pbc')
+		bam = self.resolve_input('bam', cxt.sample)
+		results = self.run_filter_qc(bam, cxt.sample.get_attribute('PE'), "-q 30")
+		pbc_dir = os.path.join(cxt.sample.dest, 'pbc')
 		filetools.ensure_dir(pbc_dir)
-		self._run_subprocess('mv -f '+sample.name+'.filt.* '+sample.name+'.dup.qc '+pbc_dir, shell=True)
-		self._run_subprocess(['rm', '-f', os.path.join(sample.dest), ('tmp.%s.filt.srt.bam' % (sample.name,))])
-		logfile.write('\t-> Completed PBC QC...\n')
-		logfile.flush()
+		self._run_subprocess('mv -f '+cxt.sample.name+'.filt.* '+cxt.sample.name+'.dup.qc '+pbc_dir, shell=True)
+		self._run_subprocess(['rm', '-f', os.path.join(cxt.sample.dest), ('tmp.%s.filt.srt.bam' % (cxt.sample.name,))])
+		cxt.log.write('\t-> Completed PBC QC...\n')
+		cxt.log.flush()
 		
 		output_files = {
-			'filtered_bam': 					os.path.join(pbc_dir, '%s.filt.srt.bam' % (sample.name,)),
-			'filtered_deduplicated_bam': 		os.path.join(pbc_dir, '%s.filt.srt.nodup.bam' % (sample.name,)),
-			'filtered_deduplicated_bam_idx': 	os.path.join(pbc_dir, '%s.filt.srt.nodup.bai' % (sample.name,)),
-			'filtered_deduplicated_flagstat': 	os.path.join(pbc_dir, '%s.filt.srt.nodup.flagstat.qc' % (sample.name,)),
-			'duplicate_qc': 					os.path.join(pbc_dir, '%s.filt.srt.nodup.pbc.qc' % (sample.name,)),
-			'pbc_qc': 							os.path.join(pbc_dir, '%s.dup.qc' % (sample.name,))
+			'filtered_bam': 					os.path.join(pbc_dir, '%s.filt.srt.bam' % (cxt.sample.name,)),
+			'filtered_deduplicated_bam': 		os.path.join(pbc_dir, '%s.filt.srt.nodup.bam' % (cxt.sample.name,)),
+			'filtered_deduplicated_bam_idx': 	os.path.join(pbc_dir, '%s.filt.srt.nodup.bai' % (cxt.sample.name,)),
+			'filtered_deduplicated_flagstat': 	os.path.join(pbc_dir, '%s.filt.srt.nodup.flagstat.qc' % (cxt.sample.name,)),
+			'duplicate_qc': 					os.path.join(pbc_dir, '%s.filt.srt.nodup.pbc.qc' % (cxt.sample.name,)),
+			'pbc_qc': 							os.path.join(pbc_dir, '%s.dup.qc' % (cxt.sample.name,))
 		}
 		return output_files
 	#end run()
