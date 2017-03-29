@@ -20,17 +20,19 @@ class AnalysisPipeline(object):
 		return [AnalysisPipelineStep(self.name, i, self.pipeline[i]) for i in range(len(self))]
 	#end itersteps()
 	
-	def append_module(self, module, critical=False):
+	def append_module(self, module, critical=None):
 		"""Appends the module to the end of the pipeline
 		"""
-		module.set_critical(critical)
+		if critical is not None:
+			module.set_critical(bool(critical))
 		self.pipeline.append(module)
 	#end append_module()
 	
-	def insert_module(self, position, module, critical=False):
+	def insert_module(self, position, module, critical=None):
 		"""Inserts the module at the specified index of the pipeline
 		"""
-		module.set_critical(critical)
+		if critical is not None:
+			module.set_critical(bool(critical))
 		self.pipeline.insert(position, module)
 	#end append_module()
 	

@@ -7,7 +7,7 @@ from ThackTech.Pipelines import PipelineModule
 class BamFingerprint(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(BamFingerprint, self).__init__('bamFingerprint', 'Bam Fingerprint', **kwargs)
+		super(BamFingerprint, self).__init__('BamFingerprint', 'Bam Fingerprint', **kwargs)
 	#end __init__()
 	
 	def tool_versions(self):

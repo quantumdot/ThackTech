@@ -5,7 +5,6 @@ import multiprocessing
 import pandas as pd
 import argparse
 import sys
-from ThackTech import Common
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline
 
 
@@ -95,7 +94,7 @@ def main():
 
     sys.stdout.write('Reading sample manifest.....\n')
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
-    samples = [AlignmentPipelinesample(s) for s in sample_manifest.to_dict(orient='records')]
+    samples = [AlignmentPipelineSample(s) for s in sample_manifest.to_dict(orient='records')]
     sample_count = len(samples)
     sys.stdout.write('\t-> Found %d item%s for processing.....\n' % (len(sample_manifest.index), ('s' if len(sample_manifest.index) > 1 else '')))
 
@@ -141,9 +140,7 @@ def make_read_alignment_pipeline(args, additional_args):
     if not args.skipalign:
         if args.trim:
             from ThackTech.Pipelines.PipelineModules import Trimmomatic
-            x = Trimmomatic.Trimmomatic()
-            x.set_available_cpus(args.threads)
-            pipeline.append_module(x, critical=True)
+            pipeline.append_module(Trimmomatic.Trimmomatic(critical=True, processors=args.threads))
     
     
         if args.bowtie_version == '1':
@@ -207,12 +204,11 @@ def make_read_alignment_pipeline(args, additional_args):
         
         if 'fpt' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamFingerprint
-            pipeline.append_module(BamFingerprint.BamFingerprint())
+            pipeline.append_module(BamFingerprint.BamFingerprint(processors=args.threads))
             
         if 'rpkm' in args.qc:
-            from ThackTech.Pipelines.PipelineModules import RPKMNormBigWig
-            x = RPKMNormBigWig.RPKMNormBigWig()
-            x.set_available_cpus(args.threads)
+            from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
+            x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
             x.set_resolver('bam', lambda s: s.get_file('SamToBam', 'bam'))
             pipeline.append_module(x)
     
@@ -225,146 +221,7 @@ def make_read_alignment_pipeline(args, additional_args):
     
     return pipeline
 #end make_read_alignment_pipeline()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # Common.ensure_dir(gopts['shm_dir'])
-        
-        
-        
-    
-    # if not args.skipalign:
-        # show_bowtie_version()
-        # sys.stdout.write('\n=========================================================\n\n')
-        # for sidx, sample in sample_manifest.iterrows():
-            # sample_start_time = time.time()
-            # sys.stdout.write("Processing sample %s......\n" % (sample['Basename'],))
-            # sys.stdout.write("\t-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
-            # sys.stdout.flush()
-            
-            # working_dest = gopts['shm_dir'] if args.shm else sample['Dest']
-            # Common.ensure_dir(sample['Dest'])
 
-            # #find the read files
-            # read_files, iscompressed = find_files(sample['Path'], sample['Basename'], sample['PE'])
-            
-            # #perform trimming
-            # if args.trim:
-                # read_files = run_trimmomatic(sample['Basename'], read_files, sample['PE'], os.path.join(sample['Dest'], 'trimmedfq'), args.threads)
-                # iscompressed = True #trimmomatic is setup here to output gzip files
-            
-            # #handle file compression and use of shm
-            # if iscompressed:
-                # sys.stdout.write("\t-> Decompressing reads....\n")
-                # sys.stdout.flush()
-                # #if we are using shm, decompress to shm, else decompress to the src directory
-                # read_files = decompress_reads(read_files, gopts['shm_dir'] if args.shm else sample['Path'])
-            # elif args.shm:
-                # sys.stdout.write("\t-> Moving reads to RAMFS....\n")
-                # sys.stdout.flush()
-                # #the reads are already uncompressed, so lets just copy them to shm
-                # read_files = cp_to_shm(read_files)
-
-
-            
-
-            # #lets do a bit of cleanup
-            # if iscompressed or args.shm:
-                # #remove files that we decompressed or copied to shm, as they are no longer needed
-                # for f in read_files:
-                    # os.remove(f)
-
-            # #Now lets convert SAM to BAM
-            # bam_dest = sam_to_bam(sam_destination, args.threads)
-            
-            # #if we were working in shm, move the final final output to the dest directory
-            # if args.shm:
-                # sys.stdout.write("\t-> Moving output from RAMFS to final destination...\n")
-                # sys.stdout.flush()
-                # files_to_move = [bam_dest, bam_dest+'.bai']
-                # if args.unaligned:
-                    # unaln_files = []
-                    # if sample['PE']:
-                        # unaln_files.append(os.path.join(working_dest, sample['Basename']+'_unaligned_1.fastq'))
-                        # unaln_files.append(os.path.join(working_dest, sample['Basename']+'_unaligned_2.fastq'))
-                    # else:
-                        # unaln_files.append(os.path.join(working_dest, sample['Basename']+'_unaligned.fastq'))
-                    # proc = subprocess.Popen(['gzip'] + unaln_files)
-                    # proc.communicate()
-                    # for f in unaln_files:
-                        # files_to_move.append(f+'.gz')
-                # proc = subprocess.Popen(['mv'] + files_to_move + [sample['Dest']])
-                # proc.communicate()
-                # #shutil.move(bam_dest, os.path.join(sample['Dest'], os.path.basename(bam_dest)))
-                # #shutil.move(bam_dest+'.bai', os.path.join(sample['Dest'], os.path.basename(bam_dest)+'.bai')) #dont forget about the index!!!
-
-            # #let the user know our progress
-            # sys.stdout.write("Done processing sample %s!\n" % (sample['Basename'],))
-            # sys.stdout.write('\t-> See output at \"%s\"\n' % (sample['Dest'],))
-            # sys.stdout.write("\t-> Processing sample took %s\n" % (Common.human_time_diff(sample_start_time, time.time()),))
-            # sys.stdout.write("=========================================================\n\n")
-            # sys.stdout.flush()
-    # #end if not args.skipalign
-    
-    
-    # if (args.qc is not None) and (len(args.qc) > 0):
-        # sys.stdout.write("Preparing to run QC assays.....\n")
-    
-        # for sidx, sample in sample_manifest.iterrows():
-            # sys.stdout.write('Processing sample "%s"....\n' % (sample['Basename'],))
-            # sys.stdout.flush()
-            # bam = os.path.join(sample['Dest'], sample['Basename']+'.bam')
-            # if 'pbc' in args.qc:
-                
-            
-            # if 'spp' in args.qc:
-                
-                
-            # if 'ism' in args.qc:
-                
-            
-            # if 'fpt' in args.qc:
-                # sys.stdout.write('\t-> Running BAM fingerprint analysis...\n')
-                # sys.stdout.flush()
-                # fpt_dir = os.path.join(sample['Dest'], 'fingerprint')
-                # Common.ensure_dir(fpt_dir)
-                # bam_fingerprint_args = [
-                    # 'bamFingerprint',
-                    # '--bamfiles', bam,
-                    # '--labels', sample['Basename'],
-                    # '--plotFile', os.path.join(fpt_dir, sample['Basename']+'.fingerprint.pdf'),
-                    # '--plotFileFormat', 'pdf',
-                    # '--outRawCounts', os.path.join(fpt_dir, sample['Basename']+'.fingerprint_counts.txt'),
-                    # '--numberOfProcessors', str(args.threads),
-                    # '--binSize', '500', #default
-                    # '--numberOfsamples', '1000000', #2x default (default is 0.5e6)
-                    # #'--verbose'
-                # ]
-                # sys.stdout.write("\t-> BAM fingerprint analysis......")
-                # sys.stdout.write("\n..............................................\n")
-                # sys.stdout.write(" ".join(bam_fingerprint_args))
-                # sys.stdout.write("\n..............................................\n")
-                # sys.stdout.flush()
-                # proc = subprocess.Popen(bam_fingerprint_args)
-                # proc.communicate()
-                # sys.stdout.write('\t-> Completed fingerprint analysis...\n')
-                # sys.stdout.flush()
-                
-                
-            # sys.stdout.write('Completed QC assays for sample "%s"....\n' % (sample['Basename'],))
-
-    # sys.stdout.write("Completed processing of all manifest items!\n")
-    # sys.stdout.write("\t-> Processing entire manifest took %s\n\n" % (Common.human_time_diff(total_start_time, time.time()),))
-    # sys.stdout.write("=========================================================\n\n")
-    # sys.stdout.flush()
-#end main()
 
 
 if __name__ == "__main__":
