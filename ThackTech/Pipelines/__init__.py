@@ -15,7 +15,7 @@ if CPU_COUNT is None:
 from ThackTech import Common
 
 from ThackTech.Pipelines.GenomeInfo import GenomeInfo
-from ThackTech.Pipelines.FileInfo import FileInfo
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 from ThackTech.Pipelines.PipelineSample import PipelineSample
 from ThackTech.Pipelines.ModuleParameter import ModuleParameter
 from ThackTech.Pipelines.PipelineModule import PipelineModule
@@ -33,6 +33,7 @@ from ThackTech.Pipelines import PipelineModules
 __all__ = [	'AnalysisPipeline',
 			'GenomeInfo',
 			'FileInfo',
+			'FileContext',
 			'PipelineSample',
 			'ModuleParameter',
 			'PipelineModule',

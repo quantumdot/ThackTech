@@ -42,7 +42,7 @@ class Trimmomatic(PipelineModule):
 			'-trimlog', trimlog_loc
 		]
 		out_sequences = []
-		read_files = self.resolve_input('fastq', cxt.sample)
+		read_files = self.resolve_input('fastq', cxt)
 		if cxt.sample.get_attribute('PE'):
 			#Input Files
 			trimmomatic_args.append(read_files[0])

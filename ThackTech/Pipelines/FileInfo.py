@@ -1,4 +1,6 @@
 import os
+import shutil
+import filecmp
 from ThackTech.Pipelines import GLOBAL_MANAGER
 from ThackTech.Pipelines.Context import BaseModuleContext
 
@@ -11,14 +13,22 @@ class FileContext(BaseModuleContext):
 		super(FileContext, self).__init__(pipeline_name, step_num, module_name)
 		self.__role = file_role
 	
+	
+	__origin_args = ("Pre-Pipeline", -1, "Origin")
 	@staticmethod
 	def from_origin(role):
 		"""Creates a FileContext that represents the file was added during sample creation
 		
 		This is most often used to identify files that were input into the pipeline
 		"""
-		return FileContext("Pre-Pipeline", -1, "Origin", role)
+		return FileContext(FileContext.__origin_args[0], FileContext.__origin_args[1], FileContext.__origin_args[2], role)
 	#end from_origin
+	
+	@property
+	def is_origin(self):
+		return self.pipeline == FileContext.__origin_args[0] \
+		   and self.step == FileContext.__origin_args[1] \
+		   and self.module == FileContext.__origin_args[2]
 	
 	@staticmethod
 	def from_module_context(context, role):
@@ -75,6 +85,11 @@ class FileInfo(object):
 		self.attributes = {}
 	#end __init__()
 	
+	def _set_path(self, filepath):
+		"""Sets the internal file path of this FileInfo
+		"""
+		self.__fullpath = filepath
+	
 	@property
 	def context(self):
 		"""Gets the context of this file
@@ -85,7 +100,7 @@ class FileInfo(object):
 	def fullpath(self):
 		"""Gets the fully-qualified path to this file
 		"""
-		return self.__fullpath
+		return os.path.abspath(self.__fullpath)
 	
 	@property
 	def dirname(self):
@@ -120,7 +135,17 @@ class FileInfo(object):
 		"""Gets a list of companion files associated with this file
 		"""
 		return self.__companions
-		
+	
+	def move(self, destfolder):
+		shutil.move(self.fullpath, destfolder)
+		self.__fullpath = os.path.join(destfolder, self.basename)
+		for companion in self.companions:
+			companion.move(destfolder)
+	
+	def copy(self, destfolder):
+		shutil.copy2(self.fullpath, destfolder)
+		for companion in self.companions:
+			companion.move(destfolder)
 		
 	def __str__(self):
 		return self.fullpath

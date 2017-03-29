@@ -157,8 +157,8 @@ class PipelineModule(object):
 		self.resolvers[name] = _callable
 	#end set_resolver()
 	
-	def resolve_input(self, name, sample):
-		return self.resolvers[name](sample)
+	def resolve_input(self, name, cxt):
+		return self.resolvers[name](cxt)
 	#end resolve_input()
 	
 	def get_resolver_names(self):

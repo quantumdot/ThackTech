@@ -5,7 +5,8 @@ import multiprocessing
 import pandas as pd
 import argparse
 import sys
-from ThackTech.Pipelines import PipelineSample, AnalysisPipeline
+from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
+from ThackTech.Pipelines.FileInfo import FileContext
 
 
 #sample manifest should be in the following TAB separated format (with headers):
@@ -35,34 +36,32 @@ class AlignmentPipelineSample(PipelineSample):
     
     def discover_files(self, path):
         files = []
-        is_compressed = False
         compressed_extensions = ['.gz', '.bz2', '.zip', '.tar', '.tar.gz']
         if self.get_attribute('PE'):
             base = os.path.join(path, self.name + gopts['pe_prefix'])
             #print "trying %s, %s" % (base+'1.fastq', base+'2.fastq')
             if os.path.exists(base+'1.fastq') and os.path.exists(base+'2.fastq'):
-                files.append(base+'1.fastq')
-                files.append(base+'2.fastq')
+                files.append(FileInfo(base+'1.fastq', FileContext.from_origin('read1')))
+                files.append(FileInfo(base+'2.fastq', FileContext.from_origin('read2')))
             else:
                 for ext in compressed_extensions:
                     if os.path.exists(base+'1.fastq'+ext) and os.path.exists(base+'2.fastq'+ext):
-                        files.append(base+'1.fastq'+ext)
-                        files.append(base+'2.fastq'+ext)
+                        files.append(FileInfo(base+'1.fastq'+ext, FileContext.from_origin('read1')))
+                        files.append(FileInfo(base+'2.fastq'+ext, FileContext.from_origin('read2')))
                         continue
-                        is_compressed = True
         else:
             base = os.path.join(path, self.name+'.fastq')
             if os.path.exists(base):
-                files.append(base)
+                files.append(FileInfo(base, FileContext.from_origin('reads')))
             else:
                 for ext in compressed_extensions:
                     if os.path.exists(base+ext):
-                        files.append(base+ext)
+                        files.append(FileInfo(base+ext, FileContext.from_origin('reads')))
                         continue
-                        is_compressed = True
         if len(files) <= 0:
             raise IOError('Unable to find '+('PE ' if self.get_attribute('PE') else '')+'reads for '+self.name)
-        self.add_file('source', 'fastq', files)
+        for f in files:
+            self.add_file(f)
     #end find_files()
 #end Pipelinesample
 
@@ -140,7 +139,9 @@ def make_read_alignment_pipeline(args, additional_args):
     if not args.skipalign:
         if args.trim:
             from ThackTech.Pipelines.PipelineModules import Trimmomatic
-            pipeline.append_module(Trimmomatic.Trimmomatic(critical=True, processors=args.threads))
+            x = Trimmomatic.Trimmomatic(critical=True, processors=args.threads)
+            x.set_resolver('fastq', lambda cxt: cxt.sample.find_files(lambda f: f.ext == ))
+            pipeline.append_module()
     
     
         if args.bowtie_version == '1':
@@ -204,7 +205,9 @@ def make_read_alignment_pipeline(args, additional_args):
         
         if 'fpt' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamFingerprint
-            pipeline.append_module(BamFingerprint.BamFingerprint(processors=args.threads))
+            x = BamFingerprint.BamFingerprint(processors=args.threads)
+            x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.ext == 'bam'))
+            pipeline.append_module(x)
             
         if 'rpkm' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig

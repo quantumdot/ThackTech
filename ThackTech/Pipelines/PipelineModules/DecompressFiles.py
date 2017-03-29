@@ -13,7 +13,7 @@ class DecompressFiles(PipelineModule):
 	
 	def run(self, cxt):
 		cxt.sample.add_attribute('decompressed_files', [])
-		file_lookups = self.resolve_input('files', cxt.sample)
+		file_lookups = self.resolve_input('files', cxt)
 		files = []
 		decompress_procs = []
 		for fl in file_lookups:
