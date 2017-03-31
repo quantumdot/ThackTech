@@ -39,7 +39,7 @@ plot_fonts = {
     'axis': None
 }
 
-class Profilecxt.sample:
+class ProfileSample:
     def __init__(self, id, sig_id, bed_id, signal_array, sig_label, bed_label):
         self.id = id
         self.sig_id = sig_id
@@ -50,7 +50,7 @@ class Profilecxt.sample:
         self.show_yaxis = False
         self.hlines = []
     #end __init__()
-#end class Profilecxt.sample
+#end class ProfileSample
 
 # class PlotLayout:
     # def __init__(self):
@@ -64,7 +64,7 @@ class Profilecxt.sample:
         # for item in self.items:
             # total_rows = max(total_rows, item.relative_row)
             # total_cols = max(total_cols, item.relative_col)
-            # for s in item.cxt.samples:
+            # for s in item.samples:
                 # groups.add(s.group)
         # #for g in groups:
             
@@ -77,7 +77,7 @@ class Profilecxt.sample:
         # self.type = type
         # self.relative_row = row
         # self.relative_col = col
-        # self.cxt.samples = []
+        # self.samples = []
     # #end __inti__()
 # #end class PlotItem
 
@@ -110,19 +110,19 @@ def main():
     profile_group.add_argument('--collectionmethod', action='store', choices=['get_as_array', 'ucsc_summarize', 'summarize'], default='get_as_array', help='Method for collecting signal data.')
     
     scale_group = parser.add_argument_group('Scaling Options')
-    scale_group.add_argument('--scalegroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of cxt.samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in cxt.sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits cxt.samples, then the omitted cxt.samples will each be scaled independently.')
-    scale_group.add_argument('--scalebedgroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of cxt.samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in cxt.sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits cxt.samples, then the omitted cxt.samples will each be scaled independently.')
+    scale_group.add_argument('--scalegroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
+    scale_group.add_argument('--scalebedgroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
     scale_group.add_argument('--saturatemin', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemin> percent bottom values.')
     scale_group.add_argument('--saturatemax', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemax> percent top values.')
     
     clustsort_group = parser.add_argument_group('Clustering/Sorting Options')
-    clustsort_group.add_argument('--sort', action='store', default=None, type=int, help='cxt.sample index (0-based) to use for sorting. If not specified than the order of the bed file is used. Mutually exclusive with --kmeans.')
+    clustsort_group.add_argument('--sort', action='store', default=None, type=int, help='sample index (0-based) to use for sorting. If not specified than the order of the bed file is used. Mutually exclusive with --kmeans.')
     clustsort_group.add_argument('--sortmethod', action='store', choices=['mean', 'median', 'max', 'min', 'sum'], default='mean', help='Method used for sorting.')
     clustsort_group.add_argument('--sortrange', action='store', default=None, help='Range of the profiles (in relative bp) to be used in the sorting operation. Specify in the format "start:stop". Default is to use the entire range.')
     clustsort_group.add_argument('--kmeans', action='store_true', help='If set, Perform K-means clustering on the data. Mutually exclusive with --sort.')
     clustsort_group.add_argument('--k', action='store', type=int, help='Number of clusters, k, to fit data to when performing K-means clustering.')
     clustsort_group.add_argument('--autok', action='store_true', help='Optimize the number of clusters, k, in the dataset. Mutually exclusixe with --k.')
-    clustsort_group.add_argument('--kcxt.samples', action='store', default='all', help='Comma-separated list of 0-based offsets of cxt.samples to use for K-means clustering. Use \'all\' to cluster on all cxt.samples.')
+    clustsort_group.add_argument('--ksamples', action='store', default='all', help='Comma-separated list of 0-based offsets of samples to use for K-means clustering. Use \'all\' to cluster on all samples.')
     clustsort_group.add_argument('--summarymethod', action='store', choices=['mean', 'median', 'max', 'min', 'sum'], default='mean', help='Method used for producing summary (avg) plot.')
     clustsort_group.add_argument('--hline', action='store_true', help='Draw horizontal lines to delineate clusters.')
     clustsort_group.add_argument('--hlineweight', action='store', type=float, default=0.5, help='Horizontal line weight.')
@@ -167,7 +167,7 @@ def main():
         sys.stderr.write("ERROR: Fewer interval labels supplied than there are intervals! Interval and label counts must be equal if supplying labels!\n")
         sys.exit(1)
     if len(args.inp) > 0 and len(args.inp) < len(args.sig):
-        sys.stderr.write("ERROR: Fewer inputs supplied than there are cxt.samples! cxt.sample and input counts must be equal if supplying inputs!\n")
+        sys.stderr.write("ERROR: Fewer inputs supplied than there are samples! sample and input counts must be equal if supplying inputs!\n")
         sys.exit(1)
     if len(args.plot) <= 0:
         sys.stderr.write("ERROR: No plot types were selected!\n")
@@ -230,7 +230,7 @@ def main():
         
         
     
-    cxt.samples = []
+    samples = []
     for s in xrange(len(args.sig)):
         for b in xrange(len(args.bed)):
             sys.stderr.write("Processing %s vs %s....\n" % (args.bed[b], args.sig[s]))
@@ -247,14 +247,14 @@ def main():
             
             signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
             
-            ps = Profilecxt.sample(len(cxt.samples), s, b, signal, s_label, b_label)
+            ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             ps.signal_array = ttstats.correct_invalid_data(ps.signal_array, args.nan)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
-            cxt.samples.append(ps)
+            samples.append(ps)
             sys.stderr.write("\n")
     
-    gopts['group_count'] = count_groups(args.scalegroups, cxt.samples)
+    gopts['group_count'] = count_groups(args.scalegroups, samples)
     if args.rotate:
         gopts['fig_cols'] = len(args.bed) + 1#gopts['group_count']
         gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.sig)) + (args.avgplotrows if 'avg' in args.plot else 0)
@@ -271,7 +271,7 @@ def main():
                 signal = sigcollector.get_bed_score_signal(bedtool)
             #print signal
             b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
-            cxt.samples.append(Profilecxt.sample(len(cxt.samples), len(args.sig), b, signal, args.bedscorelabel, b_label))
+            samples.append(ProfileSample(len(samples), len(args.sig), b, signal, args.bedscorelabel, b_label))
         if args.rotate:
             gopts['fig_rows'] += args.heatplotrows
         else:
@@ -286,15 +286,15 @@ def main():
     
     #compute sort orders/grouping/clustering
     if args.kmeans:
-        if args.kcxt.samples == 'all':
-            kindicies = range(len(cxt.samples))
+        if args.ksamples == 'all':
+            kindicies = range(len(samples))
         else:
-            kindicies = [int(i) for i in args.kcxt.samples.split(',')]
+            kindicies = [int(i) for i in args.ksamples.split(',')]
         if args.autok:
             k = range(1,10)
         else:
             k = args.k
-        compute_Kmeans(cxt.samples, kindicies, k, args.bed[0], gopts['chromsets'].use)
+        compute_Kmeans(samples, kindicies, k, args.bed[0], gopts['chromsets'].use)
         gopts['savename_notes'].append("k%d" %(gopts['k_info']['k'],))
     else:
         if args.sortrange is not None:
@@ -304,18 +304,18 @@ def main():
         else:
             start = 0
             stop = -1
-        compute_sorting(cxt.samples, args.sort, args.sortmethod, (start, stop))
+        compute_sorting(samples, args.sort, args.sortmethod, (start, stop))
         if args.sort is None:
             gopts['savename_notes'].append("sort-bed")
         else:
             gopts['savename_notes'].append("sort%d%s" % (args.sort, args.sortmethod))
         
     #compute saturation points and average profile limits
-    compute_group_scales(args.scalegroups, cxt.samples, args.saturatemin, args.saturatemax)
+    compute_group_scales(args.scalegroups, samples, args.saturatemin, args.saturatemax)
     
     #generate the subplots....
     sys.stderr.write("Generating Figure....\n")
-    for s in cxt.samples:
+    for s in samples:
         add_signal_to_figure(s)
     sys.stderr.write("\n")
     
@@ -328,7 +328,7 @@ def main():
     
     #add colorscale bar if necessary
     if 'heat' in gopts['args'].plot:
-        make_colormap_strip_for_groups(fig, args.scalegroups, cxt.samples)
+        make_colormap_strip_for_groups(fig, args.scalegroups, samples)
     
     #add sensible x-axis label
     gopts['extra_artists'].append(fig.text(0.5, 0.04, collection_opts.xaxis_label, ha='center', va='center'))
@@ -380,7 +380,7 @@ def document_args():
             sys.stderr.write("#    -> K = auto\n")
         else:
             sys.stderr.write("#    -> K = %d\n" % (gopts['args'].k,))
-        sys.stderr.write("#    -> Cluster on cxt.samples: %s\n" % (gopts['args'].kcxt.samples,))
+        sys.stderr.write("#    -> Cluster on samples: %s\n" % (gopts['args'].ksamples,))
     else:
         if gopts['args'].sort is None:
             sys.stderr.write("# Sort By: BED order\n")
@@ -396,12 +396,12 @@ def document_args():
 
 
 
-def compute_Kmeans(cxt.samples, kindicies, k, bed, white_chroms=None):
+def compute_Kmeans(samples, kindicies, k, bed, white_chroms=None):
     sys.stderr.write("Computing K-means clustering....\n")
-    sys.stderr.write("-> Considering cxt.samples %s (0-based)\n" % (str(kindicies),))
+    sys.stderr.write("-> Considering samples %s (0-based)\n" % (str(kindicies),))
     sys.stderr.write("-> Using K = %s\n" % (str(k),))
     
-    pooled = np.hstack(tuple([s.signal_array for s in cxt.samples if s.id in kindicies]))
+    pooled = np.hstack(tuple([s.signal_array for s in samples if s.id in kindicies]))
     ind, breaks = metaseq.plotutils.new_clustered_sortind(pooled, k=k, row_key=np.mean, cluster_key=np.median)
     
     if not isinstance(k, int):
@@ -411,7 +411,7 @@ def compute_Kmeans(cxt.samples, kindicies, k, bed, white_chroms=None):
     for b in breaks:
         hlines.append(b)
         
-    for s in cxt.samples:
+    for s in samples:
         s.hlines = hlines
         s.sort_order = np.argsort(ind)
     
@@ -451,54 +451,54 @@ def make_interval_classes(sort_indicies, breaks, bed, white_chroms=None):
     return intervals
 #end make_interval_classes()
 
-def compute_sorting(cxt.samples, sort_index, method, sort_range):
+def compute_sorting(samples, sort_index, method, sort_range):
     #print range
     if sort_index is None:
-        for s in cxt.samples:
+        for s in samples:
             s.sort_order = None
     else:
         sort_orders = {} #sort orders indexed by interval id
-        for s in cxt.samples:
+        for s in samples:
             if s.sig_id == sort_index:
                 sort_orders[s.bed_id] = getattr(s.signal_array[:,sort_range[0]:sort_range[1]], method)(axis=1)
-        for s in cxt.samples:
+        for s in samples:
             s.sort_order = sort_orders[s.bed_id]
 #end compute_sorting()
 
 
 
 
-def get_groups(groups, cxt.samples):
+def get_groups(groups, samples):
     if groups is None:
-        return [list(set(str(s.sig_id) for s in cxt.samples))]
+        return [list(set(str(s.sig_id) for s in samples))]
     else:
-        non_covered_cxt.samples = set([str(s.sig_id) for s in cxt.samples]) - set(groups.replace(";",",").split(","))
-        if len(non_covered_cxt.samples) > 0:
-            groups += ";" + ";".join(non_covered_cxt.samples)
+        non_covered_samples = set([str(s.sig_id) for s in samples]) - set(groups.replace(";",",").split(","))
+        if len(non_covered_samples) > 0:
+            groups += ";" + ";".join(non_covered_samples)
         final_groups = []
         for group in groups.split(";"):
-            final_groups.append([str(s.sig_id) for s in cxt.samples if str(s.sig_id) in group.split(",")])
+            final_groups.append([str(s.sig_id) for s in samples if str(s.sig_id) in group.split(",")])
         return [sl for sl in final_groups if len(sl) > 0]
 #end get_groups()
 
-def count_groups(groups, cxt.samples):
-    return len(get_groups(groups, cxt.samples))
+def count_groups(groups, samples):
+    return len(get_groups(groups, samples))
 #end count_groups()
 
-def compute_group_scales(groups, cxt.samples, min_saturate, max_saturate):
-    groups_list = get_groups(groups, cxt.samples)
+def compute_group_scales(groups, samples, min_saturate, max_saturate):
+    groups_list = get_groups(groups, samples)
     #print groups_list
     for i in range(len(groups_list)):
-        compute_scales_for_group(i, [s for s in cxt.samples if str(s.sig_id) in groups_list[i]], min_saturate, max_saturate)
+        compute_scales_for_group(i, [s for s in samples if str(s.sig_id) in groups_list[i]], min_saturate, max_saturate)
 #end compute_group_scales()
 
-def compute_scales_for_group(group_id, cxt.samples, min_saturate, max_saturate):
-    pooled = np.vstack(tuple([s.signal_array for s in cxt.samples]))
+def compute_scales_for_group(group_id, samples, min_saturate, max_saturate):
+    pooled = np.vstack(tuple([s.signal_array for s in samples]))
     heat_min = np.percentile(pooled[np.isfinite(pooled)], (min_saturate*100))
     heat_max = np.percentile(pooled[np.isfinite(pooled)], ((1-max_saturate)*100))
     avg_min = float('inf')
     avg_max = float('-inf')
-    for s in cxt.samples:
+    for s in samples:
         mean_array = s.signal_array.mean(axis=0)
         mean_min = mean_array.min()
         mean_max = mean_array.max()
@@ -513,9 +513,9 @@ def compute_scales_for_group(group_id, cxt.samples, min_saturate, max_saturate):
     else:
         avg_min = avg_min - (abs(avg_min) * 0.1)
     
-    for s in cxt.samples:
+    for s in samples:
         s.group = group_id
-        if (gopts['args'].rotate and s.bed_id == cxt.samples[0].bed_id) or (not gopts['args'].rotate and s.sig_id == cxt.samples[0].sig_id):
+        if (gopts['args'].rotate and s.bed_id == samples[0].bed_id) or (not gopts['args'].rotate and s.sig_id == samples[0].sig_id):
             s.show_yaxis = True
         s.heat_min = heat_min
         s.heat_max = heat_max
@@ -569,66 +569,66 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
     return gopts['plot_axes'][(row,col)]
 #end get_plot_axes()
 
-def add_signal_to_figure(cxt.sample):
+def add_signal_to_figure(sample):
     #avg_profile_row = gopts['fig_rows']-gopts['args'].avgplotrows #3 if 'heat' in gopts['args'].plot else 0
-    sys.stderr.write("-> Plotting data (%d, %d, %d) for %s x %s....\n" % (cxt.sample.group, cxt.sample.bed_id, cxt.sample.sig_id, cxt.sample.bed_label, cxt.sample.sig_label))
+    sys.stderr.write("-> Plotting data (%d, %d, %d) for %s x %s....\n" % (sample.group, sample.bed_id, sample.sig_id, sample.bed_label, sample.sig_label))
     
     if 'heat' in gopts['args'].plot:
         sys.stderr.write("    -> Generating heatmap...\n")
-        #sys.stderr.write("    -> (%d, %d)\n" % (cxt.sample.bed_id*3, cxt.sample.sig_id))
-        ax =  get_plot_axes('heat', cxt.sample.group, cxt.sample.bed_id, cxt.sample.sig_id)
-        make_sig_heatmap(ax, cxt.sample)
+        #sys.stderr.write("    -> (%d, %d)\n" % (sample.bed_id*3, sample.sig_id))
+        ax =  get_plot_axes('heat', sample.group, sample.bed_id, sample.sig_id)
+        make_sig_heatmap(ax, sample)
     if 'avg' in gopts['args'].plot:
-        ax =  get_plot_axes('avg', cxt.sample.group, cxt.sample.bed_id, cxt.sample.sig_id)
+        ax =  get_plot_axes('avg', sample.group, sample.bed_id, sample.sig_id)
         if 'kavg' in gopts['args'].plot:
             sys.stderr.write("    -> Generating average profile for clusters...\n")
-            #sys.stderr.write("    -> (%d, %d)\n" % (avg_profile_row,cxt.sample.sig_id))
+            #sys.stderr.write("    -> (%d, %d)\n" % (avg_profile_row,sample.sig_id))
             clust_colors = ['r','g','b','c','m','y']
             for i in range(gopts['k_info']['k']):
                 sys.stderr.write("        -> Cluster #%d...\n" % ((i+1),))
-                add_masked_group_to_avg_plot(ax, cxt.sample, (gopts['k_info']['classes']['class_id'] != (i+1)), 'cluster %d' % ((i+1),), color=clust_colors[i%len(clust_colors)])
+                add_masked_group_to_avg_plot(ax, sample, (gopts['k_info']['classes']['class_id'] != (i+1)), 'cluster %d' % ((i+1),), color=clust_colors[i%len(clust_colors)])
                 
         sys.stderr.write("    -> Generating average profile...\n")
         if gopts['args'].rotate:
-            color = gopts['color_cycle'][cxt.sample.sig_id % len(gopts['color_cycle'])]
+            color = gopts['color_cycle'][sample.sig_id % len(gopts['color_cycle'])]
         else:
-            color = gopts['color_cycle'][cxt.sample.bed_id % len(gopts['color_cycle'])]
+            color = gopts['color_cycle'][sample.bed_id % len(gopts['color_cycle'])]
         
-        make_average_sig_plot(ax, cxt.sample, color)
+        make_average_sig_plot(ax, sample, color)
         
         if 'kavg' in gopts['args'].plot:
             leg = ax.legend(loc='best', bbox_to_anchor=(0.5, -0.1))
             leg.get_frame().set_linewidth(0.1)
 #end add_signal_to_figure()
 
-def make_average_sig_plot(ax, cxt.sample, color='k'):
+def make_average_sig_plot(ax, sample, color='k'):
     if gopts['args'].vline:
         ax.axvline(0, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
         if gopts['args'].align == 'scale':
             ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
     
-    summary = getattr(cxt.sample.signal_array, gopts['args'].summarymethod)(axis=0)
-    label = cxt.sample.sig_label if gopts['args'].rotate else cxt.sample.bed_label
+    summary = getattr(sample.signal_array, gopts['args'].summarymethod)(axis=0)
+    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
     ax.plot(gopts['x_axis'], summary, color=color, label=label)
     
     if gopts['args'].showci:
-        computed_error = sigcollector.compute_error(cxt.sample, gopts['args'].ciwidth)
+        computed_error = stats.compute_error(sample, gopts['args'].ciwidth)
         ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
         ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
         
     ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
-    ax.set_ylim(bottom=cxt.sample.avg_min, top=cxt.sample.avg_max)
+    ax.set_ylim(bottom=sample.avg_min, top=sample.avg_max)
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
-    if not cxt.sample.show_yaxis:
+    if not sample.show_yaxis:
         ax.set_yticklabels([])
         #ax.set_xticklabels([])
     return ax
 #end make_average_sig_plot()
 
 
-def add_masked_group_to_avg_plot(ax, cxt.sample, mask, label, color='k'):
+def add_masked_group_to_avg_plot(ax, sample, mask, label, color='k'):
     #print mask
-    real_mask = np.zeros(cxt.sample.signal_array.shape, dtype=np.bool)
+    real_mask = np.zeros(sample.signal_array.shape, dtype=np.bool)
     counts = [0, 0]
     for maskrow in xrange(mask.shape[0]):
         if mask[maskrow]:
@@ -639,32 +639,32 @@ def add_masked_group_to_avg_plot(ax, cxt.sample, mask, label, color='k'):
     #print real_mask
     #print counts
     if gopts['args'].showci:
-        metaseq.plotutils.ci_plot(gopts['x_axis'], np.ma.array(cxt.sample.signal_array, mask=real_mask), gopts['args'].ciwidth, ax, line_kwargs=dict(color=color, label=label), fill_kwargs=dict(color=color, alpha=0.3))
+        metaseq.plotutils.ci_plot(gopts['x_axis'], np.ma.array(sample.signal_array, mask=real_mask), gopts['args'].ciwidth, ax, line_kwargs=dict(color=color, label=label), fill_kwargs=dict(color=color, alpha=0.3))
     else:
-        ax.plot(gopts['x_axis'], np.ma.array(cxt.sample.signal_array, mask=real_mask).mean(axis=0), color=color, label=label)
+        ax.plot(gopts['x_axis'], np.ma.array(sample.signal_array, mask=real_mask).mean(axis=0), color=color, label=label)
 #end add_masked_group_to_avg_plot
 
-def make_sig_heatmap(ax, cxt.sample):
+def make_sig_heatmap(ax, sample):
     #sys.stderr.write("-> saturation: (%d, %d)\n" % (vmin, vmax))
-    cxt.sample.mappable = metaseq.plotutils.imshow(
-            cxt.sample.signal_array,
+    sample.mappable = metaseq.plotutils.imshow(
+            sample.signal_array,
             x=gopts['x_axis'],
             ax=ax,
-            vmin=cxt.sample.heat_min, 
-            vmax=cxt.sample.heat_max, 
+            vmin=sample.heat_min, 
+            vmax=sample.heat_max, 
             percentile=False,
-            sort_by=cxt.sample.sort_order
+            sort_by=sample.sort_order
     )
     if gopts['args'].rotate:
-        if cxt.sample.sig_id == 0: #first row
-            ax.set_title(cxt.sample.bed_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
-        if cxt.sample.bed_id == 0: #first column
-            ax.set_ylabel(cxt.sample.sig_label)
+        if sample.sig_id == 0: #first row
+            ax.set_title(sample.bed_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
+        if sample.bed_id == 0: #first column
+            ax.set_ylabel(sample.sig_label)
     else:
-        if cxt.sample.bed_id == 0: #first row
-            ax.set_title(cxt.sample.sig_label)
-        if cxt.sample.sig_id == 0: #first column
-            ax.set_ylabel(cxt.sample.bed_label)
+        if sample.bed_id == 0: #first row
+            ax.set_title(sample.sig_label)
+        if sample.sig_id == 0: #first column
+            ax.set_ylabel(sample.bed_label)
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     if gopts['args'].vline:
@@ -672,25 +672,25 @@ def make_sig_heatmap(ax, cxt.sample):
         if gopts['args'].align == 'scale':
             ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
     if gopts['args'].hline:
-        for hl in cxt.sample.hlines:
+        for hl in sample.hlines:
             ax.axhline(hl, linestyle=gopts['args'].hlinestyle, color='k', linewidth=gopts['args'].hlineweight)
 #end make_sig_heatmap()
 
-def make_colormap_strip_for_groups(fig, groups, cxt.samples):
-    groups_list = get_groups(groups, cxt.samples)
+def make_colormap_strip_for_groups(fig, groups, samples):
+    groups_list = get_groups(groups, samples)
     for i in range(len(groups_list)):
-        make_colormap_strip(fig, [s for s in cxt.samples if str(s.sig_id) in groups_list[i]])
+        make_colormap_strip(fig, [s for s in samples if str(s.sig_id) in groups_list[i]])
 #end make_colormap_strip_for_groups()
 
-def make_colormap_strip(fig, cxt.samples):
+def make_colormap_strip(fig, samples):
     import metaseq.colormap_adjust as colormap_adjust
-    cmap = colormap_adjust.smart_colormap(cxt.samples[0].heat_min, cxt.samples[0].heat_max)
-    norm = mpl.colors.Normalize(vmin=cxt.samples[0].heat_min, vmax=cxt.samples[0].heat_max)
+    cmap = colormap_adjust.smart_colormap(samples[0].heat_min, samples[0].heat_max)
+    norm = mpl.colors.Normalize(vmin=samples[0].heat_min, vmax=samples[0].heat_max)
     cols = []
-    for s in cxt.samples:
+    for s in samples:
         cols.append(s.sig_id)
     max_col = max(cols)
-    cbar_axis = get_plot_axes('cbar', cxt.samples[0].group, min(cols), max(cols))
+    cbar_axis = get_plot_axes('cbar', samples[0].group, min(cols), max(cols))
     cur_pos = cbar_axis.get_position()
     new_pos = [cur_pos.x0, cur_pos.y0, cur_pos.width * 0.25, cur_pos.height]
     cbar_axis.set_position(new_pos)
