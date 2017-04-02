@@ -29,7 +29,7 @@ class AlignmentPipelineSample(PipelineSample):
 
     def __init__(self, sample):
         super(AlignmentPipelineSample, self).__init__(sample['Basename'], sample['Genome'], sample['Dest'])
-        self.add_attribute('PE', ('PE' in sample and sample['PE']))
+        self.set_attribute('PE', ('PE' in sample and sample['PE']))
         self.discover_files(sample['Path'])
     #end __init__()
     
