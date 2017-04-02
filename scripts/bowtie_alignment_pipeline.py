@@ -150,7 +150,7 @@ def make_read_alignment_pipeline(args, additional_args):
         if args.bowtie_version == '1':
             from ThackTech.Pipelines.PipelineModules import DecompressFiles
             x = DecompressFiles.DecompressFiles()
-            x.set_resolver('fastq', resolve_bowtie1)
+            x.set_resolver('files', resolve_bowtie1)
             pipeline.append_module(x, critical=True)
         
             from ThackTech.Pipelines.PipelineModules import BowtieAlign

@@ -25,7 +25,7 @@ class BamToRpkmNormBigWig(PipelineModule):
 		cxt.sample_basename = "%s.%s.%s" % (cxt.sample.name, 'rpkm_norm', ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw'))
 		bamcoverage_args = [
 			'bamCoverage',
-			'--bam', self.resolve_input('bam', cxt.sample),
+			'--bam', self.resolve_input('bam', cxt.sample).fullpath,
 			'--outFileName', os.path.join(cxt.sample.dest, cxt.sample_basename),
 			'--outFileFormat', self.get_parameter_value_as_string('output_format'),
 			'--binSize', self.get_parameter_value_as_string('bin_size'),

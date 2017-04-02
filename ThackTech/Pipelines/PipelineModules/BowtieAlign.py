@@ -93,11 +93,11 @@ class BowtieAlign(PipelineModule):
 		#add the input file arguments
 		if cxt.sample.get_attribute('PE'):
 			bowtiecmd += [
-				'-1', [f for f in read_files if f.has_attribute_value("mate", 1)][0], 
-				'-2', [f for f in read_files if f.has_attribute_value("mate", 2)][0]
+				'-1', [f for f in read_files if f.has_attribute_value("mate", 1)][0].fullpath, 
+				'-2', [f for f in read_files if f.has_attribute_value("mate", 2)][0].fullpath
 			]
 		else:
-			bowtiecmd.append(read_files[0])
+			bowtiecmd.append(read_files[0].fullpath)
 		#specify the destination SAM file
 		output_result['sam'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.sam')
 		bowtiecmd.append(output_result['sam'])

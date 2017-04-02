@@ -48,8 +48,8 @@ class Trimmomatic(PipelineModule):
 		read_files = self.resolve_input('fastq', cxt)
 		if cxt.sample.get_attribute('PE'):
 			#Input Files
-			trimmomatic_args.append([f for f in read_files if f.has_attribute_value("mate", 1)][0])
-			trimmomatic_args.append([f for f in read_files if f.has_attribute_value("mate", 2)][0])
+			trimmomatic_args.append([f for f in read_files if f.has_attribute_value("mate", 1)][0].fullpath)
+			trimmomatic_args.append([f for f in read_files if f.has_attribute_value("mate", 2)][0].fullpath)
 			#Output Files
 			out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'), 
 							 FileContext.from_module_context(cxt, "filtered_paired_reads"),
@@ -75,7 +75,7 @@ class Trimmomatic(PipelineModule):
 # 			out_sequences.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'))
 		else:
 			#Input Files
-			trimmomatic_args.append(read_files[0])
+			trimmomatic_args.append(read_files[0].fullpath)
 			#Output Files
 			out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'), 
 							 FileContext.from_module_context(cxt, "filtered_reads"),

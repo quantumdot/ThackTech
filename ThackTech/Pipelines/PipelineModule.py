@@ -154,6 +154,8 @@ class PipelineModule(object):
 	#end _name_resolver()
 	
 	def set_resolver(self, name, _callable):
+		if name not in self.resolvers:
+			raise ValueError("{} is not a declared resolver!".format(name))
 		self.resolvers[name] = _callable
 	#end set_resolver()
 	
