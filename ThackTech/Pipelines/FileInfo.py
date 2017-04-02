@@ -1,7 +1,6 @@
 import os
 import shutil
 import filecmp
-from ThackTech.Pipelines import GLOBAL_MANAGER
 from ThackTech.Pipelines.Context import BaseModuleContext
 
 class FileContext(BaseModuleContext):
@@ -79,6 +78,7 @@ class FileInfo(object):
 		self.__context = context
 		
 		#support for companion files
+		from ThackTech.Pipelines import GLOBAL_MANAGER
 		self.__companions = GLOBAL_MANAGER.list()
 		
 		#random extra data as needed.
