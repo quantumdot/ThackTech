@@ -109,7 +109,7 @@ def main():
     #run the pipeline!
     if args.runner == 'slurm':
         from ThackTech.Pipelines import SlurmPipelineRunner
-        runner = SlurmPipelineRunner(pipeline, partition="main", nodes=1, threads_per_node=args.threads, time_limit="5:00:00")
+        runner = SlurmPipelineRunner(pipeline, partition="main", nodes=1, threads=args.threads, time_limit="5:00:00")
     elif args.runner == 'parallel':
         from ThackTech.Pipelines import ParallelPipelineRunner
         runner = ParallelPipelineRunner(pipeline, args.threads)
