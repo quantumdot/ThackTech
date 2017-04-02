@@ -139,7 +139,7 @@ def make_read_alignment_pipeline(args, additional_args):
             from ThackTech.Pipelines.PipelineModules import Trimmomatic
             x = Trimmomatic.Trimmomatic(critical=True, processors=args.threads)
             x.set_resolver('fastq', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "reads" ))
-            pipeline.append_module()
+            pipeline.append_module(x)
     
     
         if args.bowtie_version == '1':
