@@ -112,6 +112,9 @@ class PipelineSample(object):
 		self.files.append(fileinfo)
 	#end add_file()
 	
+	def remove_file(self, fileinfo):
+		self.files.remove(fileinfo)
+	
 	def find_files(self, predicate):
 		"""Find files that satisfy a predicate
 		

@@ -1,6 +1,7 @@
 import os
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class InsertSizeMetrics(PipelineModule):
@@ -33,9 +34,9 @@ class InsertSizeMetrics(PipelineModule):
 			cxt.log.write('\t-> Completed insert size analysis...\n')
 			cxt.log.flush()
 		
-		return {
-			'histogram_figure': insmet_outbase+'.hist.pdf',
-			'histogram_data':	insmet_outbase+'.txt'
-		}
+		out_files = []
+		out_files.append(FileInfo(insmet_outbase+'.hist.pdf', FileContext.from_module_context(cxt, 'histogram_figure')))
+		out_files.append(FileInfo(insmet_outbase+'.txt', FileContext.from_module_context(cxt, 'histogram_data')))
+		return out_files
 	#end run()
 #end InsertSizeMetrics

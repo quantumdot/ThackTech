@@ -2,6 +2,7 @@ import os
 import subprocess
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class Trimmomatic(PipelineModule):
@@ -12,6 +13,8 @@ class Trimmomatic(PipelineModule):
 		self.add_parameter(ModuleParameter('trim_adapt_fa_SE', str, '/mnt/ref/adapters/TruSeq3-SE.fa'))
 		self.add_parameter(ModuleParameter('trim_adapt_fa_PE', str, '/mnt/ref/adapters/TruSeq3-PE-2.fa'))
 		
+		self.add_parameter(ModuleParameter("compress_trimlog", bool, True, desc="Determines if the trim log is compressed."))
+		
 		self.add_parameter(ModuleParameter('leading', int, 3, nullable=True, desc="Cut bases off the start of a read, if below a threshold quality"))
 		self.add_parameter(ModuleParameter('trailing', int, 3, nullable=True, desc="Cut bases off the end of a read, if below a threshold quality"))
 		self.add_parameter(ModuleParameter('sliding_window_width', int, 4))
@@ -21,8 +24,8 @@ class Trimmomatic(PipelineModule):
 		#self.add_parameter(ModuleParameter('crop', int, None, nullable=True, desc="Cut the read to a specified length"))
 		#self.add_parameter(ModuleParameter('head_crop', int, None, nullable=True, desc="Cut the specified number of bases from the start of the read"))
 		
-		self.set_parameters_from_config()
 		self._name_resolver('fastq')
+		self.set_parameters_from_config()
 	#end __init__()
 	
 	def tool_versions(self):
@@ -41,27 +44,47 @@ class Trimmomatic(PipelineModule):
 			'-threads', str(self.processors),
 			'-trimlog', trimlog_loc
 		]
-		out_sequences = []
+		out_files = []
 		read_files = self.resolve_input('fastq', cxt)
 		if cxt.sample.get_attribute('PE'):
 			#Input Files
-			trimmomatic_args.append(read_files[0])
-			trimmomatic_args.append(read_files[1])
+			trimmomatic_args.append([f for f in read_files if f.has_attribute_value("mate", 1)][0])
+			trimmomatic_args.append([f for f in read_files if f.has_attribute_value("mate", 2)][0])
 			#Output Files
-			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'))
-			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.unpaired.fastq.gz'))
-			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'))
-			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.unpaired.fastq.gz'))
-			#files to return - properly paired and filtered sequences passing QC
-			out_sequences.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'))
-			out_sequences.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'))
+			out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'), 
+							 FileContext.from_module_context(cxt, "filtered_paired_reads"),
+							 mate=1, filtered=True, paired=True))
+			out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'_R1.filtered.unpaired.fastq.gz'), 
+							 FileContext.from_module_context(cxt, "filtered_unpaired_reads"),
+							 mate=1, filtered=True, paired=False))
+			out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'), 
+							 FileContext.from_module_context(cxt, "filtered_paired_reads"),
+							 mate=2, filtered=True, paired=True))
+			out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'_R2.filtered.unpaired.fastq.gz'), 
+							 FileContext.from_module_context(cxt, "filtered_unpaired_reads"),
+							 mate=2, filtered=True, paired=False))
+			for f in out_files:
+				trimmomatic_args.append(f.fullpath)
+			
+# 			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'))
+# 			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.unpaired.fastq.gz'))
+# 			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'))
+# 			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.unpaired.fastq.gz'))
+# 			#files to return - properly paired and filtered sequences passing QC
+# 			out_sequences.append(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'))
+# 			out_sequences.append(os.path.join(outdir, cxt.sample.name+'_R2.filtered.paired.fastq.gz'))
 		else:
 			#Input Files
 			trimmomatic_args.append(read_files[0])
 			#Output Files
-			trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'))
+			out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'), 
+							 FileContext.from_module_context(cxt, "filtered_reads"),
+							 filtered=True))
+			for f in out_files:
+				trimmomatic_args.append(f.fullpath)
+			#trimmomatic_args.append(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'))
 			#files to return - filtered sequences passing QC
-			out_sequences.append(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'))
+			#out_sequences.append(os.path.join(outdir, cxt.sample.name+'.filtered.fastq.gz'))
 		#########################
 		#  Trimming Parameters  #
 		#########################
@@ -95,15 +118,14 @@ class Trimmomatic(PipelineModule):
 		cxt.log.flush()
 		self._run_subprocess(trimmomatic_args)
 		
+		if self.get_parameter_value("compress_trimlog"):
+			cxt.log.write("\t-> Compressing Trim Log......")
+			cxt.log.flush()
+			self._run_subprocess(['tar', 'cfz', trimlog_loc+'.tar.gz', trimlog_loc])
+			trimlog_loc = trimlog_loc+'.tar.gz'
 		
-		cxt.log.write("\t-> Compressing Trim Log......")
-		cxt.log.flush()
-		self._run_subprocess(['tar', 'cfz', trimlog_loc+'.tar.gz', trimlog_loc])
+		out_files.append(FileInfo(trimlog_loc, FileContext.from_module_context(cxt, "trimlog")))
 		
-		
-		return {
-			'trimmed_reads': out_sequences,
-			'trim_log':		 trimlog_loc
-		}
+		return out_files
 	#end run()
 #end class Trimmomatic	

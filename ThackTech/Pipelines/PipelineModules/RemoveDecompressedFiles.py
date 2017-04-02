@@ -10,7 +10,7 @@ class RemoveDecompressedFiles(PipelineModule):
 	
 	def run(self, cxt):
 		for f in cxt.sample.get_attribute('decompressed_files'):
-			cxt.log.write("\t-> Removing decompressed file %s....\n" % (f,))
+			cxt.log.write("\t-> Removing decompressed file %s....\n" % (f[],))
 			cxt.log.flush()
 			os.remove(f)
 	#end run()

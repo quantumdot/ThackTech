@@ -12,34 +12,22 @@ class DecompressFiles(PipelineModule):
 
 	
 	def run(self, cxt):
-		cxt.sample.add_attribute('decompressed_files', [])
-		file_lookups = self.resolve_input('files', cxt)
-		files = []
+		if not cxt.sample.has_attribute('decompressed_files'):
+			cxt.sample.add_attribute('decompressed_files', [])
+		files_to_decompress = self.resolve_input('files', cxt)
 		decompress_procs = []
-		for fl in file_lookups:
-			ofiles = cxt.sample.get_file(fl[0], fl[1])
-			if isinstance(ofiles, str):
-				#just a single file here
-				if filetools.is_compressed(ofiles):
-					cxt.log.write("\t-> Decompressing file %s....\n" % (ofiles,))
-					cxt.log.flush()
-					d, p = filetools.extract(ofiles, cxt.sample.dest, overwrite=self.get_parameter_value('overwrite'))
-					cxt.sample.add_file(fl[0], fl[1], d)
-					cxt.sample.add_attribute('decompressed_files', cxt.sample.get_attribute('decompressed_files') + [d])
-					decompress_procs.append(p)
+		
+		for f in files_to_decompress:
+			if filetools.is_compressed(f.fullpath):
+				cxt.log.write("\t-> Decompressing file {}....\n".format(f.fullpath))
+				cxt.log.flush()
+				d, p = filetools.extract(f.fullpath, cxt.sample.dest, overwrite=self.get_parameter_value('overwrite'))
+				cxt.sample.add_attribute('decompressed_files', cxt.sample.get_attribute('decompressed_files') + [(d, f.fullpath)])
+				decompress_procs.append(p)
 			else:
-				dfiles = []
-				for of in ofiles:
-					if filetools.is_compressed(of):
-						cxt.log.write("\t-> Decompressing file %s....\n" % (of,))
-						cxt.log.flush()
-						d, p = filetools.extract(of, cxt.sample.dest, overwrite=self.get_parameter_value('overwrite'))
-						dfiles.append(d)
-						cxt.sample.add_attribute('decompressed_files', cxt.sample.get_attribute('decompressed_files') + [d])
-						decompress_procs.append(p)
-				cxt.sample.add_file(fl[0], fl[1], dfiles)
+				cxt.log.write("\t-> File not compressed... Skipping decompression of file {}".format(f.fullpath))
+				
 		for p in decompress_procs:
 			p.communicate()
-		return files
 	#end run()
 #end class GeneratePseudoreplicates

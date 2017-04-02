@@ -1,6 +1,7 @@
 import os
 import subprocess
 from ThackTech.Pipelines import PipelineModule
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class SamToBam(PipelineModule):
@@ -32,16 +33,17 @@ class SamToBam(PipelineModule):
 		cxt.log.write("\t-> Postprocessing with samtools...\n")
 		#self.load_modules(cxt.log)
 		#print os.environ
-		sam = self.resolve_input('sam', cxt.sample)
+		sam = self.resolve_input('sam', cxt)
 		bam = os.path.splitext(sam)[0]+'.bam'
 
 		#convert SAM to BAM: -b => output BAM; -S => input is SAM; -@ => multithreading!
 		cxt.log.write("\t-> Converting SAM to BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
 		cxt.log.flush()
-		self._run_subprocess(['samtools', 'view', '-b', '-S', '-@', str(self.processors), '-o', bam, sam])#samtools view -bS -@ $nump "${dest}${alnname}.sam" > "${dest}${alnname}.bam"
+		self._run_subprocess(['samtools', 'view', '-b', '-S', '-@', str(self.processors), '-o', bam, sam.fullpath])#samtools view -bS -@ $nump "${dest}${alnname}.sam" > "${dest}${alnname}.bam"
 		
 		#remove the SAM file as it is no longer needed
-		os.remove(sam)
+		cxt.sample.remove_file(sam)
+		os.remove(sam.fullpath)
 		
 		#Sort our BAM file by genomic location: -@ => multithreading!
 		cxt.log.write("\t-> Sorting BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
@@ -59,9 +61,9 @@ class SamToBam(PipelineModule):
 		cxt.log.flush()
 		self._run_subprocess(['samtools', 'index', bam])#samtools index "${dest}${alnname}.bam"
 		
-		return {
-			'bam': bam,
-			'bam_idx': bam+'.bai'
-		}
+		
+		outbam = FileInfo(bam, FileContext.from_module_context(cxt, "bam"))
+		outbam.companions.append(FileInfo(bam+'.bai', FileContext.from_module_context(cxt, "bam_index")))
+		return [outbam]
 	#end run()
 #end class SamToBam

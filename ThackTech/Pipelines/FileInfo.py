@@ -8,7 +8,7 @@ class FileContext(BaseModuleContext):
 	"""Represents the context of a file within the pipelineing system
     
     """
-    
+
 	def __init__(self, pipeline_name, step_num, module_name, file_role):
 		super(FileContext, self).__init__(pipeline_name, step_num, module_name)
 		self.__role = file_role
@@ -69,7 +69,7 @@ class FileInfo(object):
 	- context: context that this file was generated under....... (NEED TO DEFINE THIS BETTER!!!)
 	
 	"""
-	def __init__(self, filepath, context=None):
+	def __init__(self, filepath, context=None, **attributes):
 		"""Initializes a FileInfo object
 		
 		Args:
@@ -83,7 +83,15 @@ class FileInfo(object):
 		
 		#random extra data as needed.
 		self.attributes = {}
+		self.attributes.update(attributes)
 	#end __init__()
+	
+	def has_attribute(self, attribute):
+		return attribute in self.attributes
+	
+	def has_attribute_value(self, attribute, value):
+		if self.has_attribute(attribute):
+			return self.attributes[attribute] == value
 	
 	def _set_path(self, filepath):
 		"""Sets the internal file path of this FileInfo
@@ -95,6 +103,9 @@ class FileInfo(object):
 		"""Gets the context of this file
 		"""
 		return self.__context
+	@property
+	def cxt(self):
+		return self.context
 	
 	@property
 	def fullpath(self):

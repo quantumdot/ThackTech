@@ -6,7 +6,6 @@ import pandas as pd
 import argparse
 import sys
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
-from ThackTech.Pipelines.FileInfo import FileContext
 
 
 #sample manifest should be in the following TAB separated format (with headers):
@@ -41,13 +40,13 @@ class AlignmentPipelineSample(PipelineSample):
             base = os.path.join(path, self.name + gopts['pe_prefix'])
             #print "trying %s, %s" % (base+'1.fastq', base+'2.fastq')
             if os.path.exists(base+'1.fastq') and os.path.exists(base+'2.fastq'):
-                files.append(FileInfo(base+'1.fastq', FileContext.from_origin('read1')))
-                files.append(FileInfo(base+'2.fastq', FileContext.from_origin('read2')))
+                files.append(FileInfo(base+'1.fastq', FileContext.from_origin('reads'), mate=1))
+                files.append(FileInfo(base+'2.fastq', FileContext.from_origin('reads'), mate=2))
             else:
                 for ext in compressed_extensions:
                     if os.path.exists(base+'1.fastq'+ext) and os.path.exists(base+'2.fastq'+ext):
-                        files.append(FileInfo(base+'1.fastq'+ext, FileContext.from_origin('read1')))
-                        files.append(FileInfo(base+'2.fastq'+ext, FileContext.from_origin('read2')))
+                        files.append(FileInfo(base+'1.fastq'+ext, FileContext.from_origin('reads'), mate=1))
+                        files.append(FileInfo(base+'2.fastq'+ext, FileContext.from_origin('reads'), mate=2))
                         continue
         else:
             base = os.path.join(path, self.name+'.fastq')
@@ -94,7 +93,6 @@ def main():
     sys.stdout.write('Reading sample manifest.....\n')
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
     samples = [AlignmentPipelineSample(s) for s in sample_manifest.to_dict(orient='records')]
-    sample_count = len(samples)
     sys.stdout.write('\t-> Found %d item%s for processing.....\n' % (len(sample_manifest.index), ('s' if len(sample_manifest.index) > 1 else '')))
 
     #sample manifest should be in the following TAB separated format (with headers):
@@ -140,7 +138,7 @@ def make_read_alignment_pipeline(args, additional_args):
         if args.trim:
             from ThackTech.Pipelines.PipelineModules import Trimmomatic
             x = Trimmomatic.Trimmomatic(critical=True, processors=args.threads)
-            x.set_resolver('fastq', lambda cxt: cxt.sample.find_files(lambda f: f.ext == ))
+            x.set_resolver('fastq', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "reads" ))
             pipeline.append_module()
     
     
@@ -154,33 +152,37 @@ def make_read_alignment_pipeline(args, additional_args):
             x = BowtieAlign.BowtieAlign()
             x.set_available_cpus(args.threads)
             x.set_parameter('unaligned', args.unaligned)
-            x.set_resolver('fastq', lambda s: s.get_file('source', 'fastq'))
             x.set_parameter('additional_args', additional_args)
-            pipeline.append_module(x, critical=True)
-            
-            from ThackTech.Pipelines.PipelineModules import SamToBam
-            x = SamToBam.SamToBam()
-            x.set_available_cpus(args.threads)
-            x.set_resolver('sam', lambda s: s.get_file('BowtieAlign', 'sam'))
+            if args.trim:
+                def resolve_bowtie1(cxt):
+                    if cxt.sample.has_attribute('PE'):
+                        cxt.sample.find_files(lambda f: f.cxt.role == "filtered_paired_reads")
+                    else:
+                        cxt.sample.find_files(lambda f: f.cxt.role == "filtered_reads")
+                x.set_resolver('fastq', resolve_bowtie1)
+            else: 
+                x.set_resolver('fastq', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "reads" ))
             pipeline.append_module(x, critical=True)
             
             from ThackTech.Pipelines.PipelineModules import RemoveDecompressedFiles
             x = RemoveDecompressedFiles.RemoveDecompressedFiles()
             pipeline.append_module(x, critical=True)
             
-        else:#run bowtie2
+        elif args.bowtie_version == '2':#run bowtie2
             from ThackTech.Pipelines.PipelineModules import Bowtie2Align
             x = Bowtie2Align.Bowtie2Align()
             x.set_available_cpus(args.threads)
             #x.set_parameter('duplicates', args.duplicates)
             #x.set_parameter('bw', args.bw)
             pipeline.append_module(x, critical=True)
+        else:
+            raise ValueError("There is no bowtie version {}. Must be one of [1, 2].".format(args.bowtie_version))
             
-            from ThackTech.Pipelines.PipelineModules import SamToBam
-            x = SamToBam.SamToBam()
-            x.set_available_cpus(args.threads)
-            x.set_resolver('sam', lambda s: s.get_file('Bowtie2Align', 'sam'))
-            pipeline.append_module(x, critical=True)
+        from ThackTech.Pipelines.PipelineModules import SamToBam
+        x = SamToBam.SamToBam()
+        x.set_available_cpus(args.threads)
+        x.set_resolver('sam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'sam')[0])
+        pipeline.append_module(x, critical=True)
     
     
     else: #we are skipping alignment process
@@ -191,17 +193,23 @@ def make_read_alignment_pipeline(args, additional_args):
     if (args.qc is not None) and (len(args.qc) > 0):
         if 'pbc' in args.qc:
             from ThackTech.Pipelines.PipelineModules import PbcAnalysis
-            x = PbcAnalysis.PbcAnalysis()
-            x.set_resolver('bam', lambda s: s.get_file())
-            pipeline.append_module()
+            x = PbcAnalysis.PbcAnalysis(processors=args.threads)
+            x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.ext == 'bam')[0])
+            pipeline.append_module(x)
+            
+            qc_bam_resolver = lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_deduplicated_bam')
+        else:
+            qc_bam_resolver = lambda cxt: cxt.sample.find_files(lambda f: f.ext == 'bam')[0]
         
-        if 'spp' in args.qc:
-            from ThackTech.Pipelines.PipelineModules import SPP
-            pipeline.append_module(SPP.SPP())
+        #if 'spp' in args.qc:
+        #    from ThackTech.Pipelines.PipelineModules import SPP
+        #    pipeline.append_module(SPP.SPP())
             
         if 'ism' in args.qc:
             from ThackTech.Pipelines.PipelineModules import InsertSizeMetrics
-            pipeline.append_module(InsertSizeMetrics.InsertSizeMetrics())
+            x = InsertSizeMetrics.InsertSizeMetrics()
+            x.set_resolver('bam', qc_bam_resolver)
+            pipeline.append_module(x)
         
         if 'fpt' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamFingerprint
@@ -212,7 +220,7 @@ def make_read_alignment_pipeline(args, additional_args):
         if 'rpkm' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
             x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
-            x.set_resolver('bam', lambda s: s.get_file('SamToBam', 'bam'))
+            x.set_resolver('bam', qc_bam_resolver)
             pipeline.append_module(x)
     
     if args.shm:

@@ -3,6 +3,7 @@ import subprocess
 import shlex
 from ThackTech import filetools, Common
 from ThackTech.Pipelines import PipelineModule
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class PbcAnalysis(PipelineModule):
@@ -25,14 +26,25 @@ class PbcAnalysis(PipelineModule):
 		cxt.log.write('\t-> Completed PBC QC...\n')
 		cxt.log.flush()
 		
-		output_files = {
-			'filtered_bam': 					os.path.join(pbc_dir, '%s.filt.srt.bam' % (cxt.sample.name,)),
-			'filtered_deduplicated_bam': 		os.path.join(pbc_dir, '%s.filt.srt.nodup.bam' % (cxt.sample.name,)),
-			'filtered_deduplicated_bam_idx': 	os.path.join(pbc_dir, '%s.filt.srt.nodup.bai' % (cxt.sample.name,)),
-			'filtered_deduplicated_flagstat': 	os.path.join(pbc_dir, '%s.filt.srt.nodup.flagstat.qc' % (cxt.sample.name,)),
-			'duplicate_qc': 					os.path.join(pbc_dir, '%s.filt.srt.nodup.pbc.qc' % (cxt.sample.name,)),
-			'pbc_qc': 							os.path.join(pbc_dir, '%s.dup.qc' % (cxt.sample.name,))
-		}
+		output_files = []
+		output_files.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.bam'.format(cxt.sample.name)),
+							FileContext.from_module_context(cxt, 'filtered_bam')))
+		
+		output_files.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.nodup.bam'.format(cxt.sample.name)),
+							FileContext.from_module_context(cxt, 'filtered_deduplicated_bam')))
+		
+		output_files[1].companions.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.nodup.bai'.format(cxt.sample.name)),
+										  FileContext.from_module_context(cxt, 'filtered_deduplicated_bam_idx')))
+		
+		output_files.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.nodup.flagstat.qc'.format(cxt.sample.name)),
+							FileContext.from_module_context(cxt, 'filtered_deduplicated_flagstat')))
+		
+		output_files.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.nodup.pbc.qc'.format(cxt.sample.name)),
+							FileContext.from_module_context(cxt, 'duplicate_qc')))
+		
+		output_files.append(FileInfo(os.path.join(pbc_dir, '{}.dup.qc'.format(cxt.sample.name)),
+							FileContext.from_module_context(cxt, 'pbc_qc')))
+
 		return output_files
 	#end run()
 	

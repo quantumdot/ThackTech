@@ -1,6 +1,7 @@
 import os
 import subprocess
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class BowtieAlign(PipelineModule):
@@ -22,6 +23,8 @@ class BowtieAlign(PipelineModule):
 		self.add_parameter(ModuleParameter('additional_args', 	list, 	[],		desc="Additional arguments to pass to Bowtie"))
 
 		self._name_resolver('fastq')
+		
+		self.set_parameters_from_config()
 	#end __init__()
 	
 	def tool_versions(self):
@@ -35,7 +38,7 @@ class BowtieAlign(PipelineModule):
 		cxt.log.flush()
 		
 		output_result = {}
-		read_files = self.resolve_input('fastq', cxt.sample)
+		read_files = self.resolve_input('fastq', cxt)
 				
 		#start constructing our bowtie arguments...
 		bowtiecmd = [ 
@@ -89,7 +92,10 @@ class BowtieAlign(PipelineModule):
 		bowtiecmd.append(cxt.sample.genome.get_index('BowtieIndex'))
 		#add the input file arguments
 		if cxt.sample.get_attribute('PE'):
-			bowtiecmd += ['-1', read_files[0], '-2', read_files[1]]
+			bowtiecmd += [
+				'-1', [f for f in read_files if f.has_attribute_value("mate", 1)][0], 
+				'-2', [f for f in read_files if f.has_attribute_value("mate", 2)][0]
+			]
 		else:
 			bowtiecmd.append(read_files[0])
 		#specify the destination SAM file
@@ -105,6 +111,11 @@ class BowtieAlign(PipelineModule):
 		cxt.log.flush()
 		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
-		return output_result
+		
+		output_files = []
+		for n, o in output_result:
+			output_files.append(FileInfo(o, FileContext.from_module_context(cxt, n)))
+		
+		return output_files
 	#end run()
 #end class BowtieAlign
