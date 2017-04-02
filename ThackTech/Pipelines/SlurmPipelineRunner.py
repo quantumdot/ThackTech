@@ -71,6 +71,7 @@ class SlurmPipelineRunner(PipelineRunner):
 				for i in range(len(samples)):
 					logout.write("Running srun command:\n")
 					logout.write(" ".join(srun_base + [sample_pickles[i], status_pickles[i]]))
+					logout.write("\n\n")
 					subprocess.Popen(srun_base + [sample_pickles[i], status_pickles[i]], stderr=subprocess.STDOUT, stdout=logout)
 				
 				progress = MultiStatusProgressBar(sample_count, "Total Progress", barlength=50, handle=sys.stderr).start()
