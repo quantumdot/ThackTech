@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 import os
-import multiprocessing
-import pandas as pd
-import argparse
 import sys
-from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
+import argparse
+import pandas as pd
+from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext, CPU_COUNT
+
 
 
 #sample manifest should be in the following TAB separated format (with headers):
@@ -17,12 +17,6 @@ gopts = {
     'shm_dir': '/mnt/ramdisk/btalign',
     'pe_prefix': '_R',
 }
-try:
-    cpu_count = multiprocessing.cpu_count()
-except:
-    cpu_count = 1
-if cpu_count is None:
-    cpu_count = 1
 
     
 class AlignmentPipelineSample(PipelineSample):
@@ -78,7 +72,7 @@ def main():
     parser.add_argument('--trim', action='store_true', help="Use trimmomatic to perform adapter clipping.")
     
     performance_group = parser.add_argument_group('Performance')
-    performance_group.add_argument('-p', '--threads', type=int, default=cpu_count, help="Number of processors to use for processing.")
+    performance_group.add_argument('-p', '--threads', type=int, default=CPU_COUNT, help="Number of processors to use for processing.")
     #performance_group.add_argument('--noparallel', action='store_true', help='Completly turn off parallelization of tasks (no use of the thread pool).')
     performance_group.add_argument('--shm', action='store_true', help="Use ramfs for file IO.")
     performance_group.add_argument('--shm-path', action='store', default='/mnt/ramdisk/bowtie'+'_'+str( os.getuid() ), help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
