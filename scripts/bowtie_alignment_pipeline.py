@@ -28,7 +28,7 @@ if cpu_count is None:
 class AlignmentPipelineSample(PipelineSample):
 
     def __init__(self, sample):
-        PipelineSample.__init__(self, sample['Basename'], sample['Genome'], sample['Dest'])
+        super(AlignmentPipelineSample, self).__init__(self, sample['Basename'], sample['Genome'], sample['Dest'])
         self.add_attribute('PE', ('PE' in sample and sample['PE']))
         self.discover_files(sample['Path'])
     #end __init__()
