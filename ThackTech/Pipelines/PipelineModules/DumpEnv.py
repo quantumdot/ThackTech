@@ -10,25 +10,25 @@ class DumpEnv(PipelineModule):
 		#self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep after saying hello."))
 	#end __init__()
 	
-	def load_modules(self, cxt):
+	def load_modules(self, log):
 		# """ Loads any system modules required for this module to function. """
-		# cxt.log.write("loading samtools")
+		# log.write("loading samtools")
 		# o, e = self._run_subprocess("module load samtools/0.1.19", shell=True, stdout=PIPE, stderr=PIPE)
-		# cxt.log.write(str(o)+"\n"+str(e))
-		# cxt.log.flush()
+		# log.write(str(o)+"\n"+str(e))
+		# log.flush()
 		
 		try:
 			#from ThackTech.Pipelines import lmodHelper
-			#cxt.log.write(lmodHelper.module("load", "samtools/0.1.19"))
+			#log.write(lmodHelper.module("load", "samtools/0.1.19"))
 			
 			
 # 			from env_modules_python import module
-# 			cxt.log.write(module("load", "samtools/0.1.19"))
-# 			cxt.log.flush()
+# 			log.write(module("load", "samtools/0.1.19"))
+# 			log.flush()
 
 			from ThackTech.Pipelines import LmodHelper2
-			cxt.log.write(LmodHelper2.module("load", "samtools/0.1.19"))
-			cxt.log.flush()
+			log.write(LmodHelper2.module("load", "samtools/0.1.19"))
+			log.flush()
 		except:
 			pass
 	#end load_modules()
@@ -61,6 +61,8 @@ class DumpEnv(PipelineModule):
 		
 		#cxt.log.write("Dumping inline Environment Information \n")
 		#cxt.log.flush()
+		
+		self.load_modules(cxt.log)
 		cxt.log.write("running samtools \n")
 		cxt.log.flush()
 		o, e = self._run_subprocess('module list', shell=True, stdout=PIPE, stderr=PIPE)
