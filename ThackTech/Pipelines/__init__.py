@@ -16,6 +16,7 @@ from ThackTech import Common
 
 from ThackTech.Pipelines.GenomeInfo import GenomeInfo
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
+from ThackTech.Pipelines.Context import ModuleRunContext, BaseModuleContext
 from ThackTech.Pipelines.PipelineSample import PipelineSample
 from ThackTech.Pipelines.ModuleParameter import ModuleParameter
 from ThackTech.Pipelines.PipelineModule import PipelineModule
@@ -24,7 +25,7 @@ from ThackTech.Pipelines.PipelineRunner import PipelineRunner
 from ThackTech.Pipelines.SerialPipelineRunner import SerialPipelineRunner
 from ThackTech.Pipelines.ParallelPipelineRunner import ParallelPipelineRunner
 from ThackTech.Pipelines.SlurmPipelineRunner import SlurmPipelineRunner
-from ThackTech.Pipelines.Context import ModuleRunContext, BaseModuleContext
+
 
 from ThackTech.Pipelines import PipelineModules
 
