@@ -19,7 +19,7 @@ class BamFingerprint(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'plotFingerprint': subprocess.check_output("plotFingerprint --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'plotFingerprint': self._call_output("plotFingerprint --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	

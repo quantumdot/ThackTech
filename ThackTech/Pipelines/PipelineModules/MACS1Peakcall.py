@@ -15,7 +15,7 @@ class MACS1Peakcall(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'macs': subprocess.check_output("macs --version 2>&1 | perl -ne 'if(m/macs\s+(.+)$/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'macs': self._call_output("macs --version 2>&1 | perl -ne 'if(m/macs\s+(.+)$/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	

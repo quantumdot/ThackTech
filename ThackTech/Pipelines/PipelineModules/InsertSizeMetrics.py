@@ -1,6 +1,7 @@
 import os
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule
+import subprocess
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
@@ -11,6 +12,11 @@ class InsertSizeMetrics(PipelineModule):
 		
 		self._name_resolver('bam')
 	#end __init__()
+	
+	def tool_versions(self):
+		return {
+			"picard-tools:CollectInsertSizeMetrics": self._call_output(["picard-tools", "CollectInsertSizeMetrics", "--version"], stderr=subprocess.STDOUT)
+		}
 	
 	def run(self, cxt):
 		if not cxt.sample.get_attribute('PE'):

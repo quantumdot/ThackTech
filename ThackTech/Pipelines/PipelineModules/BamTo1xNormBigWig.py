@@ -16,7 +16,7 @@ class RPKMNormBigWig(PipelineModule):
 
 	def tool_versions(self):
 		return {
-			'bamCoverage': subprocess.check_output("bamCoverage --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'bamCoverage': self._call_output("bamCoverage --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	

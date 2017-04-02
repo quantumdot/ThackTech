@@ -176,7 +176,11 @@ class PipelineModule(object):
 	#end set_available_processors()
 	
 	
-	
+	def _call_output(self, cmd, **kwargs):
+		proc = subprocess.Popen(cmd, **kwargs)
+		out, err = proc.communicate()
+		return out
+		
 	def _run_subprocess(self, cmd, **kwargs):
 		"""Wrapper around the subprocess.Popen call and provides some extra convience
 		

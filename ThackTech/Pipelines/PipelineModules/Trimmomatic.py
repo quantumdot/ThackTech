@@ -30,7 +30,7 @@ class Trimmomatic(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'Trimmomatic': subprocess.check_output("TrimmomaticSE 2>&1", shell=True, stderr=subprocess.STDOUT)
+			'Trimmomatic': self._call_output(["TrimmomaticSE", "-version"], stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	

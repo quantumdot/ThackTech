@@ -29,7 +29,7 @@ class BowtieAlign(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'bowtie': subprocess.check_output("bowtie --version 2>&1 | perl -ne 'if(m/.*bowtie.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'bowtie': self._call_output("bowtie --version 2>&1 | perl -ne 'if(m/.*bowtie.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
