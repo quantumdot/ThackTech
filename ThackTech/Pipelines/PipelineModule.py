@@ -208,12 +208,12 @@ class PipelineModule(object):
 		buff = ""
 		hash_length = 40
 		
-		buff += "%s\n" % (self.name,)
-		buff += "%s\n" % ('-'*hash_length,)
-		buff += "CRITICAL:    %s\n" % (self.is_critical,)
-		buff += "PROCESSORS:  %d\n" % (self.processors) 
-		buff += "%s\n"  % (textwrap.fill("DESCRIPTION: "+self.description, hash_length),)
-		buff += "%s\n" % ('-'*hash_length,)
+		buff += "{}\n".format(self.name)
+		buff += "{}\n".format('-'*hash_length)
+		buff += "CRITICAL:    {}\n".format(self.is_critical)
+		buff += "PROCESSORS:  {}\n".format(self.processors) 
+		buff += "{}\n".format(textwrap.fill("DESCRIPTION: "+self.description, hash_length))
+		buff += "{}\n".format('-'*hash_length,)
 		buff += "PARAMETERS:"
 		if len(self.parameters) < 1:
 			buff += "\n\tNo Parameters Declared\n"
@@ -235,7 +235,7 @@ class PipelineModule(object):
 		else:
 			buff += "\n"
 			for resolver in self.resolvers:
-				buff += "\t%s: %s\n" % (resolver, str(self.resolvers[resolver]))
+				buff += "\t{}: {}\n".format(resolver, str(self.resolvers[resolver]))
 		buff += '\n'
 		
 		buff += "TOOL VERSIONS:"
@@ -244,8 +244,8 @@ class PipelineModule(object):
 			buff += "\n\tNo Tools Declared\n"
 		else:
 			buff += "\n"
-			for tool, version in tools:
-				buff += "\t%s: %s\n" % (tool, version)
+			for toolname in tools:
+				buff += "\t{}: {}\n".format(toolname, tools[toolname])
 		buff += '-' * hash_length
 		buff += '\n'
 		return buff
