@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import argparse
 import threading
+import traceback
 import dill
 import time
 from ThackTech.Pipelines.PipelineRunner import _execute_pipeline_on_sample
@@ -44,5 +46,6 @@ if __name__ == "__main__":
 				dill.dump(tasks_statuses[sample_pickle.name], f)
 		thread.join()
 	except Exception as e:
-		print e
+		sys.stderr.write(traceback.format_exc())
+		sys.stderr.flush()
 		raise

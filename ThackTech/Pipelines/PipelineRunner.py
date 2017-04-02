@@ -49,18 +49,19 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 	filetools.ensure_dir(sample.dest)
 
 	with open(os.path.join(sample.dest, sample.name+'.log'), 'a', buffering=0) as logfile:
-		tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
 		sys.stdout = sys.stderr = logfile
-		logfile.write(pipeline.documentation())
-		
-		pipeline_size = len(pipeline)
-		status_counts = {
-			'total': 	pipeline_size,
-			'attempted':0,
-			'warn':		0,
-			'critical':	0
-		}
 		try:
+			tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
+			logfile.write(pipeline.documentation())
+			
+			pipeline_size = len(pipeline)
+			status_counts = {
+				'total': 	pipeline_size,
+				'attempted':0,
+				'warn':		0,
+				'critical':	0
+			}
+		
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(0, 'Preparing...')
 			logfile.write('Processing sample "%s"....\n' % (sample.name,))
 			logfile.write('-> Pipeline: %s (%d steps)\n' % (pipeline.name, pipeline_size))
