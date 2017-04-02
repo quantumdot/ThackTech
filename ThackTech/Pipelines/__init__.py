@@ -40,6 +40,7 @@ __all__ = [	'AnalysisPipeline',
 			'PipelineRunner',
 			'SerialPipelineRunner',
 			'ParallelPipelineRunner',
-			'SlurmPipelineRunner'
+			'SlurmPipelineRunner',
+			'GLOBAL_MANAGER'
 		]
 								
