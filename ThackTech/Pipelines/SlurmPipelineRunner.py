@@ -42,7 +42,7 @@ class SlurmPipelineRunner(PipelineRunner):
 				logout.write("No samples to run!")
 				return #No samples to run!
 
-			pipeline_pickles = os.path.abspath("pipeline_%s_%d.dill" % (self.pipeline.safe_name, curr_time))
+			pipeline_pickles = os.path.abspath(".pj/pipeline_%s_%d.dill" % (self.pipeline.safe_name, curr_time))
 			with open(pipeline_pickles, 'wb') as f:
 				dill.dump(self.pipeline, f)
 			
@@ -50,29 +50,33 @@ class SlurmPipelineRunner(PipelineRunner):
 			status_pickles = []
 			self.tasks_statuses = GLOBAL_MANAGER.dict()
 			for i in range(len(samples)):
-				sample_pickles.append(os.path.abspath("pipeline_%s_%d_s%d.dill" % (self.pipeline.safe_name, curr_time, i)))
-				status_pickles.append(os.path.abspath("pipeline_%s_%d_s%d_status.dill" % (self.pipeline.safe_name, curr_time, i)))
+				sample_pickles.append(os.path.abspath(".pj/pipeline_%s_%d_s%d.dill" % (self.pipeline.safe_name, curr_time, i)))
+				status_pickles.append(os.path.abspath(".pj/pipeline_%s_%d_s%d_status.dill" % (self.pipeline.safe_name, curr_time, i)))
 				with open(sample_pickles[i], 'wb') as sf:
 					dill.dump(samples[i], sf)
 				with open(status_pickles[i], 'wb') as ssf:
 					self.tasks_statuses[samples[i].name] = MultiStatusProgressItem(samples[i].name, 'Queued...', order=i)
 					dill.dump(self.tasks_statuses[samples[i].name], ssf)
 			try:
-				srun_base = [
-					'srun',
-					'--partition', str(self.partition),
-					'-n', str(self.nodes),
-					'--cpus-per-task', str(self.threads_per_node),
-					'--time', str(self.time_limit),
-					#'--export', 'ALL',
-					'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
-					pipeline_pickles
-				]
+				
 				for i in range(len(samples)):
+					srun_cmd = [
+						'srun',
+						'--job-name', '{}_{}_{}'.format(self.pipeline.safe_name, samples[i].name, curr_time),
+						'--partition', str(self.partition),
+						'-n', str(self.nodes),
+						'--cpus-per-task', str(self.threads_per_node),
+						'--time', str(self.time_limit),
+						#'--export', 'ALL',
+						'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
+						pipeline_pickles,
+						sample_pickles[i],
+						status_pickles[i]
+					]
 					logout.write("Running srun command:\n")
-					logout.write(" ".join(srun_base + [sample_pickles[i], status_pickles[i]]))
+					logout.write(" ".join(srun_cmd))
 					logout.write("\n\n")
-					subprocess.Popen(srun_base + [sample_pickles[i], status_pickles[i]], stderr=subprocess.STDOUT, stdout=logout)
+					subprocess.Popen(srun_cmd, stderr=subprocess.STDOUT, stdout=logout)
 				
 				progress = MultiStatusProgressBar(sample_count, "Total Progress", barlength=50, handle=sys.stderr).start()
 				progress.update(0, None, self.tasks_statuses)

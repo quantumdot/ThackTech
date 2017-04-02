@@ -4,10 +4,7 @@ import traceback
 import platform
 import time
 from ThackTech import filetools
-from ThackTech.Pipelines.AnalysisPipeline import AnalysisPipeline
-from ThackTech.Pipelines.PipelineSample import PipelineSample
-from ThackTech.Pipelines.Context import ModuleRunContext
-from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
+from ThackTech.Pipelines import AnalysisPipeline, PipelineSample, ModuleRunContext, FileInfo, FileContext
 
 
 class PipelineRunner(object):

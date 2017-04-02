@@ -24,6 +24,7 @@ from ThackTech.Pipelines.PipelineRunner import PipelineRunner
 from ThackTech.Pipelines.SerialPipelineRunner import SerialPipelineRunner
 from ThackTech.Pipelines.ParallelPipelineRunner import ParallelPipelineRunner
 from ThackTech.Pipelines.SlurmPipelineRunner import SlurmPipelineRunner
+from ThackTech.Pipelines.Context import ModuleRunContext, BaseModuleContext
 
 from ThackTech.Pipelines import PipelineModules
 
@@ -41,6 +42,8 @@ __all__ = [	'AnalysisPipeline',
 			'SerialPipelineRunner',
 			'ParallelPipelineRunner',
 			'SlurmPipelineRunner',
+			'ModuleRunContext',
+			'BaseModuleContext',
 			'GLOBAL_MANAGER'
 		]
 								
