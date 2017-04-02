@@ -20,8 +20,14 @@ class DumpEnv(PipelineModule):
 		try:
 			#from ThackTech.Pipelines import lmodHelper
 			#cxt.log.write(lmodHelper.module("load", "samtools/0.1.19"))
-			from env_modules_python import module
-			cxt.log.write(module("load", "samtools/0.1.19"))
+			
+			
+# 			from env_modules_python import module
+# 			cxt.log.write(module("load", "samtools/0.1.19"))
+# 			cxt.log.flush()
+
+			from ThackTech.Pipelines import LmodHelper2
+			cxt.log.write(LmodHelper2.module("load", "samtools/0.1.19"))
 			cxt.log.flush()
 		except:
 			pass
