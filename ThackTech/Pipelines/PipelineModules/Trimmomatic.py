@@ -116,7 +116,7 @@ class Trimmomatic(PipelineModule):
 		cxt.log.write(" ".join(trimmomatic_args))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
-		self._run_subprocess(trimmomatic_args)
+		self._run_subprocess(trimmomatic_args, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		if self.get_parameter_value("compress_trimlog"):
 			cxt.log.write("\t-> Compressing Trim Log......")
