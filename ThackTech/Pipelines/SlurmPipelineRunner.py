@@ -7,6 +7,7 @@ import traceback
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
 import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
 import subprocess
+from ThackTech import filetools
 from ThackTech.Pipelines import PipelineRunner, GLOBAL_MANAGER, CPU_COUNT
 from ThackTech.Processes import MultiStatusProgressItem, MultiStatusProgressBar
 
@@ -42,6 +43,7 @@ class SlurmPipelineRunner(PipelineRunner):
 				logout.write("No samples to run!")
 				return #No samples to run!
 
+			filetools.ensure_dir(os.path.abspath(".pj/"))
 			pipeline_pickles = os.path.abspath(".pj/pipeline_%s_%d.dill" % (self.pipeline.safe_name, curr_time))
 			with open(pipeline_pickles, 'wb') as f:
 				dill.dump(self.pipeline, f)
