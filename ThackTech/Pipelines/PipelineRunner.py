@@ -45,12 +45,11 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 	assert isinstance(pipeline, AnalysisPipeline), "pipeline parameter must be of type AnalysisPipeline!"
 	assert isinstance(sample, PipelineSample), "sample parameter must be of type Pipelinesample!"
 	
-	
-	tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
 	#ensure the output directory exists
 	filetools.ensure_dir(sample.dest)
 
 	with open(os.path.join(sample.dest, sample.name+'.log'), 'a', buffering=0) as logfile:
+		tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
 		sys.stdout = sys.stderr = logfile
 		logfile.write(pipeline.documentation())
 		

@@ -132,14 +132,25 @@ def make_read_alignment_pipeline(args, additional_args):
         if args.trim:
             from ThackTech.Pipelines.PipelineModules import Trimmomatic
             x = Trimmomatic.Trimmomatic(critical=True, processors=args.threads)
-            x.set_resolver('fastq', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "reads" ))
+            def resolve_trimmomatic_reads(cxt):
+                return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
+            x.set_resolver('fastq', resolve_trimmomatic_reads)
             pipeline.append_module(x)
+            
+            def resolve_bowtie1(cxt):
+                if cxt.sample.has_attribute('PE'):
+                    return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_paired_reads")
+                else:
+                    return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_reads")
+        else: 
+            def resolve_bowtie1(cxt):
+                return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
     
     
         if args.bowtie_version == '1':
             from ThackTech.Pipelines.PipelineModules import DecompressFiles
             x = DecompressFiles.DecompressFiles()
-            x.set_resolver('files', lambda s: [['source', 'fastq']])
+            x.set_resolver('fastq', resolve_bowtie1)
             pipeline.append_module(x, critical=True)
         
             from ThackTech.Pipelines.PipelineModules import BowtieAlign
@@ -147,15 +158,7 @@ def make_read_alignment_pipeline(args, additional_args):
             x.set_available_cpus(args.threads)
             x.set_parameter('unaligned', args.unaligned)
             x.set_parameter('additional_args', additional_args)
-            if args.trim:
-                def resolve_bowtie1(cxt):
-                    if cxt.sample.has_attribute('PE'):
-                        cxt.sample.find_files(lambda f: f.cxt.role == "filtered_paired_reads")
-                    else:
-                        cxt.sample.find_files(lambda f: f.cxt.role == "filtered_reads")
-                x.set_resolver('fastq', resolve_bowtie1)
-            else: 
-                x.set_resolver('fastq', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "reads" ))
+            x.set_resolver('fastq', resolve_bowtie1)
             pipeline.append_module(x, critical=True)
             
             from ThackTech.Pipelines.PipelineModules import RemoveDecompressedFiles
@@ -191,9 +194,11 @@ def make_read_alignment_pipeline(args, additional_args):
             x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.ext == 'bam')[0])
             pipeline.append_module(x)
             
-            qc_bam_resolver = lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_deduplicated_bam')
+            def qc_bam_resolver(cxt):
+                return cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_deduplicated_bam')[0]
         else:
-            qc_bam_resolver = lambda cxt: cxt.sample.find_files(lambda f: f.ext == 'bam')[0]
+            def qc_bam_resolver(cxt):
+                return cxt.sample.find_files(lambda f: f.ext == 'bam')[0]
         
         #if 'spp' in args.qc:
         #    from ThackTech.Pipelines.PipelineModules import SPP
