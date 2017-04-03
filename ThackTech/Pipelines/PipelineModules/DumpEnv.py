@@ -1,3 +1,4 @@
+import sys
 from subprocess import PIPE
 from ThackTech.Pipelines import PipelineModule
 
@@ -61,6 +62,9 @@ class DumpEnv(PipelineModule):
 		
 		#cxt.log.write("Dumping inline Environment Information \n")
 		#cxt.log.flush()
+		
+		cxt.log.write("Getting python version information...\n")
+		cxt.log.write(sys.version)
 		
 		self.load_modules(cxt.log)
 		cxt.log.write("running samtools \n")
