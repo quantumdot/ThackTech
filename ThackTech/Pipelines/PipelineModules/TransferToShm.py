@@ -23,7 +23,7 @@ class TransferToShm(PipelineModule):
 		
 		shmdest = os.path.join(self.get_parameter_value('shm_path'), cxt.sample.name)
 		filetools.ensure_dir(shmdest)
-		cxt.sample.add_attribute('origional_dest', cxt.sample.dest)
+		cxt.sample.set_attribute('origional_dest', cxt.sample.dest)
 		cxt.sample.dest = shmdest
 		
 		cxt.log.flush()

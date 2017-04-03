@@ -13,7 +13,7 @@ class DecompressFiles(PipelineModule):
 	
 	def run(self, cxt):
 		if not cxt.sample.has_attribute('decompressed_files'):
-			cxt.sample.add_attribute('decompressed_files', [])
+			cxt.sample.set_attribute('decompressed_files', [])
 		files_to_decompress = self.resolve_input('files', cxt)
 		decompress_procs = []
 		
@@ -22,7 +22,7 @@ class DecompressFiles(PipelineModule):
 				cxt.log.write("\t-> Decompressing file {}....\n".format(f.fullpath))
 				cxt.log.flush()
 				d, p = filetools.extract(f.fullpath, cxt.sample.dest, overwrite=self.get_parameter_value('overwrite'))
-				cxt.sample.add_attribute('decompressed_files', cxt.sample.get_attribute('decompressed_files') + [(d, f.fullpath)])
+				cxt.sample.set_attribute('decompressed_files', cxt.sample.get_attribute('decompressed_files') + [(d, f.fullpath)])
 				decompress_procs.append(p)
 			else:
 				cxt.log.write("\t-> File not compressed... Skipping decompression of file {}".format(f.fullpath))
