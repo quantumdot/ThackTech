@@ -216,7 +216,7 @@ def make_read_alignment_pipeline(args, additional_args):
         if 'fpt' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamFingerprint
             x = BamFingerprint.BamFingerprint(processors=args.threads)
-            x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.bam'))
+            x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.basename in ['{}.bam'.format(cxt.sample.name), '{}.filt.srt.nodup.bam'.format(cxt.sample.name)]))
             pipeline.append_module(x)
             
         if 'rpkm' in args.qc:
