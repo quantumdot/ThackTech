@@ -5,6 +5,7 @@ import sys
 import argparse
 import random 
 import itertools
+import gzip
 import HTSeq
 
 
@@ -13,7 +14,9 @@ import HTSeq
 def main():
     parser = argparse.ArgumentParser(description="Samples a random subset of sequences from fastq or fasta formatted files. "
                                                 +"Both single-end and paired-end data is supported. "
-                                                +"Files may be .gz compressed or uncompressed.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                                +"Files may be .gz compressed or uncompressed."
+                                                +"If outfiles have .gz extension data will be gzipped.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    
     
     single_end_group = parser.add_argument_group("Single-end Processing options")                                            
     single_end_group.add_argument("--inreads", help="Use for single end reads.")
@@ -36,8 +39,16 @@ def main():
         
         in1 = iter(HTSeq.FastqReader(args.inread1))
         in2 = iter(HTSeq.FastqReader(args.inread2))
-        out1 = open(args.outread1, "w")
-        out2 = open(args.outread2, "w")
+        if args.outread1.lower().endswith((".gz", ".gzip")):
+            out1 = gzip.open(args.outread1, "wb")
+        else:
+            out1 = open(args.outread1, "w")
+            
+        if args.outread2.lower().endswith((".gz", ".gzip")):
+            out2 = gzip.open(args.outread2, "wb")
+        else:
+            out2 = open(args.outread2, "w")
+        
         
         for read1, read2 in itertools.izip(in1, in2):
             if random.random() < args.fraction:
@@ -52,7 +63,10 @@ def main():
             parser.error("In paired-end mode, you must specify all of --inreads, and --outreads")
         
         inreads = iter(HTSeq.FastqReader(args.inreads))
-        outreads = open(args.outreads, "w")
+        if args.outread2.lower().endswith((".gz", ".gzip")):
+            outreads = gzip.open(args.outreads, "wb")
+        else:
+            outreads = open(args.outreads, "w")
         
         for read in inreads:
             if random.random() < args.fraction:
