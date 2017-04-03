@@ -3,7 +3,6 @@ import sys
 from dateutil.relativedelta import relativedelta
 import subprocess
 import shlex
-import pysam
 
 def human_time_diff(start, end):
 	'''returns a human readable string describing the elapsed time between start and end using units familiar to humans (i.e. months, days, hours, minutes... etc.) '''
@@ -57,16 +56,3 @@ def run_pipe(steps, outfile=None):
 	return out,err
 #end run_pipe()
 
-
-
-
-def is_bam_PE(bam_path):
-	'''
-		Find is a sam or bam file contains even one paired-end read
-	'''
-	with pysam.AlignmentFile(bam_path, "rb") as samfile:
-		for read in samfile.fetch():
-			if read.is_paired:
-				return True
-	return False
-#end is_bam_PE()
