@@ -131,7 +131,7 @@ def extract(filename, destdir, keeporigional=True, overwrite=False, wait=True, s
     else:
         with open(destination, 'wb') as out:
             #sys.stderr.write(" ".join(cmd + [file])+"\n") 
-            p = subprocess.Popen(cmd + [file], stdout=out, stderr=stderr)
+            p = subprocess.Popen(cmd + [filename], stdout=out, stderr=stderr)
             if wait:
                 p.communicate()
     return (destination, p)
