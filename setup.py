@@ -17,6 +17,7 @@ setup(  name='ThackTech',
             'dill',
             'multiprocess', #this is different than the built in multiprocessing!
             'tabulate',
+            'HTseq'
             #'glob', 
             #'sqlite3',
         ],
@@ -27,6 +28,7 @@ setup(  name='ThackTech',
             "scripts/profiler.py",
             "scripts/correlator.py",
             "scripts/bedstats.py",
-            "scripts/bowtie_alignment_pipeline.py"
+            "scripts/bowtie_alignment_pipeline.py",
+            "scripts/subsample_fastq.py"
         ],
         zip_safe=False)
