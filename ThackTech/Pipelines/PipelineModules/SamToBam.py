@@ -34,7 +34,7 @@ class SamToBam(PipelineModule):
 		#self.load_modules(cxt.log)
 		#print os.environ
 		sam = self.resolve_input('sam', cxt)
-		bam = os.path.splitext(sam)[0]+'.bam'
+		bam = os.path.splitext(sam.fullpath)[0]+'.bam'
 
 		#convert SAM to BAM: -b => output BAM; -S => input is SAM; -@ => multithreading!
 		cxt.log.write("\t-> Converting SAM to BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))

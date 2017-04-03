@@ -25,7 +25,7 @@ class InsertSizeMetrics(PipelineModule):
 		else:
 			cxt.log.write('\t-> Running insert size analysis...\n')
 			cxt.log.flush()
-			bam = self.resolve_input('bam', cxt)
+			bam = self.resolve_input('bam', cxt).fullpath
 			ism_dir = os.path.join(cxt.sample.dest, 'ism')
 			filetools.ensure_dir(ism_dir)
 			insmet_outbase = os.path.join(ism_dir, cxt.sample.name+'.insertsize')
