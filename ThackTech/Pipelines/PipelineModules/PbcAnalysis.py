@@ -33,6 +33,9 @@ class PbcAnalysis(PipelineModule):
 		output_files.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.bam'.format(cxt.sample.name)),
 							FileContext.from_module_context(cxt, 'filtered_bam')))
 		
+		output_files[0].companions.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.bai'.format(cxt.sample.name)),
+										  FileContext.from_module_context(cxt, 'filtered_bam_idx')))
+		
 		output_files.append(FileInfo(os.path.join(pbc_dir, '{}.filt.srt.nodup.bam'.format(cxt.sample.name)),
 							FileContext.from_module_context(cxt, 'filtered_deduplicated_bam')))
 		
@@ -114,6 +117,8 @@ class PbcAnalysis(PipelineModule):
 			# ==================  
 			with open(filt_bam_filename, 'w') as fh:
 				subprocess.check_call(['samtools', 'view', '-F', '1804', samtools_params, '-b', raw_bam_filename], stdout=fh)
+				
+		subprocess.check_call(['samtools', 'index', filt_bam_filename, filt_bam_prefix+'.bai'])
 		
 		# ========================
 		# Mark duplicates
