@@ -9,7 +9,7 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class PbcAnalysis(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(PbcAnalysis, self).__init__('PBC', 'Cross-correlation analysis using SPP', **kwargs)
+		super(PbcAnalysis, self).__init__('PBC', 'PCR Bottleneck Analysis', **kwargs)
 		self._name_resolver('bam')
 	#end __init__()
 	
