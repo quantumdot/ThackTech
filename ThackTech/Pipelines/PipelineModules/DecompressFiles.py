@@ -21,7 +21,7 @@ class DecompressFiles(PipelineModule):
 			if filetools.is_compressed(f.fullpath):
 				cxt.log.write("\t-> Decompressing file {}....\n".format(f.fullpath))
 				cxt.log.flush()
-				d, p = filetools.extract(f.fullpath, cxt.sample.dest, overwrite=self.get_parameter_value('overwrite'))
+				d, p = filetools.extract(f.fullpath, cxt.sample.dest, overwrite=self.get_parameter_value('overwrite'), stderr=cxt.log)
 				cxt.sample.set_attribute('decompressed_files', cxt.sample.get_attribute('decompressed_files') + [(d, f.fullpath)])
 				decompress_procs.append(p)
 			else:

@@ -57,7 +57,7 @@ def is_compressed(filename):
             return True
 #end is_compressed
 
-def extract(filename, destdir, keeporigional=True, overwrite=False, wait=True):
+def extract(filename, destdir, keeporigional=True, overwrite=False, wait=True, stderr=None):
     '''Extracts a file given by file to destination directory. Attempts to automagically detect the
        compression format used. Returns the new file name and the subprocess process spawned.'''
     basename = os.path.basename(filename)
@@ -131,7 +131,7 @@ def extract(filename, destdir, keeporigional=True, overwrite=False, wait=True):
     else:
         with open(destination, 'wb') as out:
             #sys.stderr.write(" ".join(cmd + [file])+"\n") 
-            p = subprocess.Popen(cmd + [file], stdout=out)
+            p = subprocess.Popen(cmd + [file], stdout=out, stderr=stderr)
             if wait:
                 p.communicate()
     return (destination, p)
