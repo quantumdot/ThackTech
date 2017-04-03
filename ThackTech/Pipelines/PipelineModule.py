@@ -242,7 +242,7 @@ class PipelineModule(object):
 		
 		buff += "TOOL VERSIONS:"
 		tools = self.tool_versions()
-		if len(self.tools) < 1:
+		if len(tools) < 1:
 			buff += "\n\tNo Tools Declared\n"
 		else:
 			buff += "\n"
