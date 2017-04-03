@@ -21,8 +21,11 @@ class PbcAnalysis(PipelineModule):
 		results = self.run_filter_qc(bam, cxt.sample.get_attribute('PE'), "-q 30")
 		pbc_dir = os.path.join(cxt.sample.dest, 'pbc')
 		filetools.ensure_dir(pbc_dir)
-		self._run_subprocess('mv -f '+cxt.sample.name+'.filt.* '+cxt.sample.name+'.dup.qc '+pbc_dir, shell=True)
-		self._run_subprocess(['rm', '-f', os.path.join(cxt.sample.dest), ('tmp.%s.filt.srt.bam' % (cxt.sample.name,))])
+		mv_cmd = 'mv -f {} {} {}'.format(os.path.join(cxt.sample.dest, cxt.sample.name+'.filt.*'), 
+										 os.path.join(cxt.sample.dest, cxt.sample.name+'.dup.qc'), 
+										 pbc_dir)
+		self._run_subprocess(mv_cmd, shell=True)
+		self._run_subprocess(['rm', '-f', os.path.join(cxt.sample.dest, 'tmp.{}.filt.srt.bam'.format(cxt.sample.name))])
 		cxt.log.write('\t-> Completed PBC QC...\n')
 		cxt.log.flush()
 		

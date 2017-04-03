@@ -13,7 +13,7 @@ from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, File
 #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
 
 #BEFORE RUNNING SCRIPT WHEN USING LMOD
-#module load java/1.8.0_121 samtools/0.1.19 python/2.7.12 intel_mkl/17.0.2
+#module load java/1.8.0_121 samtools/0.1.19 python/2.7.12 intel_mkl/17.0.2 bedtools2/2.25.0
 
 gopts = {
     'spp_path': '/home/josh/scripts/phantompeakqualtools/run_spp.R',
