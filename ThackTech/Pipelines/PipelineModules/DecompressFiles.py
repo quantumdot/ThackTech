@@ -23,6 +23,7 @@ class DecompressFiles(PipelineModule):
 				cxt.log.flush()
 				d, p = filetools.extract(f.fullpath, cxt.sample.dest, overwrite=self.get_parameter_value('overwrite'), stderr=cxt.log)
 				cxt.sample.set_attribute('decompressed_files', cxt.sample.get_attribute('decompressed_files') + [(d, f.fullpath)])
+				f._set_path(d)
 				decompress_procs.append(p)
 			else:
 				cxt.log.write("\t-> File not compressed... Skipping decompression of file {}".format(f.fullpath))
