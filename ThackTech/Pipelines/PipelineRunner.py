@@ -105,7 +105,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 						logfile.write('Encountered error during processing:\n')
 						logfile.write('{}\n'.format(e))
 						logfile.write(traceback.format_exc())
-						logfile.write('\n\nModule is not marked critical, continuing with pipeline:\n')
+						logfile.write('\n\nModule is not marked critical, continuing with pipeline....\n')
 						logfile.flush()
 				finally:
 					logfile.write("--------------------------------------------\n\n")

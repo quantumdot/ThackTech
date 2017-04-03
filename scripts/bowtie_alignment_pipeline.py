@@ -194,14 +194,14 @@ def make_read_alignment_pipeline(args, additional_args):
         if 'pbc' in args.qc:
             from ThackTech.Pipelines.PipelineModules import PbcAnalysis
             x = PbcAnalysis.PbcAnalysis(processors=args.threads)
-            x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.ext == 'bam')[0])
+            x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.bam')[0])
             pipeline.append_module(x)
             
             def qc_bam_resolver(cxt):
                 return cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_deduplicated_bam')[0]
         else:
             def qc_bam_resolver(cxt):
-                return cxt.sample.find_files(lambda f: f.ext == 'bam')[0]
+                return cxt.sample.find_files(lambda f: f.ext == '.bam')[0]
         
         #if 'spp' in args.qc:
         #    from ThackTech.Pipelines.PipelineModules import SPP
@@ -216,7 +216,7 @@ def make_read_alignment_pipeline(args, additional_args):
         if 'fpt' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamFingerprint
             x = BamFingerprint.BamFingerprint(processors=args.threads)
-            x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.ext == 'bam'))
+            x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.bam'))
             pipeline.append_module(x)
             
         if 'rpkm' in args.qc:

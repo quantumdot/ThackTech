@@ -179,7 +179,7 @@ class PipelineModule(object):
 	
 	
 	def _call_output(self, cmd, **kwargs):
-		proc = subprocess.Popen(cmd, **kwargs)
+		proc = subprocess.Popen(cmd, **dict(kwargs, stdout=subprocess.PIPE))
 		out, err = proc.communicate()
 		return out
 		
@@ -242,11 +242,11 @@ class PipelineModule(object):
 		
 		buff += "TOOL VERSIONS:"
 		tools = self.tool_versions()
-		if len(self.resolvers) < 1:
+		if len(self.tools) < 1:
 			buff += "\n\tNo Tools Declared\n"
 		else:
 			buff += "\n"
-			for toolname in tools:
+			for toolname in tools.keys():
 				buff += "\t{}: {}\n".format(toolname, tools[toolname])
 		buff += '-' * hash_length
 		buff += '\n'
