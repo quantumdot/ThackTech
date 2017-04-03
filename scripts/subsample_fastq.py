@@ -15,14 +15,15 @@ def main():
                                                 +"Both single-end and paired-end data is supported. "
                                                 +"Files may be .gz compressed or uncompressed.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
-                                                
-    parser.add_argument("--inreads", help="Use for single end reads.")
-    parser.add_argument("--outreads", help="Use for single end reads.")
+    single_end_group = parser.add_argument_group("Single-end Processing options")                                            
+    single_end_group.add_argument("--inreads", help="Use for single end reads.")
+    single_end_group.add_argument("--outreads", help="Use for single end reads.")
     
-    parser.add_argument("--inread1", help="Read 1 of paired-end reads.")
-    parser.add_argument("--inread2", help="Read 2 of paired-end reads.")
-    parser.add_argument("--outread1", help="Read 1 of paired-end reads.")
-    parser.add_argument("--outread2", help="Read 2 of paired-end reads.")
+    paired_end_group = parser.add_argument_group("Paired-end Processing options") 
+    paired_end_group.add_argument("--inread1", help="Read 1 of paired-end reads.")
+    paired_end_group.add_argument("--inread2", help="Read 2 of paired-end reads.")
+    paired_end_group.add_argument("--outread1", help="Read 1 of paired-end reads.")
+    paired_end_group.add_argument("--outread2", help="Read 2 of paired-end reads.")
     
     parser.add_argument("--pe", action="store_true", help="Are the reads paired?")
     parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of reads to return.")
@@ -30,6 +31,9 @@ def main():
     
     
     if args.pe:
+        if None in (args.inread1, args.inread2, args.outread1, args.outread2):
+            parser.error("In paired-end mode, you must specify all of --inread1, --inread2, --outread1, and --outread2")
+        
         in1 = iter(HTSeq.FastqReader(args.inread1))
         in2 = iter(HTSeq.FastqReader(args.inread2))
         out1 = open(args.outread1, "w")
@@ -44,6 +48,9 @@ def main():
         out2.close()
         
     else:
+        if None in (args.inreads, args.outreads):
+            parser.error("In paired-end mode, you must specify all of --inreads, and --outreads")
+        
         inreads = iter(HTSeq.FastqReader(args.inreads))
         outreads = open(args.outreads, "w")
         
