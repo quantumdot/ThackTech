@@ -63,18 +63,18 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			}
 		
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(0, 'Preparing...')
-			logfile.write('Processing sample "%s"....\n' % (sample.name,))
-			logfile.write('-> Pipeline: %s (%d steps)\n' % (pipeline.name, pipeline_size))
-			logfile.write('-> Running on: %s\n' % (' '.join(platform.uname()),))
-			logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
+			logfile.write('Processing sample "{}"....\n'.format(sample.name))
+			logfile.write('-> Pipeline: {} ({} steps)\n'.format(pipeline.name, pipeline_size))
+			logfile.write('-> Running on: {}\n'.format(' '.join(platform.uname())))
+			logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
 			logfile.write("--------------------------------------------\n\n")
 			
 			
 			for step in pipeline.itersteps():
 				#step = pipeline.pipeline[i]
 				status_counts['attempted'] += 1
-				logfile.write('Running pipeline step #%d: %s\n' % (step.index+1, step.module.name,))
-				logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
+				logfile.write('Running pipeline step #{}: {}\n'.format(step.index+1, step.module.name))
+				logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
 				logfile.flush()
 				try:
 					#if not step.is_compatible_with_sample(sample):
@@ -103,7 +103,9 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 					else:
 						status_counts['warn'] += 1
 						logfile.write('Encountered error during processing:\n')
-						logfile.write('%s\n' % e)
+						logfile.write('{}\n'.format(e))
+						logfile.write(traceback.format_exc())
+						logfile.write('\n\nModule is not marked critical, continuing with pipeline:\n')
 						logfile.flush()
 				finally:
 					logfile.write("--------------------------------------------\n\n")
@@ -112,21 +114,21 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 		except Exception as e:
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(None, 'Error!').finish()
 			logfile.write('Encountered error during processing:\n')
-			logfile.write('%s\n' % e)
+			logfile.write('{}\n'.format(e))
 			logfile.write(traceback.format_exc())
 			logfile.write('\n')
 		else:
 			#let the user know our progress
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(1, 'Done!').finish()
-			logfile.write('Completed processing of sample "%s"!\n' % (sample.name,))
-			logfile.write('-> See output: "%s"\n' % (sample.dest,))
+			logfile.write('Completed processing of sample "{}"!\n'.format(sample.name))
+			logfile.write('-> See output: "{}"\n'.format(sample.dest))
 		finally:
-			logfile.write("-> Wall clock: %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
+			logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
 			logfile.write("--------------------------------------------\n")
-			logfile.write("Total Pipeline Steps: %d\n" % (status_counts['total'],))
-			logfile.write("-> # Steps Run:  %d\n" % (status_counts['attempted'],))
-			logfile.write("-> # Steps Warn: %d (non-critical failure)\n" % (status_counts['warn'],))
-			logfile.write("-> # Steps Fail: %d (critical failure)\n" % (status_counts['critical'],))
+			logfile.write("Total Pipeline Steps: {}\n".format(status_counts['total']))
+			logfile.write("-> # Steps Run:  {}\n".format(status_counts['attempted']))
+			logfile.write("-> # Steps Warn: {} (non-critical failure)\n".format(status_counts['warn']))
+			logfile.write("-> # Steps Fail: {} (critical failure)\n".format(status_counts['critical']))
 			logfile.write("--------------------------------------------\n\n")
 			logfile.flush()
 			return sample

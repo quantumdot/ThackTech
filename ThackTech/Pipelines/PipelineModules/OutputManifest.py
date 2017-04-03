@@ -11,7 +11,7 @@ class OutputManifest(PipelineModule):
 
 	
 	def run(self, cxt):
-		cxt.log.write("-> Writing cxt.sample output manifest....\n")
+		cxt.log.write("-> Writing sample output manifest....\n")
 		cxt.log.flush()
 		dest = os.path.join(cxt.sample.dest, cxt.sample.name+'_output_manifest.tsv')
 		if os.path.exists(dest):
