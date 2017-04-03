@@ -2,6 +2,7 @@ import os
 from ThackTech.Pipelines import PipelineModule
 
 
+
 class OutputManifest(PipelineModule):
 	
 	def __init__(self, **kwargs):
@@ -20,15 +21,30 @@ class OutputManifest(PipelineModule):
 		
 		with open(dest, 'a') as output_manifest:
 			if write_headers:
-				output_manifest.write('module\tlabel\tpath\n')
-			for groupkey in cxt.sample.files.keys():
-				for labelkey in cxt.sample.files[groupkey].keys():
-					val = cxt.sample.files[groupkey][labelkey]
-					if isinstance(val, str):
-						out_val = "'%s'" % (val,)
-					else:
-						out_val = str(val)
-					output_manifest.write('%s\t%s\t%s\n' % (groupkey, labelkey, out_val))
+				output_manifest.write('id\tparent\tpipeline\tstep\tmodule\trole\tpath\tattributes\n')
+			
+			i = 0
+			for f in cxt.sample.files:
+				self.write_output(i, "None", f, output_manifest)
+				
+				if len(f.companions) > 0:
+					j=1
+					for fc in f.companions:
+						self.write_output(i+j, i, fc, output_manifest)
+						j += 1
+					i += j
+				
+				i += 1
 	#end run()
+	
+	def write_output(self, index, parent, f, out):
+		out.write("{id}\t{parent}\t{pipeline}\t{step}\t{module}\t{role}\t{path}\t{attributes}\n".format(id=index,
+																							  parent=parent,
+																							  pipeline=f.cxt.pipeline,
+																							  step=f.cxt.step,
+																							  module=f.cxt.module,
+																							  role=f.cxt.role,
+																							  path=f.fullpath,
+																							  attributes=';'.join("%s=%r" % (key,val) for (key,val) in f.attributes.iteritems())))
 #end class OutputManifest
 

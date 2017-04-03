@@ -55,7 +55,7 @@ class BamFingerprint(PipelineModule):
 		fingerprint_args += [ '--labels' ] + labels		
 
 		cxt.log.write("Computing fingerprint for "+cxt.sample.name+" with DeepTools BamFingerprint......\n")
-		cxt.log.write("DeepTools BamFingerprint version: "+subprocess.check_output(['plotFingerprint', '--version'], stderr=subprocess.STDOUT)+"\n")
+		cxt.log.write("DeepTools BamFingerprint version: "+self.tool_versions()['plotFingerprint']+"\n")
 		cxt.log.write("\n..............................................\n")
 		cxt.log.write(" ".join(fingerprint_args))
 		cxt.log.write("\n..............................................\n")

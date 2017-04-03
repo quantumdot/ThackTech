@@ -17,7 +17,7 @@ class PbcAnalysis(PipelineModule):
 		cxt.log.write('\t-> Running PBC QC...\n')
 		cxt.log.flush()
 		#compute PBC
-		bam = self.resolve_input('bam', cxt.sample)[0].fullpath
+		bam = self.resolve_input('bam', cxt)[0].fullpath
 		results = self.run_filter_qc(bam, cxt.sample.get_attribute('PE'), "-q 30")
 		pbc_dir = os.path.join(cxt.sample.dest, 'pbc')
 		filetools.ensure_dir(pbc_dir)
