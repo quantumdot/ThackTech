@@ -48,7 +48,7 @@ class ModuleParameter(object):
 	def get_value_as_type(self, value_type):
 		"""Gets the current value of this parameter, coerced to the type specified
 		"""
-		return self.__coerce_value(self.get_value(), value_type)
+		return self.__coerce_value(self.value, value_type)
 	#end get_value()
 	
 	@property
