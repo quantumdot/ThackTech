@@ -18,6 +18,7 @@ score_funcs['max'] 		= np.amax
 score_funcs['absmin'] 	= lambda lst: min([abs(i) for i in lst])
 score_funcs['absmax'] 	= lambda lst: max([abs(i) for i in lst])
 score_funcs['count'] 	= lambda lst: len(lst)
+score_funcs['zero'] 	= lambda lst: 0
 
 
 @total_ordering
@@ -243,18 +244,18 @@ def reduce_overlaps(intervals, chromsizes, scorefunc):
 	return results
 #end reduce_overlaps()
 
-def fill_complement(intervals, chroms, fill_value):
+def fill_complement(intervals, chroms, scorefunc):
 	"""fills the complement of the bedgraph with some value
 	
 	Args:
 		f (string): b
 	"""
 	sys.stderr.write('Finding regions with missing data\n')
-	
+	placeholder = "x"
 	genome_trees = {}
 	for chrom in chroms:
 		genome_trees[chrom] = IntervalTree()
-		genome_trees[chrom].addi(0, chroms[chrom], fill_value)
+		genome_trees[chrom].addi(0, chroms[chrom], placeholder)
 
 	
 	results = []
@@ -264,7 +265,11 @@ def fill_complement(intervals, chroms, fill_value):
 		
 	for chrom in chroms:
 		for iv in genome_trees[chrom]:
-			results.append(BedGraphInterval(chrom, iv.begin, iv.end, iv.data))	
+			results.append(BedGraphInterval(chrom, iv.begin, iv.end, iv.data))
+			
+	for i in xrange(len(results)):
+		if results[i].score == placeholder:
+			results[i].score = scorefunc([results[r] for r in [i-1, i+1] if r >= 0 and r < len(results)])
 			
 	results.sort()
 	return results

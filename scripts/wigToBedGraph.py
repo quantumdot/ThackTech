@@ -14,7 +14,7 @@ def main():
     parser.add_argument('-g', '--genome', required=True, action='store', help='Genome chromosome sizes. Can specify UCSC genome builds (i.e. hg19, mm9) or the location of a chromosome sizes file (standard UCSC genome sizes format).')
     parser.add_argument('-r', '--repairoverlaps', action='store_true', help='Repair overlapping intervals in the bedgraph, substituting the intersecting regions with a new interval with an average score.')
     parser.add_argument('-m', '--method', choices=bdgtools.score_funcs.keys(), default='mean', help='Method to use for computation of score when merging overlapping intervals.')
-    parser.add_argument('-e', '--missingregions', choices=['ignore', 'zero'], action='store', default='ignore', help='How to treat regions with no data.')
+    parser.add_argument('-e', '--missingregions', choices=['ignore', 'zero', 'interpolate'], action='store', default='ignore', help='How to treat regions with no data.')
     parser.add_argument('-q', '--quiet', action='store_true', help='Be as quiet as possible.')
     args = parser.parse_args()
     
