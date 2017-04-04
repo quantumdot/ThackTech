@@ -35,14 +35,16 @@ class BedGraphInterval:
 	def numeric_chrom(self):
 		return chromtools.chrom_to_int(self.chr)
 	#end numeric_chrom()
+
+	def hasOverlap(self, other):
+		if self.chr == other.chr and self.stop > other.start and self.start < other.stop:
+			return True
+		return False
+	#end Interval.getOverlap()
 	
 	def getOverlap(self, other):
-		if self.chr != other.chr:
-			return None
-		if self.stop < other.start:
-			return None
-		if self.stop >= other.start:
-			return BedGraphInterval(self.chr, other.start, self.stop, 0)
+		if self.hasOverlap(other):
+			return BedGraphInterval(self.chr, max(self.start, other.start), min(self.stop, other.stop), 0)
 	#end Interval.getOverlap()
 	
 	def __radd__(self, other):
@@ -229,6 +231,17 @@ def write_bigwig(intervals, chrsizes, outhandle):
 	outhandle.flush()
 #end convert_bdg_to_bw()
 
+def clip_regions(intervals, regions):
+	
+	results = []
+	for interval in intervals:
+		for region in regions:
+			if interval.hasOverlap(region):
+				results.append(interval)
+				continue
+	return results
+	
+
 def clip_chrom_sizes(intervals, chromsizes):
 	"""Clip intervals to be within the size bounds defined by chromsizes
 	
@@ -266,8 +279,9 @@ def reduce_overlaps(intervals, chromsizes, scorefunc):
 		trees[chrom] = IntervalTree()
 	
 	#populate the chromosome-specific intervaltrees with the intervals
-	for i in range(len(intervals)):
+	for i in xrange(len(intervals)):
 		trees[intervals[i].chr].addi(intervals[i].start, intervals[i].stop, intervals[i].score)
+	del intervals
 
 	#split overlaps, and then merge the the now equal-coordinate intervals,
 	#accumulating their values along the way as a list
@@ -298,9 +312,8 @@ def fill_complement(intervals, chroms, scorefunc):
 		genome_trees[chrom].addi(0, chroms[chrom], placeholder)
 
 	
-	results = []
+	results = intervals
 	for iv in intervals:
-		results.append(iv)
 		genome_trees[iv.chr].chop(iv.start, iv.stop)
 		
 	for chrom in chroms:

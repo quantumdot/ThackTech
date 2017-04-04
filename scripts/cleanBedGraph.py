@@ -16,6 +16,7 @@ def main():
     parser.add_argument('-c', '--clipsize', action='store_true', help="Clips the interval data so that it conforms to the chrom sizes of --genome.")
     parser.add_argument('-r', '--repairoverlaps', default=None, help='Repair overlapping intervals in the bedgraph, substituting the intersecting regions with a new interval having a score computed by one of '+str(bdgtools.score_funcs.keys()))
     parser.add_argument('-m', '--missing', default=None, help='Set regions with no data to have some value. Accepted values are a literal number (i.e. 0 or 1.5) or one of '+str(bdgtools.score_funcs.keys())+' to dynamically compute new score from adjacent intervals.')
+    parser.add_argument('-s', '--subset', default=None, help="string of chromosome locations to limit the output to. chr8:1000-5000,chr5:200-5000")
     parser.add_argument('-q', '--quiet', action='store_true', help='Be as quiet as possible.')
     args = parser.parse_args()
     
@@ -31,6 +32,14 @@ def main():
         
     chrom_sizes = chromtools.ChromSizes(args.genome)
     intervals = bdgtools.open_file_as_bedgraph(args.intervaldata, args.informat)
+    
+    if not args.subset is None:
+        subset = []
+        for region in args.subset.split(','):
+            chrom, coord = region.split(':')
+            start, stop = coord.split('-')
+            subset.append(bdgtools.BedGraphInterval(chrom, int(start), int(stop), 0))
+        intervals = bdgtools.clip_regions(intervals, subset)
     
     
     if args.repairoverlaps is not None:
