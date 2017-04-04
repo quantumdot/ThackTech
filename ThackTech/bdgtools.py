@@ -309,7 +309,7 @@ def fill_complement(intervals, chroms, scorefunc):
 			
 	for i in xrange(len(results)):
 		if results[i].score == placeholder:
-			results[i].score = scorefunc([results[r].score for r in [i-1, i+1] if r >= 0 and r < len(results)])
+			results[i].score = scorefunc([float(results[r].score) for r in [i-1, i+1] if r >= 0 and r < len(results)])
 			
 	results.sort()
 	return results
