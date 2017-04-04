@@ -17,7 +17,7 @@ setup(  name='ThackTech',
             'dill',
             'multiprocess', #this is different than the built in multiprocessing!
             'tabulate',
-            'HTseq'
+            #'HTseq'
             #'glob', 
             #'sqlite3',
         ],

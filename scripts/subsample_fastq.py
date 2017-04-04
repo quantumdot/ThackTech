@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 
-import os
-import sys
 import argparse
 import random 
 import itertools
 import gzip
-import HTSeq
-
+import pysam
 
 
 
 def main():
     parser = argparse.ArgumentParser(description="Samples a random subset of sequences from fastq or fasta formatted files. "
-                                                +"Both single-end and paired-end data is supported. "
+                                                +"Both single-end and paired-end data is supported. Running time is ~O(N) where N=size of file (# of reads). "
                                                 +"Files may be .gz compressed or uncompressed."
                                                 +"If outfiles have .gz extension data will be gzipped.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
@@ -37,23 +34,16 @@ def main():
         if None in (args.inread1, args.inread2, args.outread1, args.outread2):
             parser.error("In paired-end mode, you must specify all of --inread1, --inread2, --outread1, and --outread2")
         
-        in1 = iter(HTSeq.FastqReader(args.inread1))
-        in2 = iter(HTSeq.FastqReader(args.inread2))
-        if args.outread1.lower().endswith((".gz", ".gzip")):
-            out1 = gzip.open(args.outread1, "wb")
-        else:
-            out1 = open(args.outread1, "w")
-            
-        if args.outread2.lower().endswith((".gz", ".gzip")):
-            out2 = gzip.open(args.outread2, "wb")
-        else:
-            out2 = open(args.outread2, "w")
+        in1 = pysam.FastxFile(args.inread1)
+        in2 = pysam.FastxFile(args.inread2)
         
+        out1 = open_file_write(args.outread1)
+        out2 = open_file_write(args.outread2)
         
         for read1, read2 in itertools.izip(in1, in2):
             if random.random() < args.fraction:
-                read1.write_to_fastq_file(out1)
-                read2.write_to_fastq_file(out2)
+                write_fastq(out1, read1)
+                write_fastq(out2, read2)
         
         out1.close()
         out2.close()
@@ -62,18 +52,27 @@ def main():
         if None in (args.inreads, args.outreads):
             parser.error("In paired-end mode, you must specify all of --inreads, and --outreads")
         
-        inreads = iter(HTSeq.FastqReader(args.inreads))
-        if args.outread2.lower().endswith((".gz", ".gzip")):
-            outreads = gzip.open(args.outreads, "wb")
-        else:
-            outreads = open(args.outreads, "w")
+        inreads = pysam.FastxFile(args.inreads)
+        outreads = open_file_write(args.outreads)
         
         for read in inreads:
             if random.random() < args.fraction:
-                read.write_to_fastq_file(outreads)
+                write_fastq(outreads, read)
         
         outreads.close()
-#end main()  
+#end main()
+
+def open_file_write(filename):
+    if filename.lower().endswith((".gz", ".gzip")):
+        return gzip.open(filename, "wb")
+    else:
+        return open(filename, "w")
+#end open_file()
+
+def write_fastq(f, read):
+    fastq_format_str = "@{name}\n{sequence}\n+\n{quality}\n"
+    f.write(fastq_format_str.format(name=read.name, sequence=read.sequence, quality=read.quality))
+#end write_fastq()
     
 if __name__ == "__main__":
     main()
