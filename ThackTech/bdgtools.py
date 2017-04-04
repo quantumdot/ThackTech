@@ -306,12 +306,13 @@ def fill_complement(intervals, chroms, scorefunc):
 	for chrom in chroms:
 		for iv in genome_trees[chrom]:
 			results.append(BedGraphInterval(chrom, iv.begin, iv.end, iv.data))
-			
+	
+	results.sort()		
+	
 	for i in xrange(len(results)):
 		if results[i].score == placeholder:
 			results[i].score = scorefunc([float(results[r].score) for r in [i-1, i+1] if r >= 0 and r < len(results)])
 			
-	results.sort()
 	return results
 #end fill_complement()
 
