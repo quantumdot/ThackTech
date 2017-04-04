@@ -74,7 +74,7 @@ def detect_format(filename):
 		'wig': ['wig', 'wiggle'],
 		'bw':  ['bw', 'bigwig']
 	}
-	ext = os.path.splitext('/path/to/somefile.ext')[1][1:].lower()
+	ext = os.path.splitext(filename)[1][1:].lower()
 	for key in ext_mapping.keys():
 		if ext in ext_mapping[key]:
 			return key
