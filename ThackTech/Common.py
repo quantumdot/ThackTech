@@ -3,6 +3,7 @@ import sys
 from dateutil.relativedelta import relativedelta
 import subprocess
 import shlex
+import collections, itertools
 
 def human_time_diff(start, end):
 	'''returns a human readable string describing the elapsed time between start and end using units familiar to humans (i.e. months, days, hours, minutes... etc.) '''
@@ -10,6 +11,18 @@ def human_time_diff(start, end):
 	delta = relativedelta(seconds=(end-start))
 	return ', '.join(['%d %s' % (getattr(delta, attr), getattr(delta, attr) > 1 and attr or attr[:-1]) for attr in attrs if getattr(delta, attr)])
 #end human_time_diff()
+
+
+
+def window(it, winsize, step=1):
+	"""Sliding window iterator."""
+	it=iter(it)  # Ensure we have an iterator
+	l=collections.deque(itertools.islice(it, winsize))
+	while 1:  # Continue till StopIteration gets raised.
+		yield tuple(l)
+		for i in range(step):
+			l.append(it.next())
+			l.popleft()
 
 
 def which(name, all=False):
