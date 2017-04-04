@@ -65,6 +65,21 @@ class BedGraphInterval:
 		return ((self.chr.lower(), self.start, self.stop) < (other.chr.lower(), other.start, other.stop))
 #end class Interval
 
+
+def detect_format(filename):
+	ext_mapping = {
+		'bdg': ['bedgraph', 'bdg'],
+		'bed': ['bed'],
+		'wig': ['wig', 'wiggle'],
+		'bw':  ['bw', 'bigwig']
+	}
+	ext = ""
+	for key in ext_mapping.keys():
+		if ext in ext_mapping[key]:
+			return key
+#end detect_format()
+
+
 def __parse_part(line, regex, default=None, group=1):
 	match = re.search(regex, line)
 	if match is not None:
