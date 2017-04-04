@@ -312,8 +312,8 @@ def fill_complement(intervals, chroms, scorefunc):
 	for i in xrange(len(results)):
 		if results[i].score == placeholder:
 			scores = []
-			if i > 0: scores.append(float(results[i-1]))
-			if i < len(results): scores.append(float(results[i+1]))
+			if i > 0: scores.append(float(results[i-1].score))
+			if i < len(results): scores.append(float(results[i+1].score))
 			results[i].score = scorefunc(scores)
 			
 	return results
