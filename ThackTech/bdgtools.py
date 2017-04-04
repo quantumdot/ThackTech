@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import tempfile
@@ -73,7 +74,7 @@ def detect_format(filename):
 		'wig': ['wig', 'wiggle'],
 		'bw':  ['bw', 'bigwig']
 	}
-	ext = ""
+	ext = os.path.splitext('/path/to/somefile.ext')[1][1:]
 	for key in ext_mapping.keys():
 		if ext in ext_mapping[key]:
 			return key
@@ -87,6 +88,29 @@ def __parse_part(line, regex, default=None, group=1):
 	else:
 		return default
 #end parse_part()
+
+def open_file_as_bedgraph(filename, fileformat='auto'):
+	if fileformat == "auto":
+		fileformat = detect_format(filename)
+	
+	if fileformat == 'bw':
+		with tempfile.NamedTemporaryFile() as temp_bdg:
+			p = subprocess.Popen(['bigWigToBedGraph', filename, temp_bdg.name], stderr=sys.stderr)
+			p.communicate()
+			temp_bdg.seek(0)
+			return parse_bedgraph(temp_bdg)
+	else:
+		with open(filename, 'r') as infile:
+			if fileformat == 'bdg':
+				return parse_bedgraph(infile)
+			elif fileformat == 'wig':
+				return parse_wig(infile)
+			elif fileformat == 'bed':
+				return parse_bed(infile)
+			else:
+				raise ValueError("Cannot open file of type {}".format(format))
+	
+#end open_file_as_bedgraph
 
 def parse_bedgraph(input_str, sort=True):
 	"""Parses a bedgraph formatted string into a list of BedGraphIntervals
@@ -103,6 +127,7 @@ def parse_bedgraph(input_str, sort=True):
 		results.sort()
 	return results
 #end parse_bedgraph()
+
 
 def parse_wig(input_str, sort=True):
 	"""Parses a wig formatted string into a list of BedGraphIntervals

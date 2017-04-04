@@ -9,7 +9,7 @@ from ThackTech import bdgtools, chromtools
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('interval-data', help='File containing interval-based score data to clean.')
-    parser.add_argument('-if', '--informat', default=None, choices=['bdg', 'bed', 'wig'], help="Input format is auto-detected based on file extension, but use this option to force.")
+    parser.add_argument('-if', '--informat', default='auto', choices=['bdg', 'bed', 'wig', 'bw', 'auto'], help="Input format is auto-detected based on file extension, but use this option to force.")
     parser.add_argument('-o', '--output', help='Specifies the output file. Default is stdout')
     parser.add_argument('-of', '--outformat', choices=['bdg', 'bw'], default='bdg', help='Output format.')
     parser.add_argument('-g', '--genome', action='store', required=True, help='Genome chromosome sizes. Can specify UCSC genome builds (i.e. hg19, mm9) or the location of a chromosome sizes file (standard UCSC genome sizes format).')
@@ -22,8 +22,6 @@ def main():
     if args.repairoverlaps is not None and args.repairoverlaps not in bdgtools.score_funcs.keys():
         parser.error("--repairoverlaps must be one of {}".format(bdgtools.score_funcs.keys()))
     
-    if args.informat is None:
-        args.informat = bdgtools.detect_format(args.interval_data)
         
     if args.output and args.output != '-':
         sys.stdout = open(args.output, 'w')
@@ -32,18 +30,7 @@ def main():
         sys.stderr = os.devnull
         
     chrom_sizes = chromtools.ChromSizes(args.genome)
-        
-    
-
-    with open(args.interval_data, 'r') as infile:
-        if args.informat == 'bdg':
-            intervals = bdgtools.parse_bedgraph(infile)
-        elif args.informat == 'wig':
-            intervals = bdgtools.parse_wig(infile)
-        elif args.informat == 'bed':
-            intervals = bdgtools.parse_bed(infile)
-        else:
-            parser.error("Cannot open file of type {}".format(args.informat))
+    intervals = bdgtools.open_file_as_bedgraph(args.interval_data, args.informat)
     
     
     if args.repairoverlaps is not None:
