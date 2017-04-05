@@ -196,9 +196,8 @@ class PbcAnalysis(PipelineModule):
 		if err:
 			raise Exception("PBC file error: %s" %(err))
 		
-		headers = 'TotalReadPairs\tDistinctReadPairs\tOneReadPair\tTwoReadPairs\tNRF=Distinct/Total\tPBC1=OnePair/Distinct\tPBC2=OnePair/TwoPair'
-		p = subprocess.Popen('echo "'+headers+'" | cat - "'+pbc_file_qc_filename+'" > /tmp/out && mv /tmp/out "'+pbc_file_qc_filename+'"', shell=True)
-		p.communicate()
+		headers = 'TotalReadPairs\tDistinctReadPairs\tOneReadPair\tTwoReadPairs\tNRF=Distinct/Total\tPBC1=OnePair/Distinct\tPBC2=OnePair/TwoPair\n'
+		filetools.prepend_file(pbc_file_qc_filename, headers)
 		
 		# Return links to the output files
 		output = {
