@@ -36,7 +36,7 @@ class InsertSizeMetrics(PipelineModule):
 				'OUTPUT={}'.format(insmet_outbase+'.txt'),
 				'HISTOGRAM_FILE={}'.format(insmet_outbase+'.hist.pdf')
 			]
-			self._run_subprocess(args)
+			self._run_subprocess(args, stderr=subprocess.STDOUT, stdout=cxt.log)
 			cxt.log.write('\t-> Completed insert size analysis...\n')
 			cxt.log.flush()
 		

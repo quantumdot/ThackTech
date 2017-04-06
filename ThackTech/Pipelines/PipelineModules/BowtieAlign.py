@@ -1,7 +1,10 @@
 import os
 import subprocess
+import re
+import cStringIO
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
+from ThackTech import filetools
 
 
 class BowtieAlign(PipelineModule):
@@ -17,7 +20,7 @@ class BowtieAlign(PipelineModule):
 		self.add_parameter(ModuleParameter('multimap', 			bool, 	False,	desc="Report reads that map to multiple locations in the reference."))
 		self.add_parameter(ModuleParameter('max_align', 		int, 	None,	nullable=True, desc="If not none, maximum number of valid alignments to report."))
 		self.add_parameter(ModuleParameter('chunkmbs', 			int, 	512,	desc="give more memory for searching.. prevents warnings and increases alignment rate especially for longer reads"))
-		self.add_parameter(ModuleParameter('max_insert', 		int, 	600,	desc="max insert size allowed for PE reads"))
+		self.add_parameter(ModuleParameter('max_insert', 		int, 	800,	desc="max insert size allowed for PE reads"))
 		self.add_parameter(ModuleParameter('max_mismatches',	int, 	2,		desc="max allowed mismatches in the sead region, corresponds to -n"))
 		self.add_parameter(ModuleParameter('pairtries', 		int, 	1000,	desc="number of tries for finding valid paired-end alignments"))
 		self.add_parameter(ModuleParameter('additional_args', 	list, 	[],		desc="Additional arguments to pass to Bowtie"))
@@ -109,8 +112,12 @@ class BowtieAlign(PipelineModule):
 		cxt.log.write(" ".join(bowtiecmd))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
-		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=cxt.log)
-		
+		tmpout = cStringIO.StringIO()
+		output = filetools.Tee(cxt.log, tmpout)
+		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=output)
+		output.release(cxt.log)
+		output_result['align_stats'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.align_stats.tsv')
+		self.parse_bowtie_output(cxt, tmpout.getvalue(), output_result['align_stats'])
 		
 		output_files = []
 		for n, o in output_result.items():
@@ -118,4 +125,34 @@ class BowtieAlign(PipelineModule):
 		
 		return output_files
 	#end run()
+	
+	def parse_bowtie_output(self, cxt, logdata, destfilename):
+		regex_items = [
+			('Total Reads',		"# reads processed: (\d+)"),
+			('Aligned Reads',	"# reads with at least one reported alignment: (\d+)"),
+			('Unaligned Reads',	"# reads that failed to align: (\d+)"),
+			('Percent Aligned Reads', lambda r: (float(r['Aligned Reads']) / float(r['Total Reads']))),
+			('Percent Unaligned Reads', lambda r: (float(r['Unaligned Reads']) / float(r['Total Reads']))),
+		]
+		results = {}
+		
+		with open(destfilename, 'w') as destfile:
+			destfile.write("Sample\t")
+			destfile.write("\t".join([item[0] for item in regex_items]))
+			destfile.write("\n")
+			
+			destfile.write("{}\t".format(cxt.sample.name))
+			for item in regex_items:
+				if isinstance(item[1], basestring):
+					match = re.search(item[1], logdata, re.MULTILINE)
+					if match is not None:
+						results[item[0]] = int(match.group(1))
+					else:
+						results[item[0]] = 0
+				else:
+					results[item[0]] = item[1](results)
+				
+				destfile.write(results[item[0]])
+			destfile.write("\n")
+	#end parse_bowtie_output
 #end class BowtieAlign

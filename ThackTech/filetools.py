@@ -165,6 +165,9 @@ class Tee(object):
                 self.__handles.append(open(arg, 'w'))
             else:
                 self.__handles.append(arg)
+                
+    def release(self, filehandle):
+        self.__handles.remove(filehandle)
         
     def write(self, text):
         """Write a string to the files held by this Tee

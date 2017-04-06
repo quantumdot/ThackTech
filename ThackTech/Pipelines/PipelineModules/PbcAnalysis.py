@@ -18,7 +18,7 @@ class PbcAnalysis(PipelineModule):
 		cxt.log.flush()
 		#compute PBC
 		bam = self.resolve_input('bam', cxt).fullpath
-		results = self.run_filter_qc(bam, cxt.sample.get_attribute('PE'), "-q 30")
+		results = self.run_filter_qc(cxt, bam, cxt.sample.get_attribute('PE'), "-q 30")
 		pbc_dir = os.path.join(cxt.sample.dest, 'pbc')
 		filetools.ensure_dir(pbc_dir)
 		mv_cmd = 'mv -f {} {} {}'.format(os.path.join(cxt.sample.dest, cxt.sample.name+'.filt.*'), 
@@ -54,7 +54,7 @@ class PbcAnalysis(PipelineModule):
 		return output_files
 	#end run()
 	
-	def run_filter_qc(self, input_bam=None, paired_end=None, samtools_params=None):
+	def run_filter_qc(self, cxt, input_bam=None, paired_end=None, samtools_params=None):
 		if input_bam is None:
 			raise Exception('input_bam is required!')
 	
@@ -90,7 +90,7 @@ class PbcAnalysis(PipelineModule):
 				#require FLAG 2: properly aligned
 				"samtools view -F 1804 -f 2 %s -u %s" % (samtools_params, raw_bam_filename),
 				#sort:  -n sort by name; - take input from stdin; out to specified filename
-				"samtools sort -n - %s" % (tmp_filt_bam_prefix)])  # Will produce name sorted BAM
+				"samtools sort -n - %s" % (tmp_filt_bam_prefix)], stderr=cxt.log)  # Will produce name sorted BAM
 			if err:
 				raise RuntimeError("samtools error: %s" %(err))
 			
@@ -106,7 +106,7 @@ class PbcAnalysis(PipelineModule):
 				#repeat filtering after mate repair
 				"samtools view -F 1804 -f 2 -u -",
 				#produce the coordinate-sorted BAM
-				"samtools sort - %s" %(filt_bam_prefix)])
+				"samtools sort - %s" %(filt_bam_prefix)], stderr=cxt.log)
 			#print subprocess.check_output('ls -l', shell=True)
 		else: #single-end data
 			# =============================
@@ -116,9 +116,9 @@ class PbcAnalysis(PipelineModule):
 			# Obtain name sorted BAM file
 			# ==================  
 			with open(filt_bam_filename, 'w') as fh:
-				subprocess.check_call(['samtools', 'view', '-F', '1804', samtools_params, '-b', raw_bam_filename], stdout=fh)
+				subprocess.check_call(['samtools', 'view', '-F', '1804', samtools_params, '-b', raw_bam_filename], stdout=fh, stderr=cxt.log)
 				
-		subprocess.check_call(['samtools', 'index', filt_bam_filename, filt_bam_prefix+'.bai'])
+		subprocess.check_call(['samtools', 'index', filt_bam_filename, filt_bam_prefix+'.bai'], stderr=cxt.log)
 		
 		# ========================
 		# Mark duplicates
@@ -128,7 +128,7 @@ class PbcAnalysis(PipelineModule):
 		subprocess.check_call(shlex.split(
 		 "picard-tools MarkDuplicates INPUT=%s OUTPUT=%s METRICS_FILE=%s \
 		  VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=true REMOVE_DUPLICATES=false"
-		  %(filt_bam_filename, tmp_filt_bam_filename, dup_file_qc_filename)))
+		  %(filt_bam_filename, tmp_filt_bam_filename, dup_file_qc_filename)), stderr=cxt.log)
 		os.rename(tmp_filt_bam_filename,filt_bam_filename)
 		
 		if paired_end:
@@ -146,7 +146,7 @@ class PbcAnalysis(PipelineModule):
 			# Create final name sorted BAM
 			# ============================
 			with open(final_bam_filename, 'w') as fh:
-				subprocess.check_call(['samtools', 'view', '-F', '1804', '-f2', '-b', filt_bam_filename], stdout=fh)
+				subprocess.check_call(['samtools', 'view', '-F', '1804', '-f2', '-b', filt_bam_filename], stdout=fh, stderr=cxt.log)
 			#namesorting is needed for bam->bedPE, so moved to xcor
 			#final_nmsrt_bam_prefix = raw_bam_basename + ".filt.nmsrt.nodup"
 			#final_nmsrt_bam_filename = final_nmsrt_bam_prefix + ".bam"
@@ -157,12 +157,12 @@ class PbcAnalysis(PipelineModule):
 			# Index final position sorted BAM
 			# ============================
 			with open(final_bam_filename, 'w') as fh:
-				subprocess.check_call(['samtools', 'view', '-F', '1804', '-b', filt_bam_filename], stdout=fh)
+				subprocess.check_call(['samtools', 'view', '-F', '1804', '-b', filt_bam_filename], stdout=fh, stderr=cxt.log)
 		# Index final bam file
-		subprocess.check_call(['samtools', 'index', final_bam_filename, final_bam_index_filename])
+		subprocess.check_call(['samtools', 'index', final_bam_filename, final_bam_index_filename], stderr=cxt.log)
 		# Generate mapping statistics
 		with open(final_bam_file_mapstats_filename, 'w') as fh:
-			subprocess.check_call(['samtools', 'flagstat', final_bam_filename], stdout=fh)
+			subprocess.check_call(['samtools', 'flagstat', final_bam_filename], stdout=fh, stderr=cxt.log)
 		
 		# =============================
 		# Compute library complexity
@@ -192,7 +192,7 @@ class PbcAnalysis(PipelineModule):
 			"uniq -c",
 			r"""awk 'BEGIN{mt=0;m0=0;m1=0;m2=0} ($1==1){m1=m1+1} ($1==2){m2=m2+1} {m0=m0+1} {mt=mt+$1} END{printf "%d\t%d\t%d\t%d\t%f\t%f\t%f\n",mt,m0,m1,m2,m0/mt,m1/m0,m1/m2}'"""
 		 ])
-		out,err = Common.run_pipe(steps,pbc_file_qc_filename)
+		out,err = Common.run_pipe(steps, outfile=pbc_file_qc_filename, stderr=cxt.log)
 		if err:
 			raise Exception("PBC file error: %s" %(err))
 		
