@@ -1,6 +1,7 @@
 import os
 import sys
 import errno
+import tempfile
 import subprocess
 
 
@@ -159,12 +160,16 @@ class Tee(object):
             args: arbitrary number of file-like objects or strings. If string, it is assumed to be a file path and is opened in mode 'w'
             
         """
+        self.__innerhandle = tempfile.NamedTemporaryFile()
         self.__handles = []
         for arg in args:
             if isinstance(arg, basestring):
                 self.__handles.append(open(arg, 'w'))
             else:
                 self.__handles.append(arg)
+                
+    def __poll(self):
+        pass
                 
     def release(self, filehandle):
         self.__handles.remove(filehandle)
@@ -185,7 +190,7 @@ class Tee(object):
             text: Sequence of strings to write
         """
         for text in sequence:
-            for h in self.__handles:
+            for h in self.__handles: 
                 h.write(text)
 
     def flush(self):
