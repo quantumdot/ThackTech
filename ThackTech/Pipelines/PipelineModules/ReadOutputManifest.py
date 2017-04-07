@@ -26,7 +26,7 @@ class ReadOutputManifest(PipelineModule):
 				if len(parts) > 0:
 					c = FileContext(parts[2], int(parts[3]), parts[4], parts[5])
 					f = FileInfo(parts[6], c)
-					if not parts[7] == '':
+					if len(parts) > 6 and parts[7].strip() != '':
 						tuples = [item.split("=") for item in parts[7].split(";")]
 						for t in tuples:
 							f.attributes[t[0]] = ast.literal_eval(t[1])
