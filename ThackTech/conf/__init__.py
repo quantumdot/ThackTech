@@ -8,10 +8,11 @@ except:
 
 
 __config_dirs_to_search = [
-    os.path.dirname(__file__),
-    os.path.expanduser("~/.config/thacktech"),
-    "/etc/thacktech",
-    os.environ.get("THACKTECH_CONF")
+    os.path.dirname(__file__), #built in default config
+    os.path.expanduser("~/.config/thacktech"), #local per-user config
+    "/etc/thacktech", #system-wide config
+    os.environ.get("THACKTECH_CONF"), #dynamic settable config dir
+    os.getcwd() #check the current working directory
 ]
 
 __known_configs = {}
