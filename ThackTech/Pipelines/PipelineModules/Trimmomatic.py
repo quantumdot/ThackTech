@@ -119,7 +119,7 @@ class Trimmomatic(PipelineModule):
 		self._run_subprocess(trimmomatic_args, stderr=subprocess.STDOUT, stdout=cxt.log)
 		
 		if self.get_parameter_value("compress_trimlog"):
-			cxt.log.write("\t-> Compressing Trim Log......")
+			cxt.log.write("\t-> Compressing Trim Log......\n")
 			cxt.log.flush()
 			self._run_subprocess(['tar', 'cfz', trimlog_loc+'.tar.gz', trimlog_loc])
 			trimlog_loc = trimlog_loc+'.tar.gz'

@@ -4,7 +4,8 @@ import os
 import sys
 import argparse
 import pandas as pd
-from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext, CPU_COUNT
+from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
+from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
 
 
@@ -74,13 +75,9 @@ def main():
     parser.add_argument('--unaligned', action='store_true', help='Output reads that fail to align to the reference genome.')
     parser.add_argument('--trim', action='store_true', help="Use trimmomatic to perform adapter clipping.")
     
-    performance_group = parser.add_argument_group('Performance')
-    performance_group.add_argument('-p', '--threads', type=int, default=CPU_COUNT, help="Number of processors to use for processing.")
-    #performance_group.add_argument('--noparallel', action='store_true', help='Completly turn off parallelization of tasks (no use of the thread pool).')
-    performance_group.add_argument('--shm', action='store_true', help="Use ramfs for file IO.")
-    performance_group.add_argument('--shm-path', action='store', default='/mnt/ramdisk/bowtie'+'_'+str( os.getuid() ), help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
+    performance_group = add_runner_args(parser)
     performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
-    performance_group.add_argument('--runner', action='store', default='parallel', choices=['slurm', 'parallel', 'serial'], help="Which pipeline runner to use.")
+    
     
     args, additional_args = parser.parse_known_args()
     
@@ -100,21 +97,7 @@ def main():
 
     
     pipeline = make_read_alignment_pipeline(args, additional_args)
-    #sys.stdout.write(pipeline.documentation())
-    
-    
-    #run the pipeline!
-    if args.runner == 'slurm':
-        from ThackTech.Pipelines import SlurmPipelineRunner
-        runner = SlurmPipelineRunner(pipeline, partition="main", nodes=1, threads=args.threads, time_limit="5:00:00")
-    elif args.runner == 'parallel':
-        from ThackTech.Pipelines import ParallelPipelineRunner
-        runner = ParallelPipelineRunner(pipeline, args.threads)
-    else: #serial runner
-        from ThackTech.Pipelines import SerialPipelineRunner
-        runner = SerialPipelineRunner(pipeline)
-    
-    
+    runner = get_configured_runner(args, pipeline)
     runner.run(samples)
     
     sys.stdout.write("Completed processing of all manifest items!\n")
@@ -141,7 +124,7 @@ def make_read_alignment_pipeline(args, additional_args):
             pipeline.append_module(x)
             
             def resolve_bowtie1(cxt):
-                if cxt.sample.has_attribute('PE'):
+                if cxt.sample.get_attribute('PE'):
                     return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_paired_reads")
                 else:
                     return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_reads")

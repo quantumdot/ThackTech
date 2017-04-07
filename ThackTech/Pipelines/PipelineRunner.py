@@ -4,7 +4,7 @@ import traceback
 import platform
 import time
 from ThackTech import filetools
-from ThackTech.Pipelines import AnalysisPipeline, PipelineSample, ModuleRunContext, FileInfo, FileContext
+from ThackTech.Pipelines import AnalysisPipeline, PipelineSample, ModuleRunContext, FileInfo, FileContext, CPU_COUNT
 
 
 class PipelineRunner(object):
@@ -27,6 +27,45 @@ class PipelineRunner(object):
 	def run(self, samples):
 		pass
 #end class PipelineRunner
+
+
+def add_runner_args(argparser):
+	"""Adds an argument group to the passed argparse object with pipeline runner options
+	
+	Parameters:
+		argparser:	An argparse.ArgumentParser object to add runner options to
+		
+	Returns:
+		argument group for performance options
+	"""
+	performance_group = argparser.add_argument_group('Performance')
+	performance_group.add_argument('-p', '--threads', type=int, default=CPU_COUNT, help="Number of processors to use for processing.")
+	performance_group.add_argument('--shm', action='store_true', help="Use ramfs for file IO.")
+	performance_group.add_argument('--shm-path', action='store', default='/mnt/ramdisk/bowtie'+'_'+str( os.getuid() ), help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
+	performance_group.add_argument('--runner', action='store', default='parallel', choices=['slurm', 'parallel', 'serial'], help="Which pipeline runner to use.")
+	
+	performance_group.add_argument('--slurm-partition', action='store', default='main', help="For slurm runner, the partition to run jobs on.")
+	performance_group.add_argument('--slurm-time', action='store', default='5:00:00', help="For slurm runner, time limit for jobs.")
+	
+	return performance_group
+#end get_runner_args()
+
+def get_configured_runner(args, pipeline, **kwargs):
+	
+	if args.runner == 'slurm':
+		from ThackTech.Pipelines import SlurmPipelineRunner
+		runner = SlurmPipelineRunner(pipeline, partition=args.slurm_partition, nodes=1, threads=args.threads, time_limit=args.slurm_time, **kwargs)
+	elif args.runner == 'parallel':
+		from ThackTech.Pipelines import ParallelPipelineRunner
+		runner = ParallelPipelineRunner(pipeline, args.threads)
+	else: #serial runner
+		from ThackTech.Pipelines import SerialPipelineRunner
+		runner = SerialPipelineRunner(pipeline)
+	
+	return runner
+#end get_configured_runner()
+
+
 
 def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 	"""Exexutes a pipeline on a given sample
