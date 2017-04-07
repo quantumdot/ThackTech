@@ -69,7 +69,7 @@ def main():
     parser.add_argument('manifest', help="Manifest file containing sample information in tab separated format. Should contain the following columns (headers must be present): [Path], [Basename], [PE], [Genome], [Dest]")
     parser.add_argument('--bowtie-version', choices=['1', '2'], default='1', help="Version of bowtie to run")
     
-    available_qc_choices = ['spp', 'pbc', 'ism', 'fpt', 'rpkm']
+    available_qc_choices = ['spp', 'pbc', 'ism', 'fpt', 'rpkm', 'fqscreen']
     parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC pipelines to run after the alignment process completes. SPP is the cross-correlation analysis provided by ccQualityControl/phantompeakqualtools. PBC is the PRC bottleneck/library complexity estimation. ISM computes the distribution of insert size. FPT computes the \"BAM Fingerprint\" using DeepTools bamFingerprint program, and give a good idea of IP strength, especially for TF-like IPs. rpkm will generate a RPKM normalized BigWig from the aligned BAM file. All will run all available QC modules.")
     parser.add_argument('--pe_pre', default='_R', help="Paired-end prefix. String to insert between the file basename and the pair number when searching for read files. If your FASTQ files are names as [reads_R1.fastq, reads_R2.fastq] then use '_R1', or if reads_1.fastq then use '_1'. This option is only used when in paired end mode. default: _R1")
     parser.add_argument('--unaligned', action='store_true', help='Output reads that fail to align to the reference genome.')
@@ -131,6 +131,12 @@ def make_read_alignment_pipeline(args, additional_args):
         else: 
             def resolve_bowtie1(cxt):
                 return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
+        
+        if 'fqscreen' in args.qc:    
+            from ThackTech.Pipelines.PipelineModules import FastqScreen
+            x = FastqScreen.FastqScreen()
+            x.set_resolver('fastqs', resolve_bowtie1)
+            pipeline.append_module(x)
     
     
         if args.bowtie_version == '1':
