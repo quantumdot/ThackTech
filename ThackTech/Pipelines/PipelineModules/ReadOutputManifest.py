@@ -25,7 +25,7 @@ class ReadOutputManifest(PipelineModule):
 				parts = line.split('\t')
 				if len(parts) > 0:
 					c = FileContext(parts[2], int(parts[3]), parts[4], parts[5])
-					f = FileInfo(ast.literal_eval(parts[6]), c)
+					f = FileInfo(parts[6], c)
 					if not parts[7] == '':
 						tuples = [item.split("=") for item in parts[7].split(";")]
 						for t in tuples:
