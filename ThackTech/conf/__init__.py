@@ -21,6 +21,7 @@ def get_config(name, force_reparse=False):
         config = configparser.SafeConfigParser()
         paths = []
         for loc in __config_dirs_to_search:
+            sys.stderr.write("Looking for config files in {}\n".format(loc))
             if loc is not None:
                 paths.append(os.path.join(loc, name+".default.ini"))
                 paths.append(os.path.join(loc, name+".ini"))

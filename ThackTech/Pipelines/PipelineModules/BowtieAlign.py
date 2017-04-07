@@ -1,7 +1,7 @@
 import os
 import subprocess
 import re
-import cStringIO
+import tempfile
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 from ThackTech import filetools
@@ -112,12 +112,14 @@ class BowtieAlign(PipelineModule):
 		cxt.log.write(" ".join(bowtiecmd))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
-		tmpout = cStringIO.StringIO()
-		output = filetools.Tee(cxt.log, tmpout)
-		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=output)
-		output.release(cxt.log)
+		tmpout = tempfile.NamedTemporaryFile()
+		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=tmpout)
+		tmpout.seek(0)
+		bowtie_output = tmpout.read()
+		tmpout.close()
+		cxt.log.write(bowtie_output)
 		output_result['align_stats'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.align_stats.tsv')
-		self.parse_bowtie_output(cxt, tmpout.getvalue(), output_result['align_stats'])
+		self.parse_bowtie_output(cxt, bowtie_output, output_result['align_stats'])
 		
 		output_files = []
 		for n, o in output_result.items():
