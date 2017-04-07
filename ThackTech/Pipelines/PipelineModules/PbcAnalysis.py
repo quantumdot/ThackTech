@@ -131,10 +131,7 @@ class PbcAnalysis(PipelineModule):
 		  %(filt_bam_filename, tmp_filt_bam_filename, dup_file_qc_filename)), stderr=cxt.log)
 		os.rename(tmp_filt_bam_filename,filt_bam_filename)
 		
-		if paired_end:
-			final_bam_prefix = raw_bam_basename + ".filt.srt.nodup"
-		else:
-			final_bam_prefix = raw_bam_basename + ".filt.nodup.srt"
+		final_bam_prefix = raw_bam_basename + ".filt.srt.nodup"
 		final_bam_filename = final_bam_prefix + ".bam" # To be stored
 		final_bam_index_filename = final_bam_prefix + ".bai" # To be stored
 		final_bam_file_mapstats_filename = final_bam_prefix + ".flagstat.qc" # QC file
