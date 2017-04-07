@@ -154,7 +154,7 @@ class BowtieAlign(PipelineModule):
 				else:
 					results[item[0]] = item[1](results)
 				
-				destfile.write(results[item[0]])
+			destfile.write("\t".join(["{}".format(results[item[0]]) for item in regex_items]))
 			destfile.write("\n")
 	#end parse_bowtie_output
 #end class BowtieAlign
