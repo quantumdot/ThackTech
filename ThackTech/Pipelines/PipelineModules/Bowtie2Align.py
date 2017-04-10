@@ -12,7 +12,7 @@ class Bowtie2Align(PipelineModule):
 		
 		self.add_parameter(ModuleParameter('multimap', 			bool, 	False,	desc="Report reads that map to multiple locations in the reference."))
 		self.add_parameter(ModuleParameter('max_align', 		int, 	None,	nullable=True, desc="If not none, maximum number of valid alignments to report."))
-		self.add_parameter(ModuleParameter('max_insert', 		int, 	600,	desc="--maxins: max insert size allowed for PE reads"))
+		self.add_parameter(ModuleParameter('max_insert', 		int, 	1200,	desc="--maxins: max insert size allowed for PE reads"))
 		self.add_parameter(ModuleParameter('max_mismatches',	int, 	1,		desc="-N: max allowwd mismatches in the sead region"))
 		self.add_parameter(ModuleParameter('unaligned', 		bool, 	False,	desc="--un: Report reads that fail to align."))
 		self.add_parameter(ModuleParameter('no_unaligned', 		bool,	False,	desc="--no-unal: Suppress SAM records for reads that failed to align."))
