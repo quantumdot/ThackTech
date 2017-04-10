@@ -14,7 +14,7 @@ from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_r
 #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
 
 #BEFORE RUNNING SCRIPT WHEN USING LMOD
-#module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3
+#module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 bowtie2/2.2.9
 
 gopts = {
     'spp_path': '/home/josh/scripts/phantompeakqualtools/run_spp.R',
