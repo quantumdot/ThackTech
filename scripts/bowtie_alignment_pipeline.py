@@ -25,17 +25,17 @@ gopts = {
     
 class AlignmentPipelineSample(PipelineSample):
 
-    def __init__(self, sample):
+    def __init__(self, sample, pe_prefix='_R'):
         super(AlignmentPipelineSample, self).__init__(sample['Basename'], sample['Genome'], sample['Dest'])
         self.set_attribute('PE', ('PE' in sample and sample['PE']))
-        self.discover_files(sample['Path'])
+        self.discover_files(sample['Path'], pe_prefix)
     #end __init__()
     
-    def discover_files(self, path):
+    def discover_files(self, path, pe_prefix):
         files = []
         compressed_extensions = ['.gz', '.bz2', '.zip', '.tar', '.tar.gz']
         if self.get_attribute('PE'):
-            base = os.path.join(path, self.name + gopts['pe_prefix'])
+            base = os.path.join(path, self.name + pe_prefix)
             #print "trying %s, %s" % (base+'1.fastq', base+'2.fastq')
             if os.path.exists(base+'1.fastq') and os.path.exists(base+'2.fastq'):
                 files.append(FileInfo(base+'1.fastq', FileContext.from_origin('reads'), mate=1))
@@ -85,20 +85,17 @@ def main():
         args.qc = available_qc_choices
 
     sys.stdout.write('Reading sample manifest.....\n')
-    sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
-    samples = [AlignmentPipelineSample(s) for s in sample_manifest.to_dict(orient='records')]
-    sys.stdout.write('\t-> Found %d item%s for processing.....\n' % (len(sample_manifest.index), ('s' if len(sample_manifest.index) > 1 else '')))
-
     #sample manifest should be in the following TAB separated format (with headers):
     #Path    Basename    PE    Genome    Dest
     #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
+    sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
+    samples = [AlignmentPipelineSample(s, args.pe_pre) for s in sample_manifest.to_dict(orient='records')]
+    sys.stdout.write('\t-> Found %d item%s for processing.....\n' % (len(sample_manifest.index), ('s' if len(sample_manifest.index) > 1 else '')))
 
-    gopts['pe_prefix'] = args.pe_pre
-
-    
+    #get the pipeline and runner, then run the pipeline
     pipeline = make_read_alignment_pipeline(args, additional_args)
     runner = get_configured_runner(args, pipeline)
-    runner.run(samples)
+    runner.run(samples) #runner blocks until processing is complete
     
     sys.stdout.write("Completed processing of all manifest items!\n")
     #sys.stdout.write("\t-> Processing entire manifest took %s\n\n" % (Common.human_time_diff(total_start_time, time.time()),))

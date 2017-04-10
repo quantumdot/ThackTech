@@ -3,7 +3,7 @@ import sys
 import traceback
 import platform
 import time
-from ThackTech import filetools
+from ThackTech import filetools, conf
 from ThackTech.Pipelines import AnalysisPipeline, PipelineSample, ModuleRunContext, FileInfo, FileContext, CPU_COUNT
 
 
@@ -29,6 +29,7 @@ class PipelineRunner(object):
 #end class PipelineRunner
 
 
+
 def add_runner_args(argparser):
 	"""Adds an argument group to the passed argparse object with pipeline runner options
 	
@@ -38,6 +39,9 @@ def add_runner_args(argparser):
 	Returns:
 		argument group for performance options
 	"""
+	cfg = conf.get_config('pipelines')
+	#if cfg.has_section('general'):
+		
 	performance_group = argparser.add_argument_group('Performance')
 	performance_group.add_argument('-p', '--threads', type=int, default=CPU_COUNT, help="Number of processors to use for processing.")
 	performance_group.add_argument('--shm', action='store_true', help="Use ramfs for file IO.")
@@ -49,6 +53,7 @@ def add_runner_args(argparser):
 	
 	return performance_group
 #end get_runner_args()
+
 
 def get_configured_runner(args, pipeline, **kwargs):
 	

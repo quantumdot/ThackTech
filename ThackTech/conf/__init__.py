@@ -8,18 +8,18 @@ except:
 
 
 __config_dirs_to_search = [
-    os.path.dirname(__file__), #built in default config
-    os.path.expanduser("~/.config/thacktech"), #local per-user config
+    os.path.dirname(__file__), #built in default config (conf directory within package)
     "/etc/thacktech", #system-wide config
+    os.path.expanduser("~/.config/thacktech"), #local per-user config
     os.environ.get("THACKTECH_CONF"), #dynamic settable config dir
     os.getcwd() #check the current working directory
 ]
 
 __known_configs = {}
 
-def get_config(name, force_reparse=False):
+def get_config(name, force_reparse=False, **kwargs):
     if name not in __known_configs or force_reparse:
-        config = configparser.SafeConfigParser()
+        config = configparser.SafeConfigParser(**kwargs)
         paths = []
         for loc in __config_dirs_to_search:
             #sys.stderr.write("Looking for config files in {}\n".format(loc))
@@ -32,7 +32,6 @@ def get_config(name, force_reparse=False):
         
     return __known_configs[name]
 #end get_config
-        
-        
+
 
     
