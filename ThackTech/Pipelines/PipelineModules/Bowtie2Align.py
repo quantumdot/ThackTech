@@ -93,9 +93,12 @@ class Bowtie2Align(PipelineModule):
 		bowtiecmd += ['-x', cxt.sample.genome.get_index('Bowtie2Index')]
 		#add the input file arguments
 		if cxt.sample.get_attribute('PE'):
-			bowtiecmd += ['-1', read_files[0], '-2', read_files[1]]
+			bowtiecmd += [
+				'-1', [f for f in read_files if f.has_attribute_value("mate", 1)][0].fullpath, 
+				'-2', [f for f in read_files if f.has_attribute_value("mate", 2)][0].fullpath
+			]
 		else:
-			bowtiecmd += ['-U', read_files[0]]
+			bowtiecmd.append(read_files[0].fullpath)
 		#specify the destination SAM file
 		output_result['sam'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.sam')
 		bowtiecmd += ['-S', output_result['sam']]

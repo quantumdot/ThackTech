@@ -161,8 +161,9 @@ def make_read_alignment_pipeline(args, additional_args):
             from ThackTech.Pipelines.PipelineModules import Bowtie2Align
             x = Bowtie2Align.Bowtie2Align()
             x.set_available_cpus(args.threads)
-            #x.set_parameter('duplicates', args.duplicates)
-            #x.set_parameter('bw', args.bw)
+            x.set_parameter('unaligned', args.unaligned)
+            x.set_parameter('additional_args', additional_args)
+            x.set_resolver('fastq', resolve_bowtie1)
             pipeline.append_module(x, critical=True)
         else:
             raise ValueError("There is no bowtie version {}. Must be one of [1, 2].".format(args.bowtie_version))
