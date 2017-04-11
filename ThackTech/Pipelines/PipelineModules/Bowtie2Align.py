@@ -1,6 +1,9 @@
 import os
+import re
 import subprocess
+import tempfile
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class Bowtie2Align(PipelineModule):
@@ -112,8 +115,78 @@ class Bowtie2Align(PipelineModule):
 		cxt.log.write(" ".join(bowtiecmd))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
-		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=cxt.log)
+		tmpout = tempfile.NamedTemporaryFile()
+		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=tmpout)
+		tmpout.seek(0)
+		bowtie_output = tmpout.read()
+		tmpout.close()
+		cxt.log.write(bowtie_output)
+		output_result['align_stats'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.align_stats.tsv')
+		self.parse_bowtie_output(cxt, bowtie_output, output_result['align_stats'])
 		
-		return output_result
+		output_files = []
+		for n, o in output_result.items():
+			output_files.append(FileInfo(o, FileContext.from_module_context(cxt, n)))
+		
+		return output_files
 	#end run()
+	
+	def parse_bowtie_output(self, cxt, logdata, destfilename):
+		if cxt.sample.get_attribute('PE'):
+			regex_items = [
+				('Count Total Reads',		"(\d+) reads; of these:"),
+				('Count Paired Reads'),
+				('% Paired Reads'),
+				('Count Paired Concordant Aligned 1 Time'),
+				('% Paired Concordant Aligned 1 Time'),
+				('Count Paired Concordant Aligned > 1 Times'),
+				('% Paired Concordant Aligned > 1 Times'),
+				('% Overall Concordant Aligned'),
+				('Count Paired Discordant Aligned 1 Time'),
+				('% Paired Discordant Aligned 1 Time'),
+				('Count Paired Discordant Aligned > 1 Times'),
+				('% Paired Discordant Aligned > 1 Times'),
+				('Aligned Reads',	"# reads with at least one reported alignment: (\d+)"),
+				('Unaligned Reads',	"# reads that failed to align: (\d+)"),
+				('Percent Aligned Reads', lambda r: (float(r['Aligned Reads']) / float(r['Total Reads']))),
+				('Percent Unaligned Reads', lambda r: (float(r['Unaligned Reads']) / float(r['Total Reads']))),
+			]
+		else:
+			regex_items = [
+				('Total Reads',		"(\d+) reads; of these:"),
+				('Reads Aligned 1 Time',	"# reads with at least one reported alignment: (\d+)"),
+				('Reads Aligned >1 Times',	"# reads with at least one reported alignment: (\d+)"),
+				('Reads Aligned 0 Times',	"# reads with at least one reported alignment: (\d+)"),
+				('Percent Aligned Reads', lambda r: ((float(r['Reads Aligned 1 Time']) + float(r['Reads Aligned >1 Times'])) / float(r['Total Reads']))),
+				('Percent Unaligned Reads', lambda r: (float(r['Reads Aligned 0 Times']) / float(r['Total Reads']))),
+			]
+		results = {}
+		
+		with open(destfilename, 'w') as destfile:
+			destfile.write("Sample\t")
+			destfile.write("\t".join([item[0] for item in regex_items]))
+			destfile.write("\n")
+			
+			destfile.write("{}\t".format(cxt.sample.name))
+			for item in regex_items:
+				if isinstance(item[1], basestring):
+					match = re.search(item[1], logdata, re.MULTILINE)
+					if match is not None:
+						results[item[0]] = int(match.group(1))
+					else:
+						results[item[0]] = 0
+				else:
+					results[item[0]] = item[1](results)
+				
+			destfile.write("\t".join(["{}".format(results[item[0]]) for item in regex_items]))
+			destfile.write("\n")
+	#end parse_bowtie_output
+	
+	
+	
+	
+	
+	
+	
+	
 #end class BowtieAlign
