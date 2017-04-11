@@ -77,27 +77,27 @@ def main():
     if 'all' in args.qc:
         args.qc = available_qc_choices
 
-    sys.stderr.write('Reading sample manifest.....\n')
+    sys.stdout.write('Reading sample manifest.....\n')
     #sample manifest should be in the following TAB separated format (with headers):
     #Path    Basename    PE    Genome    Dest
     #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
     samples = [AlignmentPipelineSample(s, args.pe_pre) for s in sample_manifest.to_dict(orient='records')]
     if args.override_dest is not None:
-        sys.stderr.write("Override Destination is turned ON\n")
-        sys.stderr.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
+        sys.stdout.write("Override Destination is turned ON\n")
+        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
         for s in samples:
             s.dest = args.override_dest
-    sys.stderr.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
+    sys.stdout.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
 
     #get the pipeline and runner, then run the pipeline
     pipeline = make_read_alignment_pipeline(args, additional_args)
     runner = get_configured_runner(args, pipeline)
     runner.run(samples) #runner blocks until processing is complete
     
-    sys.stderr.write("Completed processing of all manifest items!\n")
-    sys.stderr.write("=========================================================\n\n")
-    sys.stderr.flush()
+    sys.stdout.write("Completed processing of all manifest items!\n")
+    sys.stdout.write("=========================================================\n\n")
+    sys.stdout.flush()
 #end main()
 
 def make_read_alignment_pipeline(args, additional_args):
