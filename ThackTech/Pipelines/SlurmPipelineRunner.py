@@ -7,6 +7,7 @@ import traceback
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
 import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
 import subprocess
+import uuid
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineRunner, GLOBAL_MANAGER, CPU_COUNT
 from ThackTech.Processes import MultiStatusProgressItem, MultiStatusProgressBar
@@ -36,15 +37,17 @@ class SlurmPipelineRunner(PipelineRunner):
 
 	def run(self, samples):
 		curr_time = int(time.time())
+		uid = uuid.uuid4()
 		
 		filetools.ensure_dir(os.path.abspath(".pj/"))
-		with open(os.path.abspath(".pj/%s_%d.log" % (self.pipeline.safe_name, curr_time)), 'w', 0) as logout:
+		prefix = os.path.abspath(".pj/{pipename}_{uid}".format(pipename=self.pipeline.safe_name, uid=uid))
+		with open("{prefix}.log".format(prefix=prefix), 'w', 0) as logout:
 			sample_count = len(samples)
 			if sample_count < 1:
 				logout.write("No samples to run!")
 				return #No samples to run!
 
-			pipeline_pickles = os.path.abspath(".pj/pipeline_%s_%d.dill" % (self.pipeline.safe_name, curr_time))
+			pipeline_pickles = "{prefix}.dill".format(prefix=prefix)
 			with open(pipeline_pickles, 'wb') as f:
 				dill.dump(self.pipeline, f)
 			
@@ -52,8 +55,8 @@ class SlurmPipelineRunner(PipelineRunner):
 			status_pickles = []
 			self.tasks_statuses = GLOBAL_MANAGER.dict()
 			for i in range(len(samples)):
-				sample_pickles.append(os.path.abspath(".pj/pipeline_%s_%d_s%d.dill" % (self.pipeline.safe_name, curr_time, i)))
-				status_pickles.append(os.path.abspath(".pj/pipeline_%s_%d_s%d_status.dill" % (self.pipeline.safe_name, curr_time, i)))
+				sample_pickles.append("{prefix}_s{index}.dill".format(prefix=prefix, index=i))
+				status_pickles.append("{prefix}_s{index}_status.dill".format(prefix=prefix, index=i))
 				with open(sample_pickles[i], 'wb') as sf:
 					dill.dump(samples[i], sf)
 				with open(status_pickles[i], 'wb') as ssf:
