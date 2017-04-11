@@ -98,7 +98,9 @@ class Bowtie2Align(PipelineModule):
 				'-2', [f for f in read_files if f.has_attribute_value("mate", 2)][0].fullpath
 			]
 		else:
-			bowtiecmd.append(read_files[0].fullpath)
+			bowtiecmd += [
+				'-U', read_files[0].fullpath
+			]
 		#specify the destination SAM file
 		output_result['sam'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.sam')
 		bowtiecmd += ['-S', output_result['sam']]
