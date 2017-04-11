@@ -37,13 +37,13 @@ class SlurmPipelineRunner(PipelineRunner):
 	def run(self, samples):
 		curr_time = int(time.time())
 		
-		with open(os.path.abspath("%s_%d.log" % (self.pipeline.safe_name, curr_time)), 'w', 0) as logout:
+		filetools.ensure_dir(os.path.abspath(".pj/"))
+		with open(os.path.abspath(".pj/%s_%d.log" % (self.pipeline.safe_name, curr_time)), 'w', 0) as logout:
 			sample_count = len(samples)
 			if sample_count < 1:
 				logout.write("No samples to run!")
 				return #No samples to run!
 
-			filetools.ensure_dir(os.path.abspath(".pj/"))
 			pipeline_pickles = os.path.abspath(".pj/pipeline_%s_%d.dill" % (self.pipeline.safe_name, curr_time))
 			with open(pipeline_pickles, 'wb') as f:
 				dill.dump(self.pipeline, f)

@@ -16,13 +16,7 @@ from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_r
 #BEFORE RUNNING SCRIPT WHEN USING LMOD
 #module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 bowtie2/2.2.9
 
-gopts = {
-    'spp_path': '/home/josh/scripts/phantompeakqualtools/run_spp.R',
-    'shm_dir': '/mnt/ramdisk/btalign',
-    'pe_prefix': '_R',
-}
 
-    
 class AlignmentPipelineSample(PipelineSample):
 
     def __init__(self, sample, pe_prefix='_R'):
@@ -64,7 +58,6 @@ class AlignmentPipelineSample(PipelineSample):
 
 
 def main():
-    #total_start_time = time.time()
     parser = argparse.ArgumentParser()
     parser.add_argument('manifest', help="Manifest file containing sample information in tab separated format. Should contain the following columns (headers must be present): [Path], [Basename], [PE], [Genome], [Dest]")
     parser.add_argument('--bowtie-version', choices=['1', '2'], default='1', help="Version of bowtie to run")
@@ -74,33 +67,37 @@ def main():
     parser.add_argument('--pe_pre', default='_R', help="Paired-end prefix. String to insert between the file basename and the pair number when searching for read files. If your FASTQ files are names as [reads_R1.fastq, reads_R2.fastq] then use '_R1', or if reads_1.fastq then use '_1'. This option is only used when in paired end mode. default: _R1")
     parser.add_argument('--unaligned', action='store_true', help='Output reads that fail to align to the reference genome.')
     parser.add_argument('--trim', action='store_true', help="Use trimmomatic to perform adapter clipping.")
+    parser.add_argument('--override-dest', action='store', default=None, help="Override the destination read from the sample manifest.")
     
     performance_group = add_runner_args(parser)
     performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
-    
-    
+
     args, additional_args = parser.parse_known_args()
     
     if 'all' in args.qc:
         args.qc = available_qc_choices
 
-    sys.stdout.write('Reading sample manifest.....\n')
+    sys.stderr.write('Reading sample manifest.....\n')
     #sample manifest should be in the following TAB separated format (with headers):
     #Path    Basename    PE    Genome    Dest
     #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
     samples = [AlignmentPipelineSample(s, args.pe_pre) for s in sample_manifest.to_dict(orient='records')]
-    sys.stdout.write('\t-> Found %d item%s for processing.....\n' % (len(sample_manifest.index), ('s' if len(sample_manifest.index) > 1 else '')))
+    if args.override_dest is not None:
+        sys.stderr.write("Override Destination is turned ON\n")
+        sys.stderr.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
+        for s in samples:
+            s.dest = args.override_dest
+    sys.stderr.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
 
     #get the pipeline and runner, then run the pipeline
     pipeline = make_read_alignment_pipeline(args, additional_args)
     runner = get_configured_runner(args, pipeline)
     runner.run(samples) #runner blocks until processing is complete
     
-    sys.stdout.write("Completed processing of all manifest items!\n")
-    #sys.stdout.write("\t-> Processing entire manifest took %s\n\n" % (Common.human_time_diff(total_start_time, time.time()),))
-    sys.stdout.write("=========================================================\n\n")
-    sys.stdout.flush()
+    sys.stderr.write("Completed processing of all manifest items!\n")
+    sys.stderr.write("=========================================================\n\n")
+    sys.stderr.flush()
 #end main()
 
 def make_read_alignment_pipeline(args, additional_args):
