@@ -21,17 +21,19 @@ class BamToRpkmNormBigWig(PipelineModule):
 	#end tool_versions()
 	
 	def run(self, cxt):
+		bam = self.resolve_input('bam', cxt)
+		out_ext = ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw')
 		#dest = cxt.sample.get_attribute('origional_dest') if cxt.sample.has_attribute('origional_dest') else cxt.sample.dest
-		sample_basename = "%s.%s.%s" % (cxt.sample.name, 'rpkm_norm', ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw'))
+		sample_basename = bam.basename_with_ext('rpkm_norm.{}'.format(out_ext))
 		bamcoverage_args = [
 			'bamCoverage',
-			'--bam', self.resolve_input('bam', cxt).fullpath,
+			'--bam', bam.fullpath,
 			'--outFileName', os.path.join(cxt.sample.dest, sample_basename),
 			'--outFileFormat', self.get_parameter_value_as_string('output_format'),
 			'--binSize', self.get_parameter_value_as_string('bin_size'),
 			'--normalizeUsingRPKM',
 			'--numberOfProcessors', str(self.processors),
-			'--verbose'
+			#'--verbose'
 		]
 		cxt.log.write('Generating normalized signal track....')
 		cxt.log.write("\n..............................................\n")

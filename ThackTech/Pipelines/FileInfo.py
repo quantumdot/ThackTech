@@ -2,6 +2,7 @@ import os
 import shutil
 import filecmp
 from ThackTech.Pipelines.Context import BaseModuleContext
+from ThackTech import filetools
 
 class FileContext(BaseModuleContext):
 	"""Represents the context of a file within the pipelineing system
@@ -67,6 +68,13 @@ class FileInfo(object):
 	- role: role of the file within the output (i.e. logfile, stats, etc.)
 	- context: context that this file was generated under....... (NEED TO DEFINE THIS BETTER!!!)
 	
+	Important Nomenclature:
+		- fullpath: /path/to/somefile.mult.ext
+		- dirname:  /path/to/
+		- basename: somefile.mult.ext
+		- filename: somefile.mult
+		- ext:      .ext
+	
 	"""
 	def __init__(self, filepath, context=None, **attributes):
 		"""Initializes a FileInfo object
@@ -129,10 +137,18 @@ class FileInfo(object):
 		
 	@property
 	def filename(self):
-		"""Gets the name of this file, without the file extension
+		"""Gets the name of this file, without the terminal file extension
 		Equivelent to os.path.splitext(os.path.basename())[0]
 		"""
 		return os.path.splitext(self.basename)[0]
+	
+	@property
+	def filename_strip_all_ext(self):
+		"""Gets the name of this file, without ANY file extensions
+		Equivelent to looping os.path.splitext(os.path.basename())[0]
+		until no extensions are remaining
+		"""
+		return filetools.basename_noext(self.fullpath)
 		
 	@property
 	def ext(self):
@@ -146,6 +162,24 @@ class FileInfo(object):
 		"""Gets a list of companion files associated with this file
 		"""
 		return self.__companions
+	
+	def fullpath_with_ext(self, new_extension):
+		"""Returns the fullpath of this file with the terminal file extension replaced by new_extension
+		
+		Parameters:
+			new_extension: string file extension to replace terminal file extension with
+			
+		"""
+		return os.path.join(self.dirname, self.basename_with_ext(new_extension))
+	
+	def basename_with_ext(self, new_extension):
+		"""Returns the basename of this file with the terminal file extension replaced by new_extension
+		
+		Parameters:
+			new_extension: string file extension to replace terminal file extension with
+			
+		"""
+		return "{}.{}".format(self.filename, new_extension)
 	
 	def move(self, destfolder):
 		shutil.move(self.fullpath, destfolder)

@@ -181,11 +181,13 @@ def make_read_alignment_pipeline(args, additional_args):
             x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.bam')[0])
             pipeline.append_module(x)
             
-            def qc_bam_resolver(cxt):
-                return cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_deduplicated_bam')[0]
-        else:
-            def qc_bam_resolver(cxt):
-                return cxt.sample.find_files(lambda f: f.ext == '.bam')[0]
+        
+        def qc_pbc_bam_resolver(cxt):
+            return cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_deduplicated_bam')[0]
+        
+        def qc_bt_bam_resolver(cxt):
+            return cxt.sample.find_files(lambda f: f.basename == '{}.bam'.format(cxt.sample.name))[0]
+        
         
         #if 'spp' in args.qc:
         #    from ThackTech.Pipelines.PipelineModules import SPP
@@ -193,21 +195,37 @@ def make_read_alignment_pipeline(args, additional_args):
             
         if 'ism' in args.qc:
             from ThackTech.Pipelines.PipelineModules import InsertSizeMetrics
+            
+            if 'pbc' in args.qc:
+                x = InsertSizeMetrics.InsertSizeMetrics()
+                x.set_resolver('bam', qc_pbc_bam_resolver)
+                pipeline.append_module(x)
+                
             x = InsertSizeMetrics.InsertSizeMetrics()
-            x.set_resolver('bam', qc_bam_resolver)
+            x.set_resolver('bam', qc_bt_bam_resolver)
             pipeline.append_module(x)
+            
         
         if 'fpt' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamFingerprint
             x = BamFingerprint.BamFingerprint(processors=args.threads)
-            x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.basename in ['{}.bam'.format(cxt.sample.name), '{}.filt.srt.nodup.bam'.format(cxt.sample.name)]))
+            x.set_resolver('bams', lambda cxt: [] + qc_bt_bam_resolver + qc_pbc_bam_resolver(cxt))
             pipeline.append_module(x)
+            
             
         if 'rpkm' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
+
+            if 'pbc' in args.qc:
+                x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
+                x.set_resolver('bam', qc_pbc_bam_resolver)
+                pipeline.append_module(x)
+                
             x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
-            x.set_resolver('bam', qc_bam_resolver)
+            x.set_resolver('bam', qc_bt_bam_resolver)
             pipeline.append_module(x)
+            
+            
     
     if args.shm:
         from ThackTech.Pipelines.PipelineModules import TransferFromShm
