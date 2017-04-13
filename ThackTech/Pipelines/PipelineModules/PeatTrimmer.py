@@ -21,7 +21,7 @@ class PeatTrimmer(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'peat': self._call_output(["TrimmomaticSE", "-version"], stderr=subprocess.STDOUT)
+			#'peat': self._call_output(["PEAT", "-version"], stderr=subprocess.STDOUT) #peat doesnt seem to have a version option!
 		}
 	#end tool_versions()
 	
@@ -34,12 +34,13 @@ class PeatTrimmer(PipelineModule):
 
 		#trimlog_loc = os.path.join(outdir, cxt.sample.name+'.trimlog')
 		peat_args = [
-			'Trimmomatic' + ('PE' if cxt.sample.get_attribute('PE') else 'SE'),
+			'PEAT', 'paired',
 			'-n', str(self.processors),
 			'-l', self.get_parameter_value_as_string('l'),
 			'-r', self.get_parameter_value_as_string('r'),
 			'-g', self.get_parameter_value_as_string('g'),
-			'-a', self.get_parameter_value_as_string('a')
+			'-a', self.get_parameter_value_as_string('a'),
+			
 		]
 		out_files = []
 		read_files = self.resolve_input('fastq', cxt)
@@ -50,6 +51,9 @@ class PeatTrimmer(PipelineModule):
 		peat_args.append('-2')
 		peat_args.append([f for f in read_files if f.has_attribute_value("mate", 2)][0].fullpath)
 		#Output Files
+			
+		
+		
 		out_files.append(FileInfo(os.path.join(outdir, cxt.sample.name+'_R1.filtered.paired.fastq.gz'), 
 						 FileContext.from_module_context(cxt, "filtered_paired_reads"),
 						 mate=1, filtered=True, paired=True))
