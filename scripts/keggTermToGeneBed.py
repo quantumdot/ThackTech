@@ -36,7 +36,7 @@ def main():
         if cursor.rowcount > 0:
             with open(args.outfile, 'w') as outfile:
                 for data in cursor.fetchall():
-                    outfile.write("\t".join(data))
+                    outfile.write("\t".join([str(d) for d in data]))
                     outfile.write("\n")
         else:
             sys.stderr.write("WARNING: No results were returned for query term '{query}'!!!\n".format(query=args.term))
