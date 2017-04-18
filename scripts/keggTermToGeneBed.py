@@ -14,7 +14,7 @@ def main():
     db_conn_group = parser.add_argument_group("SQL Connection Options")
     db_conn_group.add_argument('--host', default='genome-mysql.cse.ucsc.edu', help="hostname of the SQL server")
     db_conn_group.add_argument('--user', default='genome', help="username of the SQL server")
-    db_conn_group.add_argument('--port', default='3306', help="username of the SQL server")
+    db_conn_group.add_argument('--port', default=3306, type=int, help="username of the SQL server")
     args = parser.parse_args()
     
     
