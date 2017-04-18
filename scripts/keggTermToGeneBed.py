@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+import argparse
+import MySQLdb
+
+def main():
+    
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-g', required=True, help="Reference genome build to work with, in UCSC terms (i.e. mm9).")
+    parser.add_argument('-t', required=True, help="KEGG pathway term to search for. By default looks for an exact match.")
+    parser.add_argument('outfile', help="File to write results in BED format")
+    
+    db_conn_group = parser.add_argument_group("SQL Connection Options")
+    db_conn_group.add_argument('--host', default='genome-mysql.cse.ucsc.edu', "hostname of the SQL server")
+    db_conn_group.add_argument('--user', default='genome', "username of the SQL server")
+    db_conn_group.add_argument('--port', default='3306', "username of the SQL server")
+    args = parser.parse_args()
+    
+    
+    connection = MySQLdb.connect(host=args.host, user=args.user, port=args.port, db=args.genome)
+    
+    try:
+        with connection.cursor() as cursor:
+            
+            sub_query = "SELECT keggPathway.kgID " \
+                      + "FROM keggPathway INNER JOIN keggMapDesc ON keggMapDesc.mapID = keggPathway.mapID " \
+                      + "WHERE keggMapDesc.description = '{query}'".format(query=connection.escape_string(args.t))
+                      
+            sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
+                + "FROM knownGene  INNER JOIN kgXref ON knownGene.name = kgXref.kgID " \
+                + "WHERE kgXref.kgID IN ({subquery})".format(subquery=sub_query)
+    
+            cursor.execute(sql)
+            
+            with open(args.outfile) as outfile:
+                for data in cursor.fetchall():
+                    outfile.write("\t".join(data))
+                    outfile.write("\n")
+    finally:
+        connection.close()
+    
+    
+    
+    
+if __name__ == "__main__":
+    main()
