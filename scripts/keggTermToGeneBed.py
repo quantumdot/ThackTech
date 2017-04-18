@@ -7,8 +7,8 @@ def main():
     
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-g', required=True, help="Reference genome build to work with, in UCSC terms (i.e. mm9).")
-    parser.add_argument('-t', required=True, help="KEGG pathway term to search for. By default looks for an exact match.")
+    parser.add_argument('-g', '--genome', required=True, help="Reference genome build to work with, in UCSC terms (i.e. mm9).")
+    parser.add_argument('-t', '--term', required=True, help="KEGG pathway term to search for. By default looks for an exact match.")
     parser.add_argument('outfile', help="File to write results in BED format")
     
     db_conn_group = parser.add_argument_group("SQL Connection Options")
@@ -25,7 +25,7 @@ def main():
             
             sub_query = "SELECT keggPathway.kgID " \
                       + "FROM keggPathway INNER JOIN keggMapDesc ON keggMapDesc.mapID = keggPathway.mapID " \
-                      + "WHERE keggMapDesc.description = '{query}'".format(query=connection.escape_string(args.t))
+                      + "WHERE keggMapDesc.description = '{query}'".format(query=connection.escape_string(args.term))
                       
             sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
                 + "FROM knownGene  INNER JOIN kgXref ON knownGene.name = kgXref.kgID " \
