@@ -21,22 +21,21 @@ def main():
     connection = MySQLdb.connect(host=args.host, user=args.user, port=args.port, db=args.genome)
     
     try:
-        with connection.cursor() as cursor:
-            
-            sub_query = "SELECT keggPathway.kgID " \
-                      + "FROM keggPathway INNER JOIN keggMapDesc ON keggMapDesc.mapID = keggPathway.mapID " \
-                      + "WHERE keggMapDesc.description = '{query}'".format(query=connection.escape_string(args.term))
-                      
-            sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
-                + "FROM knownGene  INNER JOIN kgXref ON knownGene.name = kgXref.kgID " \
-                + "WHERE kgXref.kgID IN ({subquery})".format(subquery=sub_query)
-    
-            cursor.execute(sql)
-            
-            with open(args.outfile) as outfile:
-                for data in cursor.fetchall():
-                    outfile.write("\t".join(data))
-                    outfile.write("\n")
+        sub_query = "SELECT keggPathway.kgID " \
+                  + "FROM keggPathway INNER JOIN keggMapDesc ON keggMapDesc.mapID = keggPathway.mapID " \
+                  + "WHERE keggMapDesc.description = '{query}'".format(query=connection.escape_string(args.term))
+                  
+        sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
+            + "FROM knownGene  INNER JOIN kgXref ON knownGene.name = kgXref.kgID " \
+            + "WHERE kgXref.kgID IN ({subquery})".format(subquery=sub_query)
+        
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        
+        with open(args.outfile) as outfile:
+            for data in cursor.fetchall():
+                outfile.write("\t".join(data))
+                outfile.write("\n")
     finally:
         connection.close()
     
