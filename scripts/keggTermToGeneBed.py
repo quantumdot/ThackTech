@@ -39,7 +39,7 @@ def main():
                     outfile.write("\t".join(data))
                     outfile.write("\n")
         else:
-            sys.stderr.write("WARNING: No results were returned for query term '{query}'!!!\n".format(args.term))
+            sys.stderr.write("WARNING: No results were returned for query term '{query}'!!!\n".format(query=args.term))
     finally:
         connection.close()
     
