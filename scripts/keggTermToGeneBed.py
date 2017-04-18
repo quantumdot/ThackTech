@@ -32,7 +32,7 @@ def main():
         cursor = connection.cursor()
         cursor.execute(sql)
         
-        with open(args.outfile) as outfile:
+        with open(args.outfile, 'w') as outfile:
             for data in cursor.fetchall():
                 outfile.write("\t".join(data))
                 outfile.write("\n")
