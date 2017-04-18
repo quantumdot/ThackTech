@@ -34,6 +34,7 @@ def main():
         cursor.execute(sql)
         
         if cursor.rowcount > 0:
+            sys.stderr.write("Found {num_results} results\nWriting to {path}....\n".format(num_results=cursor.rowcount, path=args.outfile))
             with open(args.outfile, 'w') as outfile:
                 for data in cursor.fetchall():
                     outfile.write("\t".join([str(d) for d in data]))
