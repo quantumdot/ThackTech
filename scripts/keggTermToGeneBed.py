@@ -2,6 +2,7 @@
 
 import argparse
 import MySQLdb
+import sys
 
 def main():
     
@@ -32,10 +33,13 @@ def main():
         cursor = connection.cursor()
         cursor.execute(sql)
         
-        with open(args.outfile, 'w') as outfile:
-            for data in cursor.fetchall():
-                outfile.write("\t".join(data))
-                outfile.write("\n")
+        if cursor.rowcount > 0:
+            with open(args.outfile, 'w') as outfile:
+                for data in cursor.fetchall():
+                    outfile.write("\t".join(data))
+                    outfile.write("\n")
+        else:
+            sys.stderr.write("WARNING: No results were returned for query term '{query}'!!!\n".format(args.term))
     finally:
         connection.close()
     
