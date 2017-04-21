@@ -241,7 +241,7 @@ class CollectorOptions:
         In the case of scaled region mode, a tuple of three ints is retruned representing (left, scaled, right), otherwise an int is returned
         """
         if self.align == 'scale':
-            return (abs(self.upstream) / self.resolution, abs(self.scaleregionsize) / self.resolution, abs(self.downstream) / self.resolution)
+            return ((abs(self.upstream) / self.resolution), (abs(self.scaleregionsize) / self.resolution), (abs(self.downstream) / self.resolution))
         else:
             return (abs(self.upstream) + abs(self.downstream)) / self.resolution
     #end num_bins()
