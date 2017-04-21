@@ -266,7 +266,7 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         label_input = label+'_input'
     
     sys.stderr.write("-> input is '%s'...\n" %  (input_file,))
-    
+    pybedtools.BedTool(regions.provide_intervals()).saveas('bedtool_gen.bed')
     if (cache_dir is None) or (not os.path.exists(cache_name + '.npz')):
         sys.stderr.write("-> Loading signal....\n")
         sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
@@ -276,7 +276,6 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         #print regions.co.num_bins
         #print list(regions.provide_intervals())[0:5]
         
-        pybedtools.BedTool(regions.provide_intervals()).saveas('bedtool_gen.bed')
         sig_array = sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=collectionmethod, processes=cpus, zero_inf=False, zero_nan=False)
         
         if input_file is not None:
