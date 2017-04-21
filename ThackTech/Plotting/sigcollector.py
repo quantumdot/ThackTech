@@ -269,7 +269,7 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         sys.stderr.write("-> Computing signal at intervals....\n")
         #print list(regions.provide_intervals())
         print regions.co.num_bins
-        print list(regions.provide_intervals()[0:5])
+        print list(regions.provide_intervals())[0:5]
         sig_array = sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=collectionmethod, processes=cpus, zero_inf=False, zero_nan=False)
         
         if input_file is not None:
