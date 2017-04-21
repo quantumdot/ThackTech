@@ -254,13 +254,6 @@ def main():
             samples.append(ps)
             sys.stderr.write("\n")
     
-    gopts['group_count'] = count_groups(args.scalegroups, samples)
-    if args.rotate:
-        gopts['fig_cols'] = len(args.bed) + 1#gopts['group_count']
-        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.sig)) + (args.avgplotrows if 'avg' in args.plot else 0)
-    else:
-        gopts['fig_cols'] = len(args.sig) + gopts['group_count']
-        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.bed)) + (args.avgplotrows if 'avg' in args.plot else 0)
     
     if 'bedscores' in args.plot or 'truebedscores' in args.plot:
         for b in xrange(len(args.bed)):
@@ -272,11 +265,25 @@ def main():
             #print signal
             b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
             samples.append(ProfileSample(len(samples), len(args.sig), b, signal, args.bedscorelabel, b_label))
+        gopts['savename_notes'].append("bed-score")
+    
+    
+    gopts['group_count'] = count_groups(args.scalegroups, samples)
+    if args.rotate:
+        gopts['fig_cols'] = len(args.bed) + 1#gopts['group_count']
+        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.sig)) + (args.avgplotrows if 'avg' in args.plot else 0)
+    else:
+        gopts['fig_cols'] = len(args.sig) + gopts['group_count']
+        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.bed)) + (args.avgplotrows if 'avg' in args.plot else 0)
+    
+    
+    if 'bedscores' in args.plot or 'truebedscores' in args.plot:
         if args.rotate:
             gopts['fig_rows'] += args.heatplotrows
         else:
-            gopts['fig_cols'] += 1
-        gopts['savename_notes'].append("bed-score")
+            gopts['fig_cols'] += 2
+        
+        
     
     plt.rcParams['font.size'] = args.fontsize
     plt.rcParams['legend.fontsize'] = args.legendfontsize
@@ -539,9 +546,11 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             row = sig_id * gopts['args'].heatplotrows
         else:
             row = bed_id * gopts['args'].heatplotrows
+    
     elif plot_type == 'avg':
         rowspan = gopts['args'].avgplotrows
         row = gopts['fig_rows'] - gopts['args'].avgplotrows
+    
     elif plot_type == 'cbar':
         #special case: bed_id = min(sig_id) and sig_id = max(sig_id)
         if gopts['args'].rotate:
@@ -552,6 +561,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             rowspan = gopts['fig_rows'] - gopts['args'].avgplotrows
             row = 0
             col = sig_id + group + 1
+    
     elif plot_type == 'leg':
         rowspan = gopts['args'].avgplotrows
         row = gopts['fig_rows'] - gopts['args'].avgplotrows
