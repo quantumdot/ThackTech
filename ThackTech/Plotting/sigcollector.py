@@ -98,9 +98,7 @@ class IntervalProvider:
                 stop  = midpoint + self.co.downstream
                 
             start, stop = self.clamp_coordinates(interval.chrom, start, stop)
-            i = Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
-            i.strand
-            yield 
+            yield Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)            
     #end generate_midpoints()
     
     def generate_left(self, bedtool):
@@ -269,7 +267,7 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         label_input = label+'_input'
     
     sys.stderr.write("-> input is '%s'...\n" %  (input_file,))
-    pybedtools.BedTool(regions.provide_intervals()).saveas('bedtool_gen.bed')
+    #pybedtools.BedTool(regions.provide_intervals()).saveas('bedtool_gen.bed')
     if (cache_dir is None) or (not os.path.exists(cache_name + '.npz')):
         sys.stderr.write("-> Loading signal....\n")
         sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
