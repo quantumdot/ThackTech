@@ -52,32 +52,33 @@ class IntervalProvider:
     
     def provide_intervals(self):
         data = None
-        bedtool = pybedtools.BedTool(self.bed)
-        if self.white_chroms is not None:
-            bedtool = bedtool.filter(lambda d: d.chrom in self.white_chroms)
         
         if self.co.align == 'center':
             sys.stderr.write("-> producing center points...\n")
-            data = self.generate_midpoints(bedtool)
+            data = self.generate_midpoints(self.generate_origional())
         elif self.co.align == 'left':
             sys.stderr.write("-> producing 5' points...\n")
-            data = self.generate_left(bedtool)
+            data = self.generate_left(self.generate_origional())
         elif self.co.align == 'right':
             sys.stderr.write("-> producing 3' points...\n")
-            data = self.generate_right(bedtool)
+            data = self.generate_right(self.generate_origional())
         elif self.co.align == 'scale':
             sys.stderr.write("-> producing scaled regions...\n")
-            data = self.generate_scaled(bedtool)
+            data = self.generate_scaled(self.generate_origional())
         elif self.co.align == 'origional':
             sys.stderr.write("-> producing origional regions...\n")
-            data = self.generate_origional(bedtool)
+            data = self.generate_origional()
         
         return data
     #end provide_intervals()
     
-    def generate_origional(self, bedtool):
+    def generate_origional(self):
         """Generates the origional intervals this provider wraps
         """
+        bedtool = pybedtools.BedTool(self.bed)
+        if self.white_chroms is not None:
+            bedtool = bedtool.filter(lambda d: d.chrom in self.white_chroms)
+        
         for interval in bedtool:
             yield interval
     #end generate_midpoints()
@@ -271,9 +272,9 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
         sys.stderr.write("-> Computing signal at intervals....\n")
         #print list(regions.provide_intervals())
-        print regions.co
-        print regions.co.num_bins
-        print list(regions.provide_intervals())[0:5]
+        #print regions.co
+        #print regions.co.num_bins
+        #print list(regions.provide_intervals())[0:5]
         sig_array = sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=collectionmethod, processes=cpus, zero_inf=False, zero_nan=False)
         
         if input_file is not None:
@@ -310,7 +311,7 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
 def get_bed_score_signal(regions):
     matrix = []
     matrix_size = regions.co.total_bins
-    for el in regions.provide_intervals():
+    for el in regions.generate_origional():
         matrix.append([float(el.score)] * matrix_size)
     return np.array(matrix)
 #end get_bed_score_signal()
