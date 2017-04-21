@@ -37,6 +37,9 @@ class IntervalProvider:
     #end __init__()
     
     def clamp_coordinates(self, chrom, start, stop):
+        return (start, stop)
+    
+    
         if self.genome is not None:
             stop = min(stop, self.genome[chrom])
             start = max(start, 0)
@@ -268,6 +271,7 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         sig = metaseq.genomic_signal(sig_file, detect_signal_type(sig_file))
         sys.stderr.write("-> Computing signal at intervals....\n")
         #print list(regions.provide_intervals())
+        print regions.co
         print regions.co.num_bins
         print list(regions.provide_intervals())[0:5]
         sig_array = sig.array(regions.provide_intervals(), bins=regions.co.num_bins, stranded=regions.co.direction, method=collectionmethod, processes=cpus, zero_inf=False, zero_nan=False)
