@@ -1,6 +1,7 @@
 import os
 import sys
 import pybedtools
+from pybedtools import Interval
 import numpy as np
 import metaseq
 import subprocess
@@ -97,7 +98,9 @@ class IntervalProvider:
                 stop  = midpoint + self.co.downstream
                 
             start, stop = self.clamp_coordinates(interval.chrom, start, stop)
-            yield pybedtools.cbedtools.Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
+            i = Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
+            i.strand
+            yield 
     #end generate_midpoints()
     
     def generate_left(self, bedtool):
@@ -110,7 +113,7 @@ class IntervalProvider:
                 stop  = interval.start + self.co.downstream
                 
             start, stop = self.clamp_coordinates(interval.chrom, start, stop)
-            yield pybedtools.cbedtools.Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
+            yield Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
     #end midpoint_generator()
     
     def generate_right(self, bedtool):
@@ -123,7 +126,7 @@ class IntervalProvider:
                 stop  = interval.stop + self.co.downstream
                 
             start, stop = self.clamp_coordinates(interval.chrom, start, stop)
-            yield pybedtools.cbedtools.Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
+            yield Interval(interval.chrom, start, stop, strand=interval.strand, name=interval.name, score=interval.score)
     #end midpoint_generator()
     
     def generate_scaled(self, bedtool):
@@ -143,9 +146,9 @@ class IntervalProvider:
             downstream = self.clamp_coordinates(interval.chrom, downstream[0], downstream[1])
             
             #make the actual interval
-            upstream   = pybedtools.cbedtools.Interval(interval.chrom, upstream[0], upstream[1], strand=interval.strand, name=interval.name, score=interval.score)
-            gene_body  = pybedtools.cbedtools.Interval(interval.chrom, gene_body[0], gene_body[1], strand=interval.strand, name=interval.name, score=interval.score)
-            downstream = pybedtools.cbedtools.Interval(interval.chrom, downstream[0], downstream[1], strand=interval.strand, name=interval.name, score=interval.score)
+            upstream   = Interval(interval.chrom, upstream[0], upstream[1], strand=interval.strand, name=interval.name, score=interval.score)
+            gene_body  = Interval(interval.chrom, gene_body[0], gene_body[1], strand=interval.strand, name=interval.name, score=interval.score)
+            downstream = Interval(interval.chrom, downstream[0], downstream[1], strand=interval.strand, name=interval.name, score=interval.score)
             
             #pybedtools screws up when creating a standalone interval and does not set the name correctly from the constructor
             #re-set the name manually!
