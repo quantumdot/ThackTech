@@ -40,8 +40,8 @@ plot_fonts = {
 }
 
 class ProfileSample:
-    def __init__(self, id, sig_id, bed_id, signal_array, sig_label, bed_label):
-        self.id = id
+    def __init__(self, sample_id, sig_id, bed_id, signal_array, sig_label, bed_label):
+        self.id = sample_id
         self.sig_id = sig_id
         self.bed_id = bed_id
         self.signal_array = signal_array
@@ -241,11 +241,11 @@ def main():
             #bedtool2 = expand_bed(args.up, args.down, args.align, args.bed[b], gopts['chromsets'].use)#seems to choke using the same instance...... not sure why!!!
             s_label = args.slabel[s] if len(args.slabel)-1 >= s else os.path.splitext(os.path.basename(args.sig[s]))[0]
             b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
-            input = args.inp[s] if len(args.inp)-1 >= s else None
-            if input is not None and input.lower() == 'none':
-                input = None
+            input_sig = args.inp[s] if len(args.inp)-1 >= s else None
+            if input_sig is not None and input_sig.lower() == 'none':
+                input_sig = None
             
-            signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
+            signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input_sig, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))

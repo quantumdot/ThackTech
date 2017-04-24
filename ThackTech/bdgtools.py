@@ -4,7 +4,8 @@ import sys
 import tempfile
 import subprocess
 import numpy as np
-from ThackTech import chromtools
+import gzip
+from ThackTech import chromtools, filetools
 from functools import total_ordering
 from intervaltree import IntervalTree
 from ThackTech.chromtools import ChromSizes
@@ -76,6 +77,8 @@ def detect_format(filename):
 		'wig': ['wig', 'wiggle'],
 		'bw':  ['bw', 'bigwig']
 	}
+	if filename.endswith('.gz'):
+		filename = filetools.basename_noext(filename, complete=False)
 	ext = os.path.splitext(filename)[1][1:].lower()
 	for key in ext_mapping.keys():
 		if ext in ext_mapping[key]:
@@ -102,16 +105,21 @@ def open_file_as_bedgraph(filename, fileformat='auto'):
 			temp_bdg.seek(0)
 			return parse_bedgraph(temp_bdg)
 	else:
-		with open(filename, 'r') as infile:
-			if fileformat == 'bdg':
-				return parse_bedgraph(infile)
-			elif fileformat == 'wig':
-				return parse_wig(infile)
-			elif fileformat == 'bed':
-				return parse_bed(infile)
-			else:
-				raise ValueError("Cannot open file of type {}".format(format))
+		if filename.endswith('.gz'):
+			infile = gzip.open(filename, 'rb')
+		else:
+			infile = open(filename, 'r')
+		
+		if fileformat == 'bdg':
+			return parse_bedgraph(infile)
+		elif fileformat == 'wig':
+			return parse_wig(infile)
+		elif fileformat == 'bed':
+			return parse_bed(infile)
+		else:
+			raise ValueError("Cannot open file of type {}".format(format))
 	
+		infile.close()
 #end open_file_as_bedgraph
 
 def parse_bedgraph(input_str, sort=True):

@@ -8,7 +8,7 @@ from ThackTech import bdgtools, chromtools
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('intervaldata', help='File containing interval-based score data to clean.')
+    parser.add_argument('intervaldata', help='File containing interval-based score data to clean. Gzip files are also accepted.')
     parser.add_argument('-if', '--informat', default='auto', choices=['bdg', 'bed', 'wig', 'bw', 'auto'], help="Input format is auto-detected based on file extension, but use this option to force.")
     parser.add_argument('-o', '--output', help='Specifies the output file. Default is stdout')
     parser.add_argument('-of', '--outformat', choices=['bdg', 'bw'], default='bdg', help='Output format.')
