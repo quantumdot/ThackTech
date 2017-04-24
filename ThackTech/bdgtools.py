@@ -25,7 +25,10 @@ score_funcs['zero'] 	= lambda lst: 0
 
 
 @total_ordering
-class BedGraphInterval:
+class BedGraphInterval(object):
+	#implement the __slots__ mechanism to ease memory consumption
+	__slots__ = ('chr', 'start', 'stop', 'score')
+	
 	def __init__(self, chrom, start, stop, score):
 		self.chr = chrom
 		self.start = int(start)
