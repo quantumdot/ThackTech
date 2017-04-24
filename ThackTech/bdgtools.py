@@ -9,7 +9,7 @@ from ThackTech import chromtools, filetools
 from functools import total_ordering
 from intervaltree import IntervalTree
 from ThackTech.chromtools import ChromSizes
-from bokeh.models.annotations import Span
+
 
 
 score_funcs = {}
@@ -28,8 +28,8 @@ score_funcs['zero'] 	= lambda lst: 0
 class BedGraphInterval:
 	def __init__(self, chrom, start, stop, score):
 		self.chr = chrom
-		self.start = start
-		self.stop = stop
+		self.start = int(start)
+		self.stop = int(stop)
 		self.score = score
 	#end BedGraphInterval.__init__()
 	
@@ -56,11 +56,11 @@ class BedGraphInterval:
 		return abs(self.score)
 	
 	def __str__(self):
-		return "%s\t%d\t%d\t%f" % (self.chr, self.start, self.stop, self.score)
+		return "{chrom}\t{start}\t{stop}\t{value}".format(chrom=self.chr, start=self.start, stop=self.stop, value=self.score)
 	#end __str__()
 	
 	def __repr__(self):
-		return "BedGraphInterval(%s)" % (self.chr, self.start, self.stop, self.score)
+		return "BedGraphInterval({chrom}, {start}, {stop}, {value})".format(chrom=self.chr, start=self.start, stop=self.stop, value=self.score)
 	#end __repr__()
 	
 	def __eq__(self, other):
@@ -221,7 +221,7 @@ def write_bedgraph(intervals, outhandle):
 		
 	"""
 	for interval in intervals:
-		outhandle.write("%s\t%d\t%d\t%f\n" % (interval.chr, interval.start, interval.stop, interval.score))
+		outhandle.write("{chrom:s}\t{start:d}\t{stop:d}\t{value}\n".format(chrom=interval.chr, start=interval.start, stop=interval.stop, value=interval.score))
 	outhandle.flush()
 #end write_bedgraph()
 
