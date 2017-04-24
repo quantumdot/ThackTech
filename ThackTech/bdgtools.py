@@ -183,6 +183,7 @@ def parse_wig(input_str, sort=True):
 					results[-1].stop += span
 				else:
 					results.append(BedGraphInterval(currChrom, lastpos-1, lastpos+span, value))
+					rcount += 1
 				lastpos += step
 	if sort:
 		results.sort()
