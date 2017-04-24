@@ -9,6 +9,7 @@ from ThackTech import chromtools, filetools
 from functools import total_ordering
 from intervaltree import IntervalTree
 from ThackTech.chromtools import ChromSizes
+from bokeh.models.annotations import Span
 
 
 score_funcs = {}
@@ -151,6 +152,7 @@ def parse_wig(input_str, sort=True):
 	span = 0
 	step = 0
 	results = []
+	rcount = 0
 	for line in input_str:
 		line = line.strip()
 		if line.startswith('#') or line.startswith('browser') or line.startswith('track'):
@@ -168,12 +170,19 @@ def parse_wig(input_str, sort=True):
 				parts = re.match(r"^(\d+)\s([\d\.-e]+)", line)
 				pos = int(parts.group(1))
 				value = parts.group(2)
-				results.append(BedGraphInterval(currChrom, pos-1, pos+span, value))
+				if (rcount > 0) and (pos == results[-1].stop+span) and (value == results[-1].score):
+					results[-1].stop += span
+				else:
+					results.append(BedGraphInterval(currChrom, pos-1, pos+span, value))
+					rcount += 1
 				
 			elif mode == 'fixedStep':
 				parts = re.match(r"^([\d\.-e]+)", line)
 				value = parts.group(1)
-				results.append(BedGraphInterval(currChrom, lastpos-1, lastpos+span, value))
+				if (rcount > 0) and (lastpos == results[-1].stop+span) and (value == results[-1].score):
+					results[-1].stop += span
+				else:
+					results.append(BedGraphInterval(currChrom, lastpos-1, lastpos+span, value))
 				lastpos += step
 	if sort:
 		results.sort()
