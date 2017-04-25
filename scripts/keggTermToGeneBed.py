@@ -31,7 +31,7 @@ def main():
     if results is not None and len(results) > 0:
         sys.stderr.write("Found {num_results} results\nWriting to {path}....\n".format(num_results=len(results), path=args.outfile))
         with open(args.outfile, 'w') as outfile:
-            for data in results.fetchall():
+            for data in results:
                 outfile.write("\t".join([str(d) for d in data]))
                 outfile.write("\n")
     else:
