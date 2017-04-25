@@ -1,13 +1,16 @@
 #!/usr/bin/env python
-
+import os
+import sys
+import urllib
+import urllib2
 import argparse
 import MySQLdb
 import MySQLdb.cursors
-import sys
-import urllib,urllib2
 
 from ThackTech import conf
 config = conf.get_config('ontology_to_genes')
+
+
 
 def main():
     
@@ -136,7 +139,7 @@ def convert_ids_to_refseq(ids_by_source):
         if source != 'UniProtKB':
             results.extend(convert_ids_to_refseq({'UniProtKB': [line.strip() for line in response]}))
         else:
-            results.extend([line.strip() for line in response])
+            results.extend([os.path.splitext(line.strip())[0] for line in response])
     return results
 #end uniprot_to_refseq()
     
@@ -178,7 +181,7 @@ def genes_for_go_term(term, options):
     sys.stderr.write("{} go hits\n".format(len(go_hits)))
     ref_ids = convert_ids_to_refseq(ids_by_source)
     sys.stderr.write("{} refseq ids\n".format(len(ref_ids)))
-    print ref_ids
+    #print ref_ids
     return genes_for_refseq_ids(ref_ids, options)
     
 if __name__ == "__main__":
