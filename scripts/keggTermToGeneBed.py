@@ -48,7 +48,7 @@ def get_connection(name):
             'user': config.get(name, 'user'),
             'passwd': config.get(name, 'pass'),
             'port': config.getint(name, 'port'),
-            'cursorclass': MySQLdb.cursors.DictCursor
+            #'cursorclass': MySQLdb.cursors.DictCursor
         }
         c = MySQLdb.connect(**options)
         __connections[name] = c
@@ -148,7 +148,9 @@ def genes_for_go_term(term, options):
     # species.ncbi_taxa_id,
     # species.common_name
     
-    sql = "SELECT dbxref.xref_dbname AS gp_dbname, dbxref.xref_key AS gp_acc " \
+    sql = "SELECT " \
+        + "    dbxref.xref_dbname AS gp_dbname, " \
+        + "    dbxref.xref_key AS gp_acc " \
         + "FROM term " \
         + "INNER JOIN graph_path ON (term.id=graph_path.term1_id) " \
         + "INNER JOIN association ON (graph_path.term2_id=association.term_id) " \
@@ -160,9 +162,9 @@ def genes_for_go_term(term, options):
     go_hits = fetch_results('go_connection', 'go_latest', sql, (term, taxid))
     ids_by_source = {}
     for h in go_hits:
-        if h['gp_dbname'] not in ids_by_source:
-            ids_by_source[h['gp_dbname']] = []
-        ids_by_source[h['gp_dbname']].append(h['gp_acc'])
+        if h[0] not in ids_by_source:
+            ids_by_source[h[0]] = []
+        ids_by_source[h[0]].append(h[1])
         
     sys.stderr.write("{} go hits\n".format(len(go_hits)))
     ref_ids = convert_ids_to_refseq(ids_by_source)
