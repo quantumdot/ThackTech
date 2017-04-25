@@ -175,7 +175,7 @@ def genes_for_go_term(term, options):
         + "INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
         + "WHERE term.name = %s AND species.ncbi_taxa_id = %s"
     sys.stderr.write(sql+"\n")
-    go_hits = fetch_results('go_connection', 'go_latest', sql, (term, taxid))
+    go_hits = set(fetch_results('go_connection', 'go_latest', sql, (term, taxid)))
     ids_by_source = {}
     for h in go_hits:
         if h[0] not in ids_by_source:
