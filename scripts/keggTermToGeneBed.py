@@ -127,8 +127,13 @@ def filter_genes_canonical(bedlike_entries):
             if locus[2] - locus[1] == max_gene_lens[group]:
                 results.append(locus)
                 break
+    sort_genes(results)
     return results
 #end filter_genes_canonical()
+
+def sort_genes(bedlike_entries):
+    sorted(bedlike_entries, key=lambda e: (e[0], e[1]))
+#end sort_genes
     
 __id_mapping = {
     'BioCyc': 'BIOCYC_ID',
