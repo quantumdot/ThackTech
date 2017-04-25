@@ -126,6 +126,7 @@ def filter_genes_canonical(bedlike_entries):
         for locus in genes_by_id[group]:
             if locus[2] - locus[1] == max_gene_lens[group]:
                 results.append(locus)
+                break
     return results
 #end filter_genes_canonical()
     
