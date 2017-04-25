@@ -46,7 +46,8 @@ def get_connection(name):
             'host': config.get(name, 'host'),
             'user': config.get(name, 'user'),
             'passwd': config.get(name, 'pass'),
-            'port': config.getint(name, 'port')
+            'port': config.getint(name, 'port'),
+            'cursorclass': MySQLdb.cursors.DictCursor
         }
         c = MySQLdb.connect(**options)
         __connections[name] = c
@@ -161,6 +162,7 @@ def genes_for_go_term(term, options):
         if h['gp_dbname'] not in ids_by_source:
             ids_by_source[h['gp_dbname']] = []
         ids_by_source[h['gp_dbname']].append(h['gp_acc'])
+        
     sys.stderr.write("{} go hits\n".format(len(go_hits)))
     ref_ids = convert_ids_to_refseq(ids_by_source)
     sys.stderr.write("{} refseq ids\n".format(len(ref_ids)))
