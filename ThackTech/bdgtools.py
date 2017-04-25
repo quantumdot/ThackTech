@@ -273,11 +273,17 @@ def clip_chrom_sizes(intervals, chromsizes):
 	Returns:
 		list of BedGraphIntervals conforming to chromosome sizes
 	"""
+	results = []
 	for interval in intervals:
-		if interval.stop > chromsizes[interval.chr]:
+		if interval.start > chromsizes[interval.chr]:
+			continue #entire interval is outside valid range
+		elif interval.stop > chromsizes[interval.chr]:
+			#partial overlap, truncate the interval
 			interval.stop = chromsizes[interval.chr]
-		
-	return intervals
+		else:
+			#valid interval
+			results.append(interval)
+	return results
 #end clip_chrom_sizes()
 
 
