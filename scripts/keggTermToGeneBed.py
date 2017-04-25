@@ -32,6 +32,8 @@ def main():
     elif args.database == 'kegg':
         results = genes_for_kegg_term(args.term, args)
         
+    results = filter_genes_canonical(results)
+    
     if results is not None and len(results) > 0:
         sys.stderr.write("Found {num_results} results\nWriting to {path}....\n".format(num_results=len(results), path=args.outfile))
         with open(args.outfile, 'w') as outfile:
@@ -106,6 +108,26 @@ def genes_for_refseq_ids(refseq_ids, options):
         + "WHERE name IN (%s)" % (format_strings,)
     return fetch_results('ucsc_connection', options.genome, sql, tuple(refseq_ids))
 #end genes_for_refseq_ids()
+
+def filter_genes_canonical(bedlike_entries):
+    genes_by_id = {}
+    max_gene_lens = {}
+    
+    for b in bedlike_entries:
+        name = b[3].split('|')[1]
+        if name not in genes_by_id:
+            genes_by_id[name] = []
+            max_gene_lens[name] = 0
+        max_gene_lens[name] = max(max_gene_lens[name], b[2] - b[1])
+        genes_by_id[name].append(b)
+        
+    results = []
+    for group in genes_by_id:
+        for locus in genes_by_id[group]:
+            if locus[2] - locus[1] == max_gene_lens[group]:
+                results.append(locus)
+    return results
+#end filter_genes_canonical()
     
 __id_mapping = {
     'BioCyc': 'BIOCYC_ID',
