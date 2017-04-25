@@ -118,16 +118,25 @@ def convert_ids_to_refseq(ids_by_source):
         if source not in __id_mapping:
             sys.stderr.write("WARNING: Could not convert IDs from source {}".format(source))
         
+        if source != 'UniProtKB':
+            dest = 'ID'
+        else:
+            dest = 'REFSEQ_NT_ID'
+        
         data = urllib.urlencode({
             'from': __id_mapping[source],
-            'to': 'REFSEQ_NT_ID',
+            'to': dest,
             'format':'list',
             'query': ' '.join(ids_by_source[source])
         })
         request = urllib2.Request(url, data)
         request.add_header('User-Agent', 'Python')
         response = urllib2.urlopen(request)
-        results.extend([line.strip() for line in response])
+        
+        if source != 'UniProtKB':
+            results.extend(convert_ids_to_refseq({'UniProtKB': [line.strip() for line in response]}))
+        else:
+            results.extend([line.strip() for line in response])
     return results
 #end uniprot_to_refseq()
     
