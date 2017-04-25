@@ -98,21 +98,35 @@ def genes_for_refseq_ids(refseq_ids, options):
     return fetch_results('ucsc_connection', options.genome, sql, [", ".join(["'{}'".format(rsid) for rsid in refseq_ids])])
 #end genes_for_refseq_ids()
     
-
-def uniprot_to_refseq(uniprotkb_ids):
+__id_mapping = {
+    'BioCyc': 'BIOCYC_ID',
+    'EMBL': 'EMBL_ID',
+    'Ensembl': 'ENSEMBL_ID',
+    'GeneDB': 'GENEDB_ID',
+    'MGI': 'MGI_ID',
+    'UniProtKB': 'ID',
+    'PDB': 'PDB_ID'
+}
+def convert_ids_to_refseq(ids_by_source):
+    """Expect a dict of lists with key = db source and list of ids
+    """
     url = "http://www.uniprot.org/uploadlists/"
-    params = {
-        'from': 'ID',
-        'to': 'REFSEQ_NT_ID',
-        'format':'list',
-        'query': ' '.join(uniprotkb_ids)
-    }
-    data = urllib.urlencode(params)
-    request = urllib2.Request(url, data)
-    contact = "" # Please set your email address here to help us debug in case of problems.
-    request.add_header('User-Agent', 'Python %s' % contact)
-    response = urllib2.urlopen(request)
-    return [line.strip() for line in response]
+    results = []
+    for source in ids_by_source:
+        if source not in __id_mapping:
+            sys.stderr.write("WARNING: Could not convert IDs from source {}".format(source))
+        
+        data = urllib.urlencode({
+            'from': __id_mapping[source],
+            'to': 'REFSEQ_NT_ID',
+            'format':'list',
+            'query': ' '.join(ids_by_source[source])
+        })
+        request = urllib2.Request(url, data)
+        request.add_header('User-Agent', 'Python')
+        response = urllib2.urlopen(request)
+        results.extend([line.strip() for line in response])
+    return results
 #end uniprot_to_refseq()
     
 
@@ -139,11 +153,16 @@ def genes_for_go_term(term, options):
         + "INNER JOIN gene_product ON (association.gene_product_id=gene_product.id) " \
         + "INNER JOIN species ON (gene_product.species_id=species.id) " \
         + "INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
-        + "WHERE dbxref.xref_dbname = 'UniProtKB' AND term.name = %s AND species.ncbi_taxa_id = %s"
+        + "WHERE term.name = %s AND species.ncbi_taxa_id = %s"
     sys.stderr.write(sql+"\n")
     go_hits = fetch_results('go_connection', 'go_latest', sql, (term, taxid))
+    ids_by_source = {}
+    for h in go_hits:
+        if h['gp_dbname'] not in ids_by_source:
+            ids_by_source[h['gp_dbname']] = []
+        ids_by_source[h['gp_dbname']].append(h['gp_acc'])
     sys.stderr.write("{} go hits\n".format(len(go_hits)))
-    ref_ids = uniprot_to_refseq([r['gp_acc'] for r in go_hits])
+    ref_ids = convert_ids_to_refseq(ids_by_source)
     sys.stderr.write("{} refseq ids\n".format(len(ref_ids)))
     return genes_for_refseq_ids(ref_ids, options)
     
