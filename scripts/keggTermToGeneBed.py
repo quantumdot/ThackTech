@@ -3,48 +3,150 @@
 import argparse
 import MySQLdb
 import sys
+import urllib,urllib2
+
+from ThackTech import conf
+config = conf.get_config('ontology_to_genes')
 
 def main():
     
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--database', required=True, choices=['go', 'kegg'], help="annotation database to search")
     parser.add_argument('-g', '--genome', required=True, help="Reference genome build to work with, in UCSC terms (i.e. mm9).")
     parser.add_argument('-t', '--term', required=True, help="KEGG pathway term to search for. By default looks for an exact match.")
     parser.add_argument('outfile', help="File to write results in BED format")
     
-    db_conn_group = parser.add_argument_group("SQL Connection Options")
-    db_conn_group.add_argument('--host', default='genome-mysql.cse.ucsc.edu', help="hostname of the SQL server")
-    db_conn_group.add_argument('--user', default='genome', help="username of the SQL server")
-    db_conn_group.add_argument('--port', default=3306, type=int, help="username of the SQL server")
+    #db_conn_group = parser.add_argument_group("SQL Connection Options")
+    #db_conn_group.add_argument('--host', default='genome-mysql.cse.ucsc.edu', help="hostname of the SQL server")
+    #db_conn_group.add_argument('--user', default='genome', help="username of the SQL server")
+    #db_conn_group.add_argument('--port', default=3306, type=int, help="username of the SQL server")
     args = parser.parse_args()
     
-    
-    connection = MySQLdb.connect(host=args.host, user=args.user, port=args.port, db=args.genome)
-    
-    try:
-        sub_query = "SELECT keggPathway.kgID " \
-                  + "FROM keggPathway INNER JOIN keggMapDesc ON keggMapDesc.mapID = keggPathway.mapID " \
-                  + "WHERE keggMapDesc.description = '{query}'".format(query=connection.escape_string(args.term))
-                  
-        sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
-            + "FROM knownGene  INNER JOIN kgXref ON knownGene.name = kgXref.kgID " \
-            + "WHERE kgXref.kgID IN ({subquery})".format(subquery=sub_query)
+    if args.database == 'go':
+        results = genes_for_go_term(args.term, args)
+    elif args.database == 'kegg':
+        results = genes_for_kegg_term(args.term, args)
         
-        cursor = connection.cursor()
-        cursor.execute(sql)
+    if results is not None and len(results) > 0:
+        sys.stderr.write("Found {num_results} results\nWriting to {path}....\n".format(num_results=len(results), path=args.outfile))
+        with open(args.outfile, 'w') as outfile:
+            for data in results.fetchall():
+                outfile.write("\t".join([str(d) for d in data]))
+                outfile.write("\n")
+    else:
+        sys.stderr.write("WARNING: No results were returned for query term '{query}'!!!\n".format(query=args.term))
+    
+#end main()
+
+__connections = {}
+def get_connection(name):
+    if name not in __connections:
+        options = {
+            'host': config.get(name, 'host'),
+            'user': config.get(name, 'user'),
+            'password': config.get(name, 'pass'),
+            'port': config.getint(name, 'port')
+        }
+        c = MySQLdb.connect(options)
+        __connections[name] = c
         
-        if cursor.rowcount > 0:
-            sys.stderr.write("Found {num_results} results\nWriting to {path}....\n".format(num_results=cursor.rowcount, path=args.outfile))
-            with open(args.outfile, 'w') as outfile:
-                for data in cursor.fetchall():
-                    outfile.write("\t".join([str(d) for d in data]))
-                    outfile.write("\n")
-        else:
-            sys.stderr.write("WARNING: No results were returned for query term '{query}'!!!\n".format(query=args.term))
-    finally:
-        connection.close()
+    return __connections[name]
+#end get_connection_opts()
+
+def fetch_results(con_name, database, query, data=None):
+    db = get_connection('ucsc_connection')
+    db.select_db(database)
     
+    cursor = db.cursor()
+    cursor.execute(query, data)
     
+    if cursor.rowcount > 0:
+        return cursor.fetchall()
+    else:
+        return []
+#end fetch_results()
+
+def ucsc_genome_to_ncbi_taxid(genome):
+    db = get_connection('ucsc_connection')
+    db.select_db('hgcentral')
+    sql = "SELECT DISTINCT taxId FROM dbDb WHERE name = '{query}'".format(query=db.escape_string(genome))
+    cursor = db.cursor()
+    cursor.execute(sql)
+    if cursor.rowcount > 0:
+        return cursor.fetchone()[0]
+    else:
+        return None
+#end ucsc_genome_to_ncbi_taxid()
+
+def genes_for_kegg_term(term, options):
+    sub_query = "SELECT keggPathway.kgID " \
+              + "FROM keggPathway INNER JOIN keggMapDesc ON keggMapDesc.mapID = keggPathway.mapID " \
+              + "WHERE keggMapDesc.description = '%s'"
+              
+    sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
+        + "FROM knownGene INNER JOIN kgXref ON knownGene.name = kgXref.kgID " \
+        + "WHERE kgXref.kgID IN ("+sub_query+")"
+    
+    return fetch_results('ucsc_connection', options.genome, sql, [term])
+#end genes_for_kegg_term()
+
+def genes_for_refseq_ids(refseq_ids, options):    
+    sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
+        + "FROM knownGene " \
+        + "WHERE kgXref.refseq IN (%s)"
+    return fetch_results('ucsc_connection', options.genome, sql, [", ".join(["'{}'".format(rsid) for rsid in refseq_ids])])
+#end genes_for_refseq_ids()
+    
+
+def uniprot_to_refseq(uniprotkb_ids):
+    url = "http://www.uniprot.org/uploadlists/"
+    params = {
+        'from': 'ID',
+        'to': 'REFSEQ_NT_ID',
+        'format':'list',
+        'query': ' '.join(uniprotkb_ids)
+    }
+    data = urllib.urlencode(params)
+    request = urllib2.Request(url, data)
+    contact = "" # Please set your email address here to help us debug in case of problems.
+    request.add_header('User-Agent', 'Python %s' % contact)
+    response = urllib2.urlopen(request)
+    return [line.strip() for line in response]
+#end uniprot_to_refseq()
+    
+
+def genes_for_go_term(term, options):
+    taxid = ucsc_genome_to_ncbi_taxid(options.genome)
+    sql = """SELECT 
+             term.name AS superterm_name,
+             term.acc AS superterm_acc,
+             term.term_type AS superterm_type,
+             association.*,
+             gene_product.symbol AS gp_symbol,
+             gene_product.symbol AS gp_full_name,
+             dbxref.xref_dbname AS gp_dbname,
+             dbxref.xref_key AS gp_acc,
+             species.genus,
+             species.species,
+             species.ncbi_taxa_id,
+             species.common_name
+            FROM term
+             INNER JOIN graph_path ON (term.id=graph_path.term1_id)
+             INNER JOIN association ON (graph_path.term2_id=association.term_id)
+             INNER JOIN gene_product ON (association.gene_product_id=gene_product.id)
+             INNER JOIN species ON (gene_product.species_id=species.id)
+             INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id)
+            WHERE
+         term.name = '%s'
+         AND 
+         dbxref.xref_dbname = 'UniProtKB',
+         AND
+         species.ncbi_taxa_id = '%s';"""
+    
+    go_hits = fetch_results('go_connection', 'go_latest', sql, [term, taxid])
+    ref_ids = uniprot_to_refseq([r['gp_acc'] for r in go_hits])
+    return genes_for_refseq_ids(ref_ids, options)
     
 if __name__ == "__main__":
     main()
