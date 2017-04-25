@@ -118,31 +118,28 @@ def uniprot_to_refseq(uniprotkb_ids):
 
 def genes_for_go_term(term, options):
     taxid = ucsc_genome_to_ncbi_taxid(options.genome)
-    sql = """SELECT 
-             term.name AS superterm_name,
-             term.acc AS superterm_acc,
-             term.term_type AS superterm_type,
-             association.*,
-             gene_product.symbol AS gp_symbol,
-             gene_product.symbol AS gp_full_name,
-             dbxref.xref_dbname AS gp_dbname,
-             dbxref.xref_key AS gp_acc,
-             species.genus,
-             species.species,
-             species.ncbi_taxa_id,
-             species.common_name
-            FROM term
-             INNER JOIN graph_path ON (term.id=graph_path.term1_id)
-             INNER JOIN association ON (graph_path.term2_id=association.term_id)
-             INNER JOIN gene_product ON (association.gene_product_id=gene_product.id)
-             INNER JOIN species ON (gene_product.species_id=species.id)
-             INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id)
-            WHERE
-         term.name = '%s'
-         AND 
-         dbxref.xref_dbname = 'UniProtKB',
-         AND
-         species.ncbi_taxa_id = '%s';"""
+    
+    # term.name AS superterm_name,
+    # term.acc AS superterm_acc,
+    # term.term_type AS superterm_type,
+    # association.*,
+    # gene_product.symbol AS gp_symbol,
+    # gene_product.symbol AS gp_full_name,
+    # dbxref.xref_dbname AS gp_dbname,
+    # dbxref.xref_key AS gp_acc,
+    # species.genus,
+    # species.species,
+    # species.ncbi_taxa_id,
+    # species.common_name
+    
+    sql = "SELECT dbxref.xref_dbname AS gp_dbname, dbxref.xref_key AS gp_acc " \
+        + "FROM term " \
+        + "INNER JOIN graph_path ON (term.id=graph_path.term1_id) " \
+        + "INNER JOIN association ON (graph_path.term2_id=association.term_id) " \
+        + "INNER JOIN gene_product ON (association.gene_product_id=gene_product.id) " \
+        + "INNER JOIN species ON (gene_product.species_id=species.id) " \
+        + "INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
+        + "WHERE dbxref.xref_dbname = 'UniProtKB' AND term.name = '%s' AND species.ncbi_taxa_id = '%s';"
     
     go_hits = fetch_results('go_connection', 'go_latest', sql, [term, taxid])
     ref_ids = uniprot_to_refseq([r['gp_acc'] for r in go_hits])
