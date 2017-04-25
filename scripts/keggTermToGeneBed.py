@@ -48,7 +48,7 @@ def get_connection(name):
             'password': config.get(name, 'pass'),
             'port': config.getint(name, 'port')
         }
-        c = MySQLdb.connect(options)
+        c = MySQLdb.connect(**options)
         __connections[name] = c
         
     return __connections[name]
