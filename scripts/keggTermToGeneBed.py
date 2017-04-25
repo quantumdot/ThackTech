@@ -93,7 +93,7 @@ def genes_for_kegg_term(term, options):
 
 def genes_for_refseq_ids(refseq_ids, options):    
     sql = "SELECT chrom, txStart, txEnd, CONCAT(kgXref.mRNA, '|', kgXref.refseq, '|', kgXref.geneSymbol) as name, '.' as score, strand " \
-        + "FROM knownGene " \
+        + "FROM knownGene INNER JOIN kgXref ON knownGene.name = kgXref.kgID " \
         + "WHERE kgXref.refseq IN (%s)"
     return fetch_results('ucsc_connection', options.genome, sql, [", ".join(["'{}'".format(rsid) for rsid in refseq_ids])])
 #end genes_for_refseq_ids()
