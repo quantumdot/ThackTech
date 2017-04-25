@@ -181,7 +181,7 @@ def genes_for_go_term(term, options):
     sys.stderr.write("{} go hits\n".format(len(go_hits)))
     ref_ids = convert_ids_to_refseq(ids_by_source)
     sys.stderr.write("{} refseq ids\n".format(len(ref_ids)))
-    #print ref_ids
+    print ref_ids
     return genes_for_refseq_ids(ref_ids, options)
     
 if __name__ == "__main__":
