@@ -2,6 +2,7 @@
 
 import argparse
 import MySQLdb
+import MySQLdb.cursors
 import sys
 import urllib,urllib2
 
