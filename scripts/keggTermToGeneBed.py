@@ -141,7 +141,7 @@ def genes_for_go_term(term, options):
         + "INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
         + "WHERE dbxref.xref_dbname = 'UniProtKB' AND term.name = %s AND species.ncbi_taxa_id = %s"
     sys.stderr.write(sql+"\n")
-    go_hits = fetch_results('go_connection', 'go_latest', sql, [term, taxid])
+    go_hits = fetch_results('go_connection', 'go_latest', sql, (term, taxid))
     sys.stderr.write("{} go hits\n".format(len(go_hits)))
     ref_ids = uniprot_to_refseq([r['gp_acc'] for r in go_hits])
     sys.stderr.write("{} refseq ids\n".format(len(ref_ids)))
