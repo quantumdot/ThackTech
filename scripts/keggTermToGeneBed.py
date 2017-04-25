@@ -45,7 +45,7 @@ def get_connection(name):
         options = {
             'host': config.get(name, 'host'),
             'user': config.get(name, 'user'),
-            'password': config.get(name, 'pass'),
+            'passwd': config.get(name, 'pass'),
             'port': config.getint(name, 'port')
         }
         c = MySQLdb.connect(**options)
