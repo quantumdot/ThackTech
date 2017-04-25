@@ -54,8 +54,8 @@ def get_connection(name):
     return __connections[name]
 #end get_connection_opts()
 
-def fetch_results(con_name, database, query, data=None):
-    db = get_connection('ucsc_connection')
+def fetch_results(connection_name, database, query, data=None):
+    db = get_connection(connection_name)
     db.select_db(database)
     
     cursor = db.cursor()
