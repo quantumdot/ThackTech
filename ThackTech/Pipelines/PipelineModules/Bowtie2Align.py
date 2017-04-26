@@ -134,30 +134,41 @@ class Bowtie2Align(PipelineModule):
 	def parse_bowtie_output(self, cxt, logdata, destfilename):
 		if cxt.sample.get_attribute('PE'):
 			regex_items = [
-				('Count Total Reads',		"(\d+) reads; of these:"),
-				('Count Paired Reads'),
-				('% Paired Reads'),
-				('Count Paired Concordant Aligned 1 Time'),
-				('% Paired Concordant Aligned 1 Time'),
-				('Count Paired Concordant Aligned > 1 Times'),
-				('% Paired Concordant Aligned > 1 Times'),
-				('% Overall Concordant Aligned'),
-				('Count Paired Discordant Aligned 1 Time'),
-				('% Paired Discordant Aligned 1 Time'),
-				('Count Paired Discordant Aligned > 1 Times'),
-				('% Paired Discordant Aligned > 1 Times'),
-				('Aligned Reads',	"# reads with at least one reported alignment: (\d+)"),
-				('Unaligned Reads',	"# reads that failed to align: (\d+)"),
-				('Percent Aligned Reads', lambda r: (float(r['Aligned Reads']) / float(r['Total Reads']))),
-				('Percent Unaligned Reads', lambda r: (float(r['Unaligned Reads']) / float(r['Total Reads']))),
+				('Count Total Reads',						  "(\d+) reads; of these:"),
+				('Count Paired Reads', 						  "(\d+) \([\d\.%]+\) were paired; of these:"),
+				('% Paired Reads',							  lambda r: (float(r['Count Total Reads']) / float(r['Count Paired Reads']))),
+				('Count Paired Concordant Aligned 1 Time',	  "(\d+) \([\d\.%]+\) aligned concordantly exactly 1 time"),
+				('% Paired Concordant Aligned 1 Time',		  lambda r: (float(r['Count Paired Concordant Aligned 1 Time']) / float(r['Count Paired Reads']))),
+				('Count Paired Concordant Aligned > 1 Times', "(\d+) \([\d\.%]+\) aligned concordantly >1 times"),
+				('% Paired Concordant Aligned > 1 Times', 	  lambda r: (float(r['Count Paired Concordant Aligned > 1 Times']) / float(r['Count Paired Reads']))),
+				('% Overall Concordant Aligned', 			  lambda r: (float(r['Count Paired Concordant Aligned 1 Time'] + r['Count Paired Concordant Aligned > 1 Times']) / float(r['Count Paired Reads']))),
+				('Count Paired Concordant Aligned 0 Times',   "(\d+) \([\d\.%]+\) aligned concordantly 0 times"),
+				('Count Paired Discordant Aligned 1 Time', 	  "(\d+) \([\d\.%]+\) aligned discordantly 1 time"),
+				('% Paired Discordant Aligned 1 Time', 		  lambda r: (float(r['Count Paired Discordant Aligned 1 Time']) / float(r['Count Paired Concordant Aligned 0 Times']))),
+				('Count Paired Discordant Aligned > 1 Times', "(\d+) \([\d\.%]+\) aligned discordantly >1 times"),
+				('% Paired Discordant Aligned > 1 Times', 	  lambda r: (float(r['Count Paired Discordant Aligned > 1 Times']) / float(r['Count Paired Concordant Aligned 0 Times']))),	
+				('Count PE-Unaligned Pairs', 	  			  "(\d+) pairs aligned 0 times concordantly or discordantly; of these:"),
+				('Count PE-Unaligned Reads', 	  			  "(\d+) mates make up the pairs; of these:"),
+				('Count Unpaired Reads Aligned 0 Times', 	  "(\d+) \([\d\.%]+\) aligned 0 times"),
+				('% Unpaired Reads Aligned 0 Times', 		  lambda r: (float(r['Count Unpaired Reads Aligned 1 Time']) / float(r['Count PE-Unaligned Reads']))),
+				('Count Unpaired Reads Aligned 1 Time', 	  "(\d+) \([\d\.%]+\) aligned 0 times"),
+				('% Unpaired Reads Aligned 1 Time', 		  lambda r: (float(r['Count Unpaired Reads Aligned 1 Time']) / float(r['Count PE-Unaligned Reads']))),
+				('Count Unpaired Reads Aligned > 1 Times', 	  "(\d+) \([\d\.%]+\) aligned >1 times"),
+				('% Unpaired Reads Aligned > 1 Times', 		  lambda r: (float(r['Count Unpaired Reads Aligned > 1 Time']) / float(r['Count PE-Unaligned Reads']))),
+				
+				('% Overall Alignment', lambda r: (( \
+												 float((r['Count Paired Concordant Aligned 1 Time'] + r['Count Paired Concordant Aligned > 1 Times'] + r['Count Paired Discordant Aligned 1 Time'] + r['Count Paired Discordant Aligned > 1 Times']) * 2)\
+												+ (r['Count Unpaired Reads Aligned 1 Time'] + r['Count Unpaired Reads Aligned > 1 Times'])) \
+												/ float(r['Count Total Reads'] * 2) \
+												))
 			]
 		else:
 			regex_items = [
-				('Total Reads',		"(\d+) reads; of these:"),
+				('Total Reads',				"(\d+) reads; of these:"),
 				('Reads Aligned 1 Time',	"# reads with at least one reported alignment: (\d+)"),
 				('Reads Aligned >1 Times',	"# reads with at least one reported alignment: (\d+)"),
 				('Reads Aligned 0 Times',	"# reads with at least one reported alignment: (\d+)"),
-				('Percent Aligned Reads', lambda r: ((float(r['Reads Aligned 1 Time']) + float(r['Reads Aligned >1 Times'])) / float(r['Total Reads']))),
+				('Percent Aligned Reads', 	lambda r: ((float(r['Reads Aligned 1 Time']) + float(r['Reads Aligned >1 Times'])) / float(r['Total Reads']))),
 				('Percent Unaligned Reads', lambda r: (float(r['Reads Aligned 0 Times']) / float(r['Total Reads']))),
 			]
 		results = {}
@@ -169,14 +180,17 @@ class Bowtie2Align(PipelineModule):
 			
 			destfile.write("{}\t".format(cxt.sample.name))
 			for item in regex_items:
-				if isinstance(item[1], basestring):
-					match = re.search(item[1], logdata, re.MULTILINE)
-					if match is not None:
-						results[item[0]] = int(match.group(1))
+				try:
+					if isinstance(item[1], basestring):
+						match = re.search(item[1], logdata, re.MULTILINE)
+						if match is not None:
+							results[item[0]] = int(match.group(1))
+						else:
+							results[item[0]] = 0
 					else:
-						results[item[0]] = 0
-				else:
-					results[item[0]] = item[1](results)
+						results[item[0]] = item[1](results)
+				except:
+					results[item[0]] = 0
 				
 			destfile.write("\t".join(["{}".format(results[item[0]]) for item in regex_items]))
 			destfile.write("\n")

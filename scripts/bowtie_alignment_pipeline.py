@@ -135,14 +135,14 @@ def make_read_alignment_pipeline(args, additional_args):
                     return resolve_trimmomatic_reads(cxt)
                 
             from ThackTech.Pipelines.PipelineModules import FastQC
-            x = FastQC.FastQC()
+            x = FastQC.FastQC(processors=args.threads)
             x.set_resolver('fastqs', fastqc_resolver)
             pipeline.append_module(x)
         
         
         if 'fqscreen' in args.qc:    
             from ThackTech.Pipelines.PipelineModules import FastqScreen
-            x = FastqScreen.FastqScreen()
+            x = FastqScreen.FastqScreen(processors=args.threads)
             x.set_resolver('fastqs', resolve_bowtie1)
             pipeline.append_module(x)
     

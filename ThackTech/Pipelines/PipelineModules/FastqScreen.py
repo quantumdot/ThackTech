@@ -31,6 +31,7 @@ class FastqScreen(PipelineModule):
 		out_files = []
 		fqscreen_args = [
 			'fastq_screen',
+			'--aligner', self.get_parameter_value_as_string('aligner'),
 			'--threads', str(self.processors),
 			'--outdir',  dest_dir
 		]
