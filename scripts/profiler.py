@@ -669,10 +669,10 @@ def make_sig_heatmap(ax, sample):
         if sample.sig_id == 0: #first row
             ax.set_title(sample.bed_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
         if sample.bed_id == 0: #first column
-            ax.set_ylabel(sample.sig_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
+            ax.set_ylabel(sample.sig_label, rotation=45, verticalalignment='top', horizontalalignment='right')
     else:
         if sample.bed_id == 0: #first row
-            ax.set_title(sample.sig_label, rotation=45, verticalalignment='top', horizontalalignment='right')
+            ax.set_title(sample.sig_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
         if sample.sig_id == 0: #first column
             ax.set_ylabel(sample.bed_label, rotation=45, verticalalignment='top', horizontalalignment='right')
     ax.set_xticklabels([])
