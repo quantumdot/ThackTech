@@ -19,6 +19,7 @@ def main():
     parser.add_argument('-d', '--database', required=True, choices=['go', 'kegg'], help="annotation database to search")
     parser.add_argument('-g', '--genome', required=True, help="Reference genome build to work with, in UCSC terms (i.e. mm9).")
     parser.add_argument('-t', '--term', required=True, help="KEGG pathway term to search for. By default looks for an exact match.")
+    parser.add_argument('--gomode', choices=['direct', 'indirect'], default='direct', help="For GO queries, return directly annotated genes or include transitive indirect annotated genes.")
     parser.add_argument('outfile', help="File to write results in BED format")
     
     #db_conn_group = parser.add_argument_group("SQL Connection Options")
@@ -174,34 +175,57 @@ def convert_ids_to_refseq(ids_by_source):
             results.extend([os.path.splitext(line.strip())[0] for line in response])
     return results
 #end uniprot_to_refseq()
-    
 
-def genes_for_go_term(term, options):
-    taxid = ucsc_genome_to_ncbi_taxid(options.genome)
+
+
+def get_go_query_include_transitive():
+    """Gets a SQL query for a GO term including transitive indirect annotations
     
-    # term.name AS superterm_name,
-    # term.acc AS superterm_acc,
-    # term.term_type AS superterm_type,
-    # association.*,
-    # gene_product.symbol AS gp_symbol,
-    # gene_product.symbol AS gp_full_name,
-    # dbxref.xref_dbname AS gp_dbname,
-    # dbxref.xref_key AS gp_acc,
-    # species.genus,
-    # species.species,
-    # species.ncbi_taxa_id,
-    # species.common_name
-    
+    Adapted from: http://wiki.geneontology.org/index.php/Example_LEAD_Queries#All_genes_in_Drosophila_annotated_to_.27nucleus.27_.28including_transitive_indirect_annotations.29
+    """
     sql = "SELECT " \
         + "    dbxref.xref_dbname AS gp_dbname, " \
         + "    dbxref.xref_key AS gp_acc " \
         + "FROM term " \
-        + "INNER JOIN graph_path ON (term.id=graph_path.term1_id) " \
-        + "INNER JOIN association ON (graph_path.term2_id=association.term_id) " \
-        + "INNER JOIN gene_product ON (association.gene_product_id=gene_product.id) " \
-        + "INNER JOIN species ON (gene_product.species_id=species.id) " \
-        + "INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
-        + "WHERE term.name = %s AND species.ncbi_taxa_id = %s"
+        + "    INNER JOIN graph_path ON (term.id=graph_path.term1_id) " \
+        + "    INNER JOIN association ON (graph_path.term2_id=association.term_id) " \
+        + "    INNER JOIN gene_product ON (association.gene_product_id=gene_product.id) " \
+        + "    INNER JOIN species ON (gene_product.species_id=species.id) " \
+        + "    INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
+        + "WHERE " \
+        + "    term.name = %s " \
+        + "AND species.ncbi_taxa_id = %s"
+    return sql
+#end get_go_query_include_transitive()
+
+def get_go_query_direct():
+    """Gets a SQL query for a GO term including transitive indirect annotations
+    
+    Adapted from: http://wiki.geneontology.org/index.php/Example_LEAD_Queries#All_genes_directly_annotated_to_.27nucleus.27_.28excluding_child_terms.29
+    """
+    sql = "SELECT " \
+        + "    dbxref.xref_dbname AS gp_dbname, " \
+        + "    dbxref.xref_key AS gp_acc, " \
+        + "FROM term " \
+        + "    INNER JOIN association ON (term.id=association.term_id) " \
+        + "    INNER JOIN gene_product ON (association.gene_product_id=gene_product.id) " \
+        + "    INNER JOIN species ON (gene_product.species_id=species.id) " \
+        + "    INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
+        + "    INNER JOIN db ON (association.source_db_id=db.id) " \
+        + "WHERE " \
+        + "    term.name = %s " \
+        + "AND species.ncbi_taxa_id = %s"
+    return sql
+#end get_go_query_direct()
+
+def genes_for_go_term(term, options):
+    taxid = ucsc_genome_to_ncbi_taxid(options.genome)
+    
+    if options.gomode == 'indirect':
+        sql = get_go_query_include_transitive()
+    else:
+        sql = get_go_query_direct()
+    
     sys.stderr.write(sql+"\n")
     go_hits = set(fetch_results('go_connection', 'go_latest', sql, (term, taxid)))
     ids_by_source = {}
