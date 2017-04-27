@@ -19,6 +19,7 @@ def main():
     parser.add_argument('-d', '--database', required=True, choices=['go', 'kegg'], help="annotation database to search")
     parser.add_argument('-g', '--genome', required=True, help="Reference genome build to work with, in UCSC terms (i.e. mm9).")
     parser.add_argument('-t', '--term', required=True, help="KEGG pathway term to search for. By default looks for an exact match.")
+    parser.add_argument('--type', choices=['name', 'acc'], default='acc', help='Is the query a term name or accession number')
     parser.add_argument('--gomode', choices=['direct', 'indirect'], default='direct', help="For GO queries, return directly annotated genes or include transitive indirect annotated genes.")
     parser.add_argument('outfile', help="File to write results in BED format")
     
@@ -178,7 +179,7 @@ def convert_ids_to_refseq(ids_by_source):
 
 
 
-def get_go_query_include_transitive():
+def get_go_query_include_transitive(search_field):
     """Gets a SQL query for a GO term including transitive indirect annotations
     
     Adapted from: http://wiki.geneontology.org/index.php/Example_LEAD_Queries#All_genes_in_Drosophila_annotated_to_.27nucleus.27_.28including_transitive_indirect_annotations.29
@@ -193,12 +194,12 @@ def get_go_query_include_transitive():
         + "    INNER JOIN species ON (gene_product.species_id=species.id) " \
         + "    INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
         + "WHERE " \
-        + "    term.name = %s " \
+        + "    term."+search_field+" = %s " \
         + "AND species.ncbi_taxa_id = %s"
     return sql
 #end get_go_query_include_transitive()
 
-def get_go_query_direct():
+def get_go_query_direct(search_field):
     """Gets a SQL query for a GO term including transitive indirect annotations
     
     Adapted from: http://wiki.geneontology.org/index.php/Example_LEAD_Queries#All_genes_directly_annotated_to_.27nucleus.27_.28excluding_child_terms.29
@@ -213,7 +214,7 @@ def get_go_query_direct():
         + "    INNER JOIN dbxref ON (gene_product.dbxref_id=dbxref.id) " \
         + "    INNER JOIN db ON (association.source_db_id=db.id) " \
         + "WHERE " \
-        + "    term.name = %s " \
+        + "    term."+search_field+" = %s " \
         + "AND species.ncbi_taxa_id = %s"
     return sql
 #end get_go_query_direct()
@@ -222,9 +223,9 @@ def genes_for_go_term(term, options):
     taxid = ucsc_genome_to_ncbi_taxid(options.genome)
     
     if options.gomode == 'indirect':
-        sql = get_go_query_include_transitive()
+        sql = get_go_query_include_transitive(options.type)
     else:
-        sql = get_go_query_direct()
+        sql = get_go_query_direct(options.type)
     
     sys.stderr.write(sql+"\n")
     go_hits = set(fetch_results('go_connection', 'go_latest', sql, (term, taxid)))
