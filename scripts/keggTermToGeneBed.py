@@ -229,6 +229,9 @@ def genes_for_go_term(term, options):
     
     sys.stderr.write(sql+"\n")
     go_hits = set(fetch_results('go_connection', 'go_latest', sql, (term, taxid)))
+    if len(go_hits) == 0:
+        sys.stderr.write("Did not find any GO matches for term {}!\n Please check that it exists!".format(term))
+        return []
     ids_by_source = {}
     for h in go_hits:
         if h[0] not in ids_by_source:
