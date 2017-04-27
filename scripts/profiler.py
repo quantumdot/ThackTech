@@ -622,7 +622,7 @@ def make_average_sig_plot(ax, sample, color='k'):
     ax.plot(gopts['x_axis'], summary, color=color, label=label)
     
     if gopts['args'].showci:
-        computed_error = stats.compute_error(sample, gopts['args'].ciwidth)
+        computed_error = ttstats.compute_error(sample, gopts['args'].ciwidth)
         ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
         ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
         
@@ -669,12 +669,12 @@ def make_sig_heatmap(ax, sample):
         if sample.sig_id == 0: #first row
             ax.set_title(sample.bed_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
         if sample.bed_id == 0: #first column
-            ax.set_ylabel(sample.sig_label)
+            ax.set_ylabel(sample.sig_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
     else:
         if sample.bed_id == 0: #first row
-            ax.set_title(sample.sig_label)
+            ax.set_title(sample.sig_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
         if sample.sig_id == 0: #first column
-            ax.set_ylabel(sample.bed_label)
+            ax.set_ylabel(sample.bed_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     if gopts['args'].vline:
