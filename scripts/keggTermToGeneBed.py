@@ -205,7 +205,7 @@ def get_go_query_direct():
     """
     sql = "SELECT " \
         + "    dbxref.xref_dbname AS gp_dbname, " \
-        + "    dbxref.xref_key AS gp_acc, " \
+        + "    dbxref.xref_key AS gp_acc " \
         + "FROM term " \
         + "    INNER JOIN association ON (term.id=association.term_id) " \
         + "    INNER JOIN gene_product ON (association.gene_product_id=gene_product.id) " \
