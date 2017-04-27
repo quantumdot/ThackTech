@@ -223,7 +223,10 @@ def make_read_alignment_pipeline(args, additional_args):
         if 'fpt' in args.qc:
             from ThackTech.Pipelines.PipelineModules import BamFingerprint
             x = BamFingerprint.BamFingerprint(processors=args.threads)
-            x.set_resolver('bams', lambda cxt: [] + qc_bt_bam_resolver(cxt) + qc_pbc_bam_resolver(cxt))
+            if 'pbc' in args.qc:
+                x.set_resolver('bams', lambda cxt: [qc_bt_bam_resolver(cxt), qc_pbc_bam_resolver(cxt)])
+            else:
+                x.set_resolver('bams', lambda cxt: [qc_bt_bam_resolver(cxt)])
             pipeline.append_module(x)
             
             
