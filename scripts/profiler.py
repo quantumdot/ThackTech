@@ -287,9 +287,8 @@ def main():
     
     plt.rcParams['font.size'] = args.fontsize
     plt.rcParams['legend.fontsize'] = args.legendfontsize
-    
     fig = plt.figure(figsize=(args.width, args.height), dpi=args.dpi)
-    gopts['extra_artists'].append(fig.suptitle(args.title))
+    
     
     #compute sort orders/grouping/clustering
     if args.kmeans:
@@ -339,6 +338,7 @@ def main():
     
     #add sensible x-axis label
     gopts['extra_artists'].append(fig.text(0.5, 0.04, collection_opts.xaxis_label, ha='center', va='center'))
+    gopts['extra_artists'].append(fig.suptitle(args.title))
         
     #finally save the figure!
     save_figure(fig, "_".join(gopts['savename_notes']))
@@ -665,16 +665,21 @@ def make_sig_heatmap(ax, sample):
             percentile=False,
             sort_by=sample.sort_order
     )
+    if len(gopts['args'].bed) > 1:
+        side_label_opts = {'rotation': 45, 'verticalalignment': 'top', 'horizontalalignment': 'right'}
+    else:
+        side_label_opts = {}
+    
     if gopts['args'].rotate:
         if sample.sig_id == 0: #first row
             ax.set_title(sample.bed_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
         if sample.bed_id == 0: #first column
-            ax.set_ylabel(sample.sig_label, rotation=45, verticalalignment='top', horizontalalignment='right')
+            ax.set_ylabel(sample.sig_label, **side_label_opts)
     else:
         if sample.bed_id == 0: #first row
             ax.set_title(sample.sig_label, rotation=45, verticalalignment='bottom', horizontalalignment='left')
         if sample.sig_id == 0: #first column
-            ax.set_ylabel(sample.bed_label, rotation=45, verticalalignment='top', horizontalalignment='right')
+            ax.set_ylabel(sample.bed_label, **side_label_opts)
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     if gopts['args'].vline:
