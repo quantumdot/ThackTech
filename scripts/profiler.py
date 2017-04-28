@@ -138,6 +138,10 @@ def main():
     output_group.add_argument('--avgplotrows', action='store', type=int, default=1, help='Number of rows to use for average profile plots.')
     output_group.add_argument('--heatplotrows', action='store', type=int, default=3, help='Number of rows to use for heatmap plots.')
     output_group.add_argument('--rotate', action='store_true', help='By default plots will be arranged with signals going across and intervals going down. --rotate will change the orientation so that intervals go across and signals going down.')
+    output_group.add_argument('--dumpsummary', action='store_true', help='Write summary data to a text file. By default, ')
+    output_group.add_argument('--summaryrange', action='store', default=None, help='Range(s) of the profiles (in relative bp) to be used in the sorting operation. Specify in the format "start:stop". Default is to use the entire range. Write multiple ranges by separating ranges with a semicolon')
+    output_group.add_argument('--summarymethod', action='store', choices=['mean', 'median', 'max', 'min', 'sum'], default='mean', help='Method used for producing summary data.')
+    
     
     plot_group = parser.add_argument_group('General Plotting Options')
     plot_group.add_argument('--vline', action='store_true', help='Draw a vertical line at the "zero" point.')
@@ -346,7 +350,17 @@ def main():
     #finally save the figure!
     save_figure(fig, "_".join(gopts['savename_notes']))
     plt.close(fig)
-    write_summary_profiles(samples)
+    
+    if args.dumpsummary:
+        ranges = []
+        if args.summaryrange is not None:
+            sr = args.summaryrange.split(';')
+            for r in sr:
+                start, stop = r.split(':')
+                ranges.append((int(int(start) / args.res), int(int(stop) / args.res)))
+        else:
+            ranges.append((0, -1))
+        write_summary_profiles(samples, ranges, args.summarymethod)
     sys.stderr.write('Done!')
 #end main()
 
@@ -462,7 +476,7 @@ def make_interval_classes(sort_indicies, breaks, bed, white_chroms=None):
     return intervals
 #end make_interval_classes()
 
-def write_summary_profiles(samples):
+def write_summary_profiles(samples, ranges, method):
     iv_beds = {}
     for s in samples:
         if s.bed_label not in iv_beds:
@@ -470,9 +484,8 @@ def write_summary_profiles(samples):
     
     for s in samples:
         b = iv_beds[s.bed_label]
-        sort_range = (0, -1)
-        method = 'mean'
-        b[s.sig_label] = getattr(s.signal_array[:,sort_range[0]:sort_range[1]], method)(axis=1)
+        for r in ranges:
+            b["{}_[{}..{}]".format(s.sig_label, r[0], r[1]] = getattr(s.signal_array[:,r[0]:r[1]], method)(axis=1)
     
     for b in iv_beds:
         iv_beds[b].to_csv("{}.summary_{}.tsv".format(gopts['output_base'], b), sep='\t', index=False)
