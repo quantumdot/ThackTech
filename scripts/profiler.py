@@ -466,7 +466,7 @@ def write_summary_profiles(samples):
     iv_beds = {}
     for s in samples:
         if s.bed_label not in iv_beds:
-            iv_beds[s.bed_label] = pd.DataFrame(s.bedtool.generate_origional(), columns=['chrom', 'start', 'end', 'name', 'score', 'strand'])
+            iv_beds[s.bed_label] = pd.DataFrame(s.bedtool.generate_origional_as_tuples(), columns=['chrom', 'start', 'end', 'name', 'score', 'strand'])
     
     for s in samples:
         b = iv_beds[s.bed_label]
