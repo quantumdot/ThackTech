@@ -227,7 +227,7 @@ def genes_for_go_term(term, options):
     else:
         sql = get_go_query_direct(options.type)
     
-    sys.stderr.write(sql+"\n")
+    #sys.stderr.write(sql+"\n")
     go_hits = set(fetch_results('go_connection', 'go_latest', sql, (term, taxid)))
     if len(go_hits) == 0:
         sys.stderr.write("Did not find any GO matches for term {}!\nPlease check that it exists!\n".format(term))
