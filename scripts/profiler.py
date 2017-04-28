@@ -485,7 +485,7 @@ def write_summary_profiles(samples, ranges, method):
     for s in samples:
         b = iv_beds[s.bed_label]
         for r in ranges:
-            b["{}_[{}..{}]".format(s.sig_label, r[0], r[1]] = getattr(s.signal_array[:,r[0]:r[1]], method)(axis=1)
+            b["{}_[{}..{}]".format(s.sig_label, r[0], r[1])] = getattr(s.signal_array[:,r[0]:r[1]], method)(axis=1)
     
     for b in iv_beds:
         iv_beds[b].to_csv("{}.summary_{}.tsv".format(gopts['output_base'], b), sep='\t', index=False)
