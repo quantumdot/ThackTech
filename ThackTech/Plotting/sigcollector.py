@@ -84,6 +84,17 @@ class IntervalProvider:
             yield interval
     #end generate_midpoints()
     
+    def generate_origional_as_tuples(self):
+        """Generates the origional intervals this provider wraps
+        """
+        bedtool = pybedtools.BedTool(self.bed)
+        if self.white_chroms is not None:
+            bedtool = bedtool.filter(lambda d: d.chrom in self.white_chroms)
+        
+        for i in bedtool:
+            yield (i.chrom, i.start, i.stop, i.strand, i.name, i.score)
+    #end generate_midpoints()
+    
     def generate_midpoints(self, bedtool):
         """Generates intervals aligned on the center of bed intervals
                                     

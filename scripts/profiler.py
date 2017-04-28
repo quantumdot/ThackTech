@@ -248,6 +248,7 @@ def main():
             signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input_sig, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
+            ps.bedtool = bedtool
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             ps.signal_array = ttstats.correct_invalid_data(ps.signal_array, args.nan)
             sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
@@ -264,7 +265,9 @@ def main():
                 signal = sigcollector.get_bed_score_signal(bedtool)
             #print signal
             b_label = args.ilabel[b] if len(args.ilabel)-1 >= b else os.path.splitext(os.path.basename(args.bed[b]))[0]
-            samples.append(ProfileSample(len(samples), len(args.sig), b, signal, args.bedscorelabel, b_label))
+            ps = ProfileSample(len(samples), len(args.sig), b, signal, args.bedscorelabel, b_label)
+            ps.bedtool = bedtool
+            samples.append(ps)
         gopts['savename_notes'].append("bed-score")
     
     
@@ -343,6 +346,7 @@ def main():
     #finally save the figure!
     save_figure(fig, "_".join(gopts['savename_notes']))
     plt.close(fig)
+    write_summary_profiles(samples)
     sys.stderr.write('Done!')
 #end main()
 
@@ -456,6 +460,23 @@ def make_interval_classes(sort_indicies, breaks, bed, white_chroms=None):
     intervals.to_csv(gopts['output_base']+'.kmeans_classes.tsv', sep='\t', index=False)
     intervals.sort_index(inplace=True)
     return intervals
+#end make_interval_classes()
+
+def write_summary_profiles(samples):
+    iv_beds = {}
+    for s in samples:
+        if s.bed_label not in iv_beds:
+            iv_beds[s.bed_label] = pd.DataFrame(s.bedtool.generate_origional(), columns=['chrom', 'start', 'end', 'name', 'score', 'strand'])
+    
+    for s in samples:
+        b = iv_beds[s.bed_label]
+        sort_range = (0, -1)
+        method = 'mean'
+        b[s.sig_label] = getattr(s.signal_array[:,sort_range[0]:sort_range[1]], method)(axis=1)
+    
+    for b in iv_beds:
+        iv_beds[b].to_csv("{}.summary_{}.tsv".format(gopts['output_base'], b), sep='\t', index=False)
+
 #end make_interval_classes()
 
 def compute_sorting(samples, sort_index, method, sort_range):
