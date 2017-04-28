@@ -92,7 +92,7 @@ class IntervalProvider:
             bedtool = bedtool.filter(lambda d: d.chrom in self.white_chroms)
         
         for i in bedtool:
-            yield (i.chrom, i.start, i.stop, i.strand, i.name, i.score)
+            yield (i.chrom, i.start, i.stop, i.name, i.score, i.strand)
     #end generate_midpoints()
     
     def generate_midpoints(self, bedtool):
