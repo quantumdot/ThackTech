@@ -19,7 +19,7 @@ class OutputManifest(PipelineModule):
 		else:
 			write_headers = True
 		
-		with open(dest, 'a') as output_manifest:
+		with open(dest, 'w') as output_manifest:
 			if write_headers:
 				output_manifest.write('id\tparent\tpipeline\tstep\tmodule\trole\tpath\tattributes\n')
 			
