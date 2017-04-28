@@ -367,7 +367,7 @@ def document_args():
             if gopts['args'].inp[i].lower() == 'none':
                 sys.stderr.write("#\t%d: None\n" % (i,))
             else:
-                sys.stderr.write("#\t%d: %s\n" % (i, os.path.abspath(gopts['args'].inp),))
+                sys.stderr.write("#\t%d: %s\n" % (i, os.path.abspath(gopts['args'].inp[i]),))
     else:
         sys.stderr.write("#\tNone\n")
         
