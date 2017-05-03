@@ -610,6 +610,8 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
         ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=gopts['args'].numticks-1))
         [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
         gopts['plot_axes'][(row,col)] = ax
+    
+    print "getting axis ({},{})".format(row, col)
     return gopts['plot_axes'][(row,col)]
 #end get_plot_axes()
 
