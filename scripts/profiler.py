@@ -95,7 +95,8 @@ def main():
     labeling_group.add_argument('-il', '--ilabel', action='append', default=[], help='Interval labels for each plot. Specify in the same order as the interval files. If not supplied, file basename will be used.')
     labeling_group.add_argument('--title', action='store', default='', help='Title for entire plot')
     labeling_group.add_argument('--bedscorelabel', action='store', default="Score", help='Label for plotting the score column of intervals.')
-    labeling_group.add_argument('--numticks', action='store', type=int, default=4, help='Number of tick marks to use in the x-axis.')
+    labeling_group.add_argument('--xnumticks', action='store', type=int, default=4, help='Number of tick marks to use in the x-axis.')
+    labeling_group.add_argument('--ynumticks', action='store', type=int, default=4, help='Number of tick marks to use in the y-axis.')
     
     profile_group = parser.add_argument_group('Profiling Options')
     profile_group.add_argument('--nochromfilter', action='store_true', help='Do not filter bed file for common chromosomes. By default profiling only occurs on chromosomes common to all files (useful for ignoring random or Un* chromosomes).')
@@ -607,7 +608,8 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             
     if (row,col) not in gopts['plot_axes']:
         ax = plt.subplot2grid((gopts['fig_rows'],gopts['fig_cols']), (row, col), rowspan)
-        ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=gopts['args'].numticks-1))
+        ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=gopts['args'].xnumticks-1))
+        ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=gopts['args'].ynumticks-1))
         [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
         gopts['plot_axes'][(row,col)] = ax
     
