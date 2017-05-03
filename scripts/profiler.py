@@ -600,7 +600,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
         rowspan = gopts['args'].avgplotrows
         row = gopts['fig_rows'] - gopts['args'].avgplotrows
         if 'heat' in gopts['args'].plot:
-            col = gopts['fig_cols'] - 2
+            col = gopts['fig_cols'] - 1
         else:
             col = gopts['fig_cols'] - 1
             
