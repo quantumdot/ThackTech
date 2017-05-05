@@ -10,7 +10,12 @@ class MACS1Peakcall(PipelineModule):
 		
 		self.add_parameter(ModuleParameter('duplicates', str, 	'auto',	desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
 		self.add_parameter(ModuleParameter('bw', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
-		self.add_parameter(ModuleParameter('sigout', 	str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
+		self.add_parameter(ModuleParameter('sigout',	 str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
+		self.add_parameter(ModuleParameter('tsize',		 int, 	None, nullable=True,	desc="Tag size. This will overide the auto detected tag size."))
+		self.add_parameter(ModuleParameter('pvalue',	 float,	1e-5, desc="Pvalue cutoff for peak detection."))
+		
+		self._name_resolver('treatment')
+		self._name_resolver('control')
 	#end __init__()
 	
 	def tool_versions(self):
@@ -20,26 +25,25 @@ class MACS1Peakcall(PipelineModule):
 	#end tool_versions()
 	
 	def run(self, cxt):
-		format = cxt.sample.format.upper()
-		if format == "BAMPE":
-			format = "BAM"
+		treatment = self.resolve_input('treatment', cxt)
+		control = self.resolve_input('control', cxt)
 
 		macs_args = [
 			'macs',
 			'--name', cxt.sample.name,
 			'--gsize', cxt.sample.genome.gsize,
-			'--format', format,
+			'--format', self.get_file_format(treatment),
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
 			'--verbose', '2', 
 			'--single-profile', 
 			'--diag',
 			('--bdg' if self.get_parameter_value_as_string('sigout') == 'bdg' else '--wig'),
-			'--treatment', cxt.sample.get_file('source', 'treatment')
+			'--treatment', treatment.fullpath
 		]
 
-		if cxt.sample.has_file('source', 'control'):
-			macs_args += [ '--control', cxt.sample.get_file('source', 'control') ]
+		if control is not None:
+			macs_args += [ '--control', control.fullpath ]
 			
 		cxt.log.write("Performing peak calling with MACS......\n")
 		cxt.log.write("-> "+subprocess.check_output(['macs', '--version'], stderr=subprocess.STDOUT)+"")
@@ -64,8 +68,22 @@ class MACS1Peakcall(PipelineModule):
 		}
 		if os.path.isfile(os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')):
 			output_files['model_Rscript'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')
-		if cxt.sample.has_file('source', 'control'):
+		if control is not None:
 			output_files['control_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+signal_folder, 'control', cxt.sample.name+'_control_afterfiting_all'+signal_output_ext)
 		return output_files
 	#end run()
+	
+	def get_file_format(self, fileinfo):
+		ext = fileinfo.ext.lower()
+		if ext == '.bam':
+			return 'BAM'
+		elif ext == '.sam':
+			return 'SAM'
+		elif ext == '.bed':
+			return 'BED'
+		elif ext == '.bowtie':
+			return 'BOWTIE'
+		else:
+			return 'AUTO'
+	#end get_file_format()
 #end class MACS1Peakcall

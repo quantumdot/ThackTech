@@ -18,7 +18,7 @@ from ThackTech import filetools
 from ThackTech.Plotting import sigcollector, stats as ttstats
 from ThackTech import chromtools
 
-
+#http://matplotlib.1069221.n5.nabble.com/Auto-wrapping-text-within-a-plot-Is-there-a-simpler-solution-td20.html
 
 
 
