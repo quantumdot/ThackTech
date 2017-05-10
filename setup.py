@@ -29,6 +29,7 @@ setup(  name='ThackTech',
             "scripts/correlator.py",
             "scripts/bedstats.py",
             "scripts/bowtie_alignment_pipeline.py",
+            "scripts/macs_peakcall_pipeline.py",
             "scripts/subsample_fastq.py",
             "scripts/keggTermToGeneBed.py"
         ],

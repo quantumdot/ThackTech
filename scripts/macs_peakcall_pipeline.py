@@ -8,10 +8,11 @@ from ThackTech import Common
 from ThackTech import filetools
 from ThackTech import aligntools
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline
+from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
 
 #manifest should be structured as follows (with headers)
-#Name    Treatment    Control    Genome    Broad    Dest
+#Name    Group    Treatment    Control    Genome    Broad    Dest
 
 gopts = {
     'shm_enabled': False,
@@ -40,16 +41,6 @@ class MacsPipelineSample(PipelineSample):
         if 'Group' in sample:
             self.add_attribute('group', sample['Group'])
     #end __init__()
-    
-    def detect_format(self, sample):
-        ext = os.path.splitext(sample['Treatment'])[1][1:].lower()
-        if ext == 'bam':
-            if aligntools.is_bam_PE(sample['Treatment']):
-                return 'BAMPE'
-            else:
-                return 'BAM'
-        return ext.upper()
-    #end detect_format()
 #end PipelineSample
 
 
@@ -73,11 +64,7 @@ def main():
     parser.add_argument('--idr', action='store_true', help="Perform IDR analysis. Requires that the manifest contain an additional [Group] column that describes group names for replicates. Will generate pooled and psuedoreplicates and pass them through the same processing pipeline as the explicitly defined manifest items. IDR is only supported in combination with MACS2.")
     parser.add_argument('--ignore-control', action='store_true', help="Ignore control data present in the sample manifest.")
     
-    performance_group = parser.add_argument_group('Performance')
-    performance_group.add_argument('-p', '--threads', type=int, default=cpu_count, help="Number of processors to use for processing.")
-    performance_group.add_argument('--shm', action='store_true', help="Use ramfs for file IO.")
-    performance_group.add_argument('--shm-path', action='store', default='/mnt/ramdisk/bowtie'+'_'+str(os.getuid()), help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
-    performance_group.add_argument('--runner', action='store', default='parallel', choices=['slurm', 'parallel', 'serial'], help="Which pipeline runner to use.")
+    performance_group = add_runner_args(parser)
     performance_group.add_argument('--skipmacs', action='store_true', help="Skip the peak calling process and only run the QC routines. Assumes files are in the location specified by the manifest.")
     
     args = parser.parse_args()
@@ -262,15 +249,7 @@ def main():
 #end main()
 
 def run_pipeline(pipeline, samples, args):
-    if args.runner == 'slurm':
-        from ThackTech.Pipelines import SlurmPipelineRunner
-        runner = SlurmPipelineRunner(pipeline, partition="main", nodes=1, threads_per_node=args.threads, time_limit="5:00:00")
-    elif args.runner == 'parallel':
-        from ThackTech.Pipelines import ParallelPipelineRunner
-        runner = ParallelPipelineRunner(pipeline, args.threads)
-    else: #serial runner
-        from ThackTech.Pipelines import SerialPipelineRunner
-        runner = SerialPipelineRunner(pipeline)
+    runner = get_configured_runner(args, pipeline)
     runner.run(samples)
 #end get_runner()
 
