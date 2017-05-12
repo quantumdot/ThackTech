@@ -53,4 +53,8 @@ class ParallelPipelineRunner(PipelineRunner):
 		progress.update(sample_count, 'Done!', self.tasks_statuses)
 		progress.finish()
 	#end run()
+	
+	def monitor(self):
+		PipelineRunner.monitor(self)
+	#end monitor()
 #end class ParallelPipelineRunner

@@ -26,6 +26,9 @@ class PipelineRunner(object):
 	
 	def run(self, samples):
 		pass
+	
+	def monitor(self):
+		pass
 #end class PipelineRunner
 
 

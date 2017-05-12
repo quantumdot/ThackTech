@@ -13,4 +13,9 @@ class SerialPipelineRunner(PipelineRunner):
 	def run(self, samples):
 		for sample in samples:
 			_execute_pipeline_on_sample(self.pipeline, sample, {sample.name: MultiStatusProgressItem(sample.name, 'Queued...')})
+	#end run()
+		
+	def monitor(self):
+		PipelineRunner.monitor(self)
+	#end monitor()
 #end class SerialPipelineRunner

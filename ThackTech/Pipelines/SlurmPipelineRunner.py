@@ -113,4 +113,9 @@ class SlurmPipelineRunner(PipelineRunner):
 				for p in [pipeline_pickles]+sample_pickles+status_pickles:
 					if os.path.exists(p):
 						subprocess.call(['rm', '-rf', p], stderr=subprocess.STDOUT, stdout=logout)
+	#end run()
+	
+	def monitor(self):
+		PipelineRunner.monitor(self)					
+	#end monitor()
 #end class SlurmPipelineRunner
