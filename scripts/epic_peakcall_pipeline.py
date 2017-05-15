@@ -128,8 +128,8 @@ def make_peak_calling_and_qc_pipeline(args, additional_args):
     x.set_parameter('window_size', 200)
     x.set_parameter('gaps_allowed', 3)
     x.set_parameter('fdr_cutoff', 0.05)
-    x.set_resolver('treatment', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'TreatmentBed'))
-    x.set_resolver('control', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'ControlBed'))
+    x.set_resolver('treatments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'TreatmentBed'))
+    x.set_resolver('controls', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'ControlBed'))
     pipeline.append_module(x, True)
         
     from ThackTech.Pipelines.PipelineModules import OutputManifest
