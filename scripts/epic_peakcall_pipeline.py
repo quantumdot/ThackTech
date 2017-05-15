@@ -96,7 +96,7 @@ def run_pipeline(pipeline, samples, args):
 #end get_runner()
 
 
-def make_peak_calling_and_qc_pipeline(args):
+def make_peak_calling_and_qc_pipeline(args, additional_args):
     pipeline = AnalysisPipeline('Peak Calling and QC')
     
     
