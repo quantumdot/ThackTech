@@ -41,7 +41,7 @@ class EpicSICER(PipelineModule):
 		
 		cmd = [
 			'epic',
-			'--number-cores', self.processors,
+			'--number-cores', str(self.processors),
 			'--genome', cxt.sample.genome.name,
 			#'--effective_genome_size', str(cxt.sample.genome.gsize),
 			#'--chromsizes', cxt.sample.genome.chrsize,
@@ -69,6 +69,11 @@ class EpicSICER(PipelineModule):
 		if len(control_files) > 0:
 			cmd.extend(['--control']+control_files)
 		
+		cxt.log.write("\t-> Performing peak calling with Epic......")
+		cxt.log.write("\n..............................................\n")
+		cxt.log.write(" ".join(cmd))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
 		with open(os.path.join(cxt.sample.dest, cxt.sample.name+'_results.csv'), 'w') as results_out:
 			self._run_subprocess(cmd, stderr=cxt.log, stdout=results_out)
 			
