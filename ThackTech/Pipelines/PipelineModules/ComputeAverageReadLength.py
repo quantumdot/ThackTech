@@ -12,7 +12,7 @@ class ComputeAverageReadLength(PipelineModule):
 
 	
 	def run(self, cxt):	
-		read_length = subprocess.check_output(['awk', '-f', self.get_parameter_value_as_string('script_path'), self.resolve_input('fastq', cxt.sample)])
+		read_length = subprocess.check_output(['awk', '-f', self.get_parameter_value_as_string('script_path'), self.resolve_input('fastq', cxt)])
 		cxt.log.write("-> Average Read Length = %d\n" % (int(read_length),))
 		cxt.log.flush()
 		cxt.cxt.sample.set_attribute('avgreadlength', int(read_length))

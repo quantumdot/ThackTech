@@ -23,7 +23,7 @@ class MergeBams(PipelineModule):
 		filetools.ensure_dir(outdir)
 		outfile = os.path.join(outdir, cxt.sample.name+'.merged.bam')
 		
-		samtools_cmd = [ 'samtools', 'merge', outfile ] + self.resolve_input('alignments', cxt.sample)
+		samtools_cmd = [ 'samtools', 'merge', outfile ] + self.resolve_input('alignments', cxt)
 		
 		cxt.log.write("-> Merging bam files with samtools......\n")
 		cxt.log.write("-> "+subprocess.check_output('samtools 2>&1 | grep Version', shell=True, stderr=subprocess.STDOUT)+"")

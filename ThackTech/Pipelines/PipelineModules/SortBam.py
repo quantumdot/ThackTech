@@ -25,14 +25,14 @@ class SortBam(PipelineModule):
 	#end tool_versions()
 	
 	def run(self, cxt):
-		bam = self.resolve_input('alignments', cxt.sample)
+		bam = self.resolve_input('alignments', cxt)
 		if bam is None:
 			cxt.log.write("No bam provided, exiting module\n")
 			return
 		
-		sorted_bam = os.path.splitext(bam)[0]+'_sorted'
+		sorted_bam = bam.fullpath_with_ext('sorted')
 		
-		sort_cmd = ['samtools', 'sort', '-@', str(self.processors), bam, sorted_bam]
+		sort_cmd = ['samtools', 'sort', '-@', str(self.processors), bam.fullpath, sorted_bam]
 		
 		if self.get_parameter_value('sort_name'):
 			sort_cmd.insert(2, '-n')

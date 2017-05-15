@@ -19,7 +19,7 @@ class IndexBam(PipelineModule):
 	#end tool_versions()
 	
 	def run(self, cxt):
-		bam = self.resolve_input('alignments', cxt.sample)
+		bam = self.resolve_input('alignments', cxt)
 		
 		index_cmd = ['samtools', 'index', bam]
 		

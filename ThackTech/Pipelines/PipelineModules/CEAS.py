@@ -45,7 +45,7 @@ class CEAS(PipelineModule):
 	#end show_version()
 	
 	def run(self, cxt):
-		signal_file = self.resolve_input('signal', cxt.sample)
+		signal_file = self.resolve_input('signal', cxt)
 		signal_compressed = False
 		
 		#check for compressed files
@@ -64,7 +64,7 @@ class CEAS(PipelineModule):
 
 		ceas_args = [
 			ceas_exe,
-			'-b', self.resolve_input('peaks', cxt.sample),
+			'-b', self.resolve_input('peaks', cxt),
 			'-w',  signal_file,
 			'-g', ('/mnt/ref/ceas/%s.refGene' % (cxt.sample.genome.name,)),
 			'--name', cxt.sample.name

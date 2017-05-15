@@ -27,7 +27,7 @@ class FRiPAnalysis(PipelineModule):
 			for label, file_path in cxt.sample.get_file_group('source').iteritems():
 				cxt.log.write("Computing FRiP for %s\n" % (label,))
 				cxt.log.flush()
-				peak_file = self.resolve_input('peaks', cxt.sample)
+				peak_file = self.resolve_input('peaks', cxt)
 				if not os.path.isfile(peak_file):
 					raise IOError('Unable to locate peaks file [%s]!' % (peak_file,))
 				peak_type = os.path.splitext(peak_file)[1][1:]

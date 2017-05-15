@@ -43,7 +43,7 @@ class HISAT2Align(PipelineModule):
 		cxt.log.flush()
 		
 		output_result = {}
-		read_files = self.resolve_input('fastq', cxt.sample)
+		read_files = self.resolve_input('fastq', cxt)
 				
 		#start constructing our HISAT2 arguments...
 		bowtiecmd = [ 
