@@ -76,7 +76,7 @@ def main():
     if args.ignore_control:
         sample_manifest.drop('Control', axis=1, inplace=True)
     
-    samples = [EpicPipelineSample(s, args.format) for s in sample_manifest.to_dict(orient='records')]
+    samples = [EpicPipelineSample(s) for s in sample_manifest.to_dict(orient='records')]
     sample_count = len(samples)
     sys.stdout.write('-> Found %d item%s for processing.\n\n' % (sample_count, ('s' if sample_count > 1 else '')))
     
