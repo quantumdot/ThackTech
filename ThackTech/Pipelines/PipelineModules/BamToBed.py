@@ -8,7 +8,8 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class BamToBed(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(BamToBed, self).__init__('BamToBed', 'Convert BAM to BED', **kwargs)
+		super_args = dict(name='BamToBed', short_description='Convert BAM to BED', **kwargs)
+		super(BamToBed, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('gzip', bool, True, desc="Gzip output"))
 		

@@ -8,7 +8,8 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class SortBam(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(SortBam, self).__init__('SortBam', 'Sort BAM file', **kwargs)
+		super_args = dict(name='SortBam', short_description='Sort BAM file', **kwargs)
+		super(SortBam, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('sort_name', bool, False, desc="Sort by read name rather than coordinate."))
 		self.add_parameter(ModuleParameter('overwrite', bool, True, desc="Overwrite the source, non-sorted, BAM."))
@@ -24,6 +25,10 @@ class SortBam(PipelineModule):
 	
 	def run(self, cxt):
 		bam = self.resolve_input('alignments', cxt.sample)
+		if bam is None:
+			cxt.log.write("No bam provided, exiting module\n")
+			return
+		
 		sorted_bam = os.path.splitext(bam)[0]+'_sorted'
 		
 		sort_cmd = ['samtools', 'sort', '-@', str(self.processors), bam, sorted_bam]
