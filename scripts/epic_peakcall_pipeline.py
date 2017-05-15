@@ -107,18 +107,18 @@ def make_peak_calling_and_qc_pipeline(args, additional_args):
     x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "treatment")[0])
     pipeline.append_module(x, True)
     
-    x = SortBam.SortBam('ControlSortBam')
+    x = SortBam.SortBam(name='ControlSortBam')
     x.set_parameter('sort_name', True)
     x.set_parameter('overwrite', False)
     x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "control")[0])
     pipeline.append_module(x, True)
     
     from ThackTech.Pipelines.PipelineModules import BamToBed
-    x = BamToBed.BamToBed('TreatmentBed')
+    x = BamToBed.BamToBed(name='TreatmentBed')
     x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'TreatSortBam')[0])
     pipeline.append_module(x, True)
     
-    x = BamToBed.BamToBed('ControlBed')
+    x = BamToBed.BamToBed(name='ControlBed')
     x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'ControlSortBam')[0])
     pipeline.append_module(x, True)
     
