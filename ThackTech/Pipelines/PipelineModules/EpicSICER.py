@@ -69,7 +69,7 @@ class EpicSICER(PipelineModule):
 		if len(control_files) > 0:
 			cmd.extend(['--control']+control_files)
 		
-		with open(os.path.join(cxt.sample.dest, cxt.sample.name+'_results.csv')) as results_out:
+		with open(os.path.join(cxt.sample.dest, cxt.sample.name+'_results.csv'), 'w') as results_out:
 			self._run_subprocess(cmd, stderr=cxt.log, stdout=results_out)
 			
 		
