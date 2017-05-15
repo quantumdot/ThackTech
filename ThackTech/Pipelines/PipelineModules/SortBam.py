@@ -30,7 +30,7 @@ class SortBam(PipelineModule):
 			cxt.log.write("No bam provided, exiting module\n")
 			return
 		
-		sorted_bam = bam.fullpath_with_ext('sorted')
+		sorted_bam = os.path.join(cxt.sample.dest, bam.basename_with_ext('sorted'))
 		
 		sort_cmd = ['samtools', 'sort', '-@', str(self.processors), bam.fullpath, sorted_bam]
 		

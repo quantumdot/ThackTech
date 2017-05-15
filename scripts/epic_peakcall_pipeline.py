@@ -27,12 +27,15 @@ class EpicPipelineSample(PipelineSample):
     def __init__(self, sample):
         PipelineSample.__init__(self, sample['Name'], sample['Genome'], sample['Dest'])
         self.add_file(FileInfo(sample['Treatment'], FileContext.from_origin('treatment')))
+        
         if 'Control' in sample:
             self.add_file(FileInfo(sample['Control'], FileContext.from_origin('control')))
-        if 'Broad' in sample and sample['Broad']:
-            self.set_attribute('broad', True)
+            
         if 'Group' in sample:
             self.set_attribute('group', sample['Group'])
+            
+        self.set_attribute('PE', ('PE' in sample and sample['PE']))
+        self.set_attribute('Broad', ('Broad' in sample and sample['Broad']))
     #end __init__()
 #end PipelineSample
 

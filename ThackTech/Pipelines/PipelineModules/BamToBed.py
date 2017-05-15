@@ -39,9 +39,9 @@ class BamToBed(PipelineModule):
 		if cxt.sample.get_attribute('PE'):
 			cxt.log.write("\t\t-> Conversion in PE mode...\n")
 			cmd.append('-bedpe')
-			outfile = inputfile.fullpath_with_ext('.bedpe')
+			outfile = os.path.join(cxt.sample.dest, inputfile.basename_with_ext('bedpe'))
 		else:
-			outfile = inputfile.fullpath_with_ext('.bed')
+			outfile = os.path.join(cxt.sample.dest, inputfile.basename_with_ext('bed'))
 		
 		if self.get_parameter_value('gzip'):
 			cxt.log.write("\t\t-> Results will be gzipped...\n")
