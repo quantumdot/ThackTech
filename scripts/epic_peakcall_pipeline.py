@@ -101,13 +101,13 @@ def make_peak_calling_and_qc_pipeline(args, additional_args):
     
     
     from ThackTech.Pipelines.PipelineModules import SortBam
-    x = SortBam.SortBam(name='TreatSortBam')
+    x = SortBam.SortBam(name='TreatSortBam', processors=args.threads)
     x.set_parameter('sort_name', True)
     x.set_parameter('overwrite', False)
     x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "treatment")[0])
     pipeline.append_module(x, True)
     
-    x = SortBam.SortBam(name='ControlSortBam')
+    x = SortBam.SortBam(name='ControlSortBam', processors=args.threads)
     x.set_parameter('sort_name', True)
     x.set_parameter('overwrite', False)
     x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == "control")[0])
@@ -124,7 +124,7 @@ def make_peak_calling_and_qc_pipeline(args, additional_args):
     
     
     from ThackTech.Pipelines.PipelineModules import EpicSICER
-    x = EpicSICER.EpicSICER()
+    x = EpicSICER.EpicSICER(processors=args.threads)
     x.set_parameter('window_size', 200)
     x.set_parameter('gaps_allowed', 3)
     x.set_parameter('fdr_cutoff', 0.05)
