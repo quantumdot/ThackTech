@@ -33,7 +33,7 @@ class SortBam(PipelineModule):
 		
 		sorted_bam = os.path.join(cxt.sample.dest, bam.basename_with_ext('sorted'))
 		
-		if os.path.exists(sorted_bam) and self.get_parameter_value('overwrite'):
+		if os.path.exists(sorted_bam) and not self.get_parameter_value('overwrite'):
 			cxt.log.write("Sorted bam appears to already exist, skipping!\n")
 			#we should return the FileInfo though as resolvers may depend on it.
 			return [FileInfo(sorted_bam+'.bam', FileContext.from_module_context(cxt, "sorted_bam"))]
