@@ -47,7 +47,7 @@ class EpicSICER(PipelineModule):
 			'--false-discovery-rate-cutoff', self.get_parameter_value_as_string('fdr_cutoff'),
 			'--sum-bigwig', cxt.sample.dest,
 			'--bigwig', cxt.sample.dest,
-			'--bed', os.path.join(cxt.sample.dest, cxt.sample.name+'peaks.bed'),
+			'--bed', os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed'),
 			'--store-matrix', os.path.join(cxt.sample.dest, cxt.sample.name+'.matrix'),
 		]
 		if self.get_parameter_value('keep_duplicates'):
@@ -75,7 +75,7 @@ class EpicSICER(PipelineModule):
 		
 		results = []
 		results.append(FileInfo(os.path.join(cxt.sample.dest, cxt.sample.name+'_results.csv'), FileContext.from_module_context(cxt, 'results')))
-		results.append(FileInfo(os.path.join(cxt.sample.dest, cxt.sample.name+'peaks.bed'), FileContext.from_module_context(cxt, 'peaks')))
+		results.append(FileInfo(os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed'), FileContext.from_module_context(cxt, 'peaks')))
 		results.append(FileInfo(os.path.join(cxt.sample.dest, cxt.sample.name+'.matrix'), FileContext.from_module_context(cxt, 'matrix')))
 		results.append(FileInfo(os.path.join(cxt.sample.dest, 'chip_sum.bw'), FileContext.from_module_context(cxt, 'chip_sum_signal')))
 		results.append(FileInfo(os.path.join(cxt.sample.dest, 'input_sum.bw'), FileContext.from_module_context(cxt, 'input_sum_signal')))
