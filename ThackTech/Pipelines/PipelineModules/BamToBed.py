@@ -3,6 +3,7 @@ import subprocess
 import gzip
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
+from ThackTech import filetools
 
 
 class BamToBed(PipelineModule):
@@ -45,10 +46,18 @@ class BamToBed(PipelineModule):
 		
 		if self.get_parameter_value('gzip'):
 			cxt.log.write("\t\t-> Results will be gzipped...\n")
-			outhandle = gzip.open(outfile+'.gz', 'wb')
-		else:
-			outhandle = open(outfile, 'w')
-			
+			outfile += '.gz'
+		
+		if os.path.exists(outfile):
+			cxt.log.write("Bed converted from BMA appears to already exist, skipping!\n")
+			#we should return the FileInfo though as resolvers may depend on it.
+			return [FileInfo(outfile, FileContext.from_module_context(cxt, "bed_from_bam"))]
+		
+		cxt.log.write("..............................................\n")
+		cxt.log.write(" ".join(cmd))
+		cxt.log.write("\n..............................................\n")
+		cxt.log.flush()
+		outhandle = filetools.open_any(outfile, 'wb')	
 		p = subprocess.Popen(cmd, stdout=outhandle, stderr=cxt.log)
 		p.communicate()
 		outhandle.close()

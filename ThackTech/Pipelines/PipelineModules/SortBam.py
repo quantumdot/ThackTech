@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
+from ThackTech import filetools
 
 
 class SortBam(PipelineModule):
@@ -31,6 +32,11 @@ class SortBam(PipelineModule):
 			return
 		
 		sorted_bam = os.path.join(cxt.sample.dest, bam.basename_with_ext('sorted'))
+		
+		if os.path.exists(sorted_bam) and self.get_parameter_value('overwrite'):
+			cxt.log.write("Sorted bam appears to already exist, skipping!\n")
+			#we should return the FileInfo though as resolvers may depend on it.
+			return [FileInfo(sorted_bam+'.bam', FileContext.from_module_context(cxt, "sorted_bam"))]
 		
 		sort_cmd = ['samtools', 'sort', '-@', str(self.processors), bam.fullpath, sorted_bam]
 		

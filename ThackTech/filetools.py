@@ -1,5 +1,6 @@
 import os
 import sys
+import gzip
 import errno
 import tempfile
 import subprocess
@@ -46,6 +47,13 @@ def basename_noext(path, complete=False):
                 return new_base
             base = new_base
 #end basename_noext()
+
+def open_any(path, mode, **kwargs):
+    if path.endswith('.gz'):
+        return gzip.open(path, mode, **kwargs)
+    else:
+        return open(path, mode, **kwargs)
+#end open_any()
 
 def get_known_compression_ext():
     ''' Return a list of known and supported compressed file extensions. Used by is_compressed() and extract() '''
