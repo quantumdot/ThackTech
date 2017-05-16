@@ -63,11 +63,11 @@ class EpicSICER(PipelineModule):
 			cmd.extend(['--fragment-size', self.get_parameter_value_as_string('fragment_size')])
 		
 		treatment_files = self.resolve_input('treatments', cxt)
-		cmd.extend(['--treatment']+treatment_files)
+		cmd.extend(['--treatment'] + [f.fullpath for f in treatment_files])
 		
 		control_files = self.resolve_input('controls', cxt)
 		if len(control_files) > 0:
-			cmd.extend(['--control']+control_files)
+			cmd.extend(['--control'] + [f.fullpath for f in control_files])
 		
 		cxt.log.write("\t-> Performing peak calling with Epic......")
 		cxt.log.write("\n..............................................\n")

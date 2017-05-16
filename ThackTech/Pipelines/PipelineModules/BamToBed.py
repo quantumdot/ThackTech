@@ -51,6 +51,7 @@ class BamToBed(PipelineModule):
 			
 		p = subprocess.Popen(cmd, stdout=outhandle, stderr=cxt.log)
 		p.communicate()
+		outhandle.close()
 		
 		outbam = FileInfo(outfile, FileContext.from_module_context(cxt, "bed_from_bam"))
 		return [outbam]
