@@ -35,10 +35,6 @@ class EpicSICER(PipelineModule):
 	
 	def run(self, cxt):
 		
-		filetools.ensure_dir(os.path.join(cxt.sample.dest, 'signal'))
-		filetools.ensure_dir(os.path.join(cxt.sample.dest, 'sum_signal'))
-		
-		
 		cmd = [
 			'epic',
 			'--number-cores', str(self.processors),
@@ -49,10 +45,10 @@ class EpicSICER(PipelineModule):
 			'--window-size', self.get_parameter_value_as_string('window_size'),
 			'--gaps-allowed', self.get_parameter_value_as_string('gaps_allowed'),
 			'--false-discovery-rate-cutoff', self.get_parameter_value_as_string('fdr_cutoff'),
-			'--sum-bigwig', os.path.join(cxt.sample.dest, 'sum_signal'),
-			'--bigwig', os.path.join(cxt.sample.dest, 'signal'),
-			'--bed', os.path.join(cxt.sample.dest, 'bed'),
-			'--store-matrix', os.path.join(cxt.sample.dest, 'matrix', cxt.sample.name+'.matrix'),
+			'--sum-bigwig', cxt.sample.dest,
+			'--bigwig', cxt.sample.dest,
+			'--bed', os.path.join(cxt.sample.dest, cxt.sample.name+'peaks.bed'),
+			'--store-matrix', os.path.join(cxt.sample.dest, cxt.sample.name+'.matrix'),
 		]
 		if self.get_parameter_value('keep_duplicates'):
 			cmd.append('--keep-duplicates')
@@ -76,7 +72,20 @@ class EpicSICER(PipelineModule):
 		cxt.log.flush()
 		with open(os.path.join(cxt.sample.dest, cxt.sample.name+'_results.csv'), 'w') as results_out:
 			self._run_subprocess(cmd, stderr=cxt.log, stdout=results_out)
-			
 		
+		results = []
+		results.append(FileInfo(os.path.join(cxt.sample.dest, cxt.sample.name+'_results.csv'), FileContext.from_module_context(cxt, 'results')))
+		results.append(FileInfo(os.path.join(cxt.sample.dest, cxt.sample.name+'peaks.bed'), FileContext.from_module_context(cxt, 'peaks')))
+		results.append(FileInfo(os.path.join(cxt.sample.dest, cxt.sample.name+'.matrix'), FileContext.from_module_context(cxt, 'matrix')))
+		results.append(FileInfo(os.path.join(cxt.sample.dest, 'chip_sum.bw'), FileContext.from_module_context(cxt, 'chip_sum_signal')))
+		results.append(FileInfo(os.path.join(cxt.sample.dest, 'input_sum.bw'), FileContext.from_module_context(cxt, 'input_sum_signal')))
+		
+		for f in treatment_files:
+			results.append(FileInfo(os.path.join(cxt.sample.dest, f.basename+'.bw'), FileContext.from_module_context(cxt, 'signal')))
+		
+		if len(control_files) > 0:
+			for f in control_files:
+				results.append(FileInfo(os.path.join(cxt.sample.dest, f.basename+'.bw'), FileContext.from_module_context(cxt, 'signal')))
+		return results
 	#end run()
 #end class SamToBam
