@@ -268,7 +268,7 @@ def make_peak_calling_and_qc_pipeline(args):
     from ThackTech.Pipelines.PipelineModules import GeneratePlainBed
     x = GeneratePlainBed.GeneratePlainBed()
     x.set_resolver('encode_beds', lambda cxt: cxt.sample.find_files(lambda f: f.ext in ['.narrowPeak', '.broadPeak', '.gappedPeak']))
-    pipeline.append_module()
+    pipeline.append_module(x)
     
     from ThackTech.Pipelines.PipelineModules import ConvertBedgraphToBigWig
     x = ConvertBedgraphToBigWig.ConvertBedgraphToBigWig()
