@@ -25,7 +25,7 @@ class GeneratePlainBed(PipelineModule):
 			outbed = os.path.join(cxt.sample.dest, path.basename_with_ext('bed'))
 			
 			with open(path.fullpath, 'r') as encodepeaks, open(outbed, 'w') as outfile:
-				cmd = ['awk', '-F', '\t', '-v', 'OFS="\t"', "'{print "+ext_to_ranges[path.ext]+"}"]
+				cmd = ['awk', r'{OFS="\t"; print '+ext_to_ranges[path.ext]+'}']
 				cxt.log.write('Converting {} to BED6 format and writing to {}....'.format(path.fullpath, outbed))
 				cxt.log.write("\n..............................................\n")
 				cxt.log.write(" ".join(cmd))

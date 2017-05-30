@@ -29,6 +29,10 @@ class BamToRpkmNormBigWig(PipelineModule):
 			cxt.log.flush()
 			return
 		
+		if isinstance(bam, list):
+			cxt.log.write('WARNING: resolver returned a list with {} item(s), but this module only supports one input from this resolver. Taking the first item.\n'.format(len(bam)))
+			bam = bam[0]
+		
 		out_ext = ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw')
 		#dest = cxt.sample.get_attribute('origional_dest') if cxt.sample.has_attribute('origional_dest') else cxt.sample.dest
 		sample_basename = bam.basename_with_ext('rpkm_norm.{}'.format(out_ext))
