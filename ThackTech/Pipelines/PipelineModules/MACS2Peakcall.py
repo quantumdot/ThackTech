@@ -45,7 +45,7 @@ class MACS2Peakcall(PipelineModule):
 		macs_args.extend(['--treatment'] + [f.fullpath for f in treatments])
 		
 		controls = self.resolve_input('controls', cxt)
-		if len(controls) > 0:
+		if controls is not None and len(controls) > 0:
 			macs_args.extend(['--control'] + [f.fullpath for f in controls])
 
 		
@@ -63,16 +63,25 @@ class MACS2Peakcall(PipelineModule):
 		cxt.log.flush()		
 
 		self._run_subprocess(macs_args, cwd=cxt.sample.dest, stderr=subprocess.STDOUT, stdout=cxt.log)
+		output_files = {}
 		
-		output_files = {
-			'cutoff_analysis':	os.path.join(cxt.sample.dest, cxt.sample.name+'_cutoff_analysis.txt'),
-			'treatment_signal':	os.path.join(cxt.sample.dest, cxt.sample.name+'_treat_pileup.bdg'),
-			'peaks_xls':		os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.xls'),
-		}
+		
 		if os.path.isfile(os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')):
 			output_files['model_Rscript'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')
-			
-		if len(controls) > 0:
+			cxt.log.write('Generating MACS model figure.....\n')
+			cxt.log.flush()
+			output_files['model_figure'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.pdf')
+			self._run_subprocess(['Rscript', '--vanilla', output_files['model_Rscript']], stderr=subprocess.STDOUT, stdout=cxt.log, cwd=cxt.sample.dest)
+		else:
+			cxt.log.write('Skipping MACS model figure generation because model R script is not present.....\n')
+			cxt.log.flush()
+		
+		
+		output_files['cutoff_analysis'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_cutoff_analysis.txt')
+		output_files['treatment_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_treat_pileup.bdg')
+		output_files['peaks_xls'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.xls')
+		
+		if controls is not None and len(controls) > 0:
 			output_files['control_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_control_lambda.bdg')
 			
 		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):

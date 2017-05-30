@@ -271,8 +271,6 @@ def make_peak_calling_and_qc_pipeline(args):
             x.set_resolver('controls', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.cxt.role == 'control'))
             pipeline.append_module(x, critical=True)
             
-        from ThackTech.Pipelines.PipelineModules import GenerateMACsModelFigure
-        pipeline.append_module(GenerateMACsModelFigure.GenerateMACsModelFigure())
         
     from ThackTech.Pipelines.PipelineModules import GeneratePlainBed
     pipeline.append_module(GeneratePlainBed.GeneratePlainBed())

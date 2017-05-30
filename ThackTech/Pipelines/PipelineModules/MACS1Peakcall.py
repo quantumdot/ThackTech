@@ -14,8 +14,8 @@ class MACS1Peakcall(PipelineModule):
 		self.add_parameter(ModuleParameter('tsize',		 int, 	None, nullable=True,	desc="Tag size. This will overide the auto detected tag size."))
 		self.add_parameter(ModuleParameter('pvalue',	 float,	1e-5, desc="Pvalue cutoff for peak detection."))
 		
-		self._name_resolver('treatment')
-		self._name_resolver('control')
+		self._name_resolver('treatments')
+		self._name_resolver('controls')
 	#end __init__()
 	
 	def tool_versions(self):
@@ -25,25 +25,27 @@ class MACS1Peakcall(PipelineModule):
 	#end tool_versions()
 	
 	def run(self, cxt):
-		treatment = self.resolve_input('treatment', cxt)
-		control = self.resolve_input('control', cxt)
 
 		macs_args = [
 			'macs',
 			'--name', cxt.sample.name,
-			'--gsize', cxt.sample.genome.gsize,
-			'--format', self.get_file_format(treatment),
+			'--gsize', str(cxt.sample.genome.gsize),
+			#'--format', self.get_file_format(treatment),
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
 			'--verbose', '2', 
 			'--single-profile', 
 			'--diag',
 			('--bdg' if self.get_parameter_value_as_string('sigout') == 'bdg' else '--wig'),
-			'--treatment', treatment.fullpath
 		]
+		
+		treatments = self.resolve_input('treatments', cxt)
+		macs_args.extend(['--treatment'] + [f.fullpath for f in treatments])
+		
+		controls = self.resolve_input('controls', cxt)
+		if controls is not None and len(controls) > 0:
+			macs_args.extend(['--control'] + [f.fullpath for f in controls])
 
-		if control is not None:
-			macs_args += [ '--control', control.fullpath ]
 			
 		cxt.log.write("Performing peak calling with MACS......\n")
 		cxt.log.write("-> "+subprocess.check_output(['macs', '--version'], stderr=subprocess.STDOUT)+"")
@@ -66,10 +68,20 @@ class MACS1Peakcall(PipelineModule):
 			'summits':			os.path.join(cxt.sample.dest, cxt.sample.name+'_summits.bed'),
 			'treatment_signal':	os.path.join(cxt.sample.dest, cxt.sample.name+signal_folder, 'treat', cxt.sample.name+'_treat_afterfiting_all'+signal_output_ext)
 		}
+		
 		if os.path.isfile(os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')):
 			output_files['model_Rscript'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')
-		if control is not None:
+			cxt.log.write('Generating MACS model figure.....\n')
+			cxt.log.flush()
+			output_files['model_figure'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.pdf')
+			self._run_subprocess(['Rscript', '--vanilla', output_files['model_Rscript']], stderr=subprocess.STDOUT, stdout=cxt.log, cwd=cxt.sample.dest)
+		else:
+			cxt.log.write('Skipping MACS model figure generation because model R script is not present.....\n')
+			cxt.log.flush()
+
+		if controls is not None and len(controls) > 0:
 			output_files['control_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+signal_folder, 'control', cxt.sample.name+'_control_afterfiting_all'+signal_output_ext)
+		
 		return output_files
 	#end run()
 	
