@@ -9,7 +9,9 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class FastQC(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(FastQC, self).__init__('FastQC', 'FASTQ Quality Metrics', **kwargs)
+		super_args = dict(name='FastQC', short_description='FASTQ Quality Metrics')
+		super_args.update(**kwargs)
+		super(FastQC, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('kmers', int, 7, desc="Specifies the length of Kmer to look for in the Kmer content module. Specified Kmer length must be between 2 and 10."))
 		self.add_parameter(ModuleParameter('limits', str, None, nullable=True, desc="Specify a location for the limits file (--limits option in fastqc)"))

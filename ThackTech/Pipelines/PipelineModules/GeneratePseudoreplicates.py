@@ -8,8 +8,12 @@ import pysam
 class GeneratePseudoreplicates(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(GeneratePseudoreplicates, self).__init__('Pseudoreplicates', 'Generate Pseudoreplicates', **kwargs)
+		super_args = dict(name='Pseudoreplicates', short_description='Generate Pseudoreplicates')
+		super_args.update(**kwargs)
+		super(GeneratePseudoreplicates, self).__init__(**super_args)
+		
 		self._name_resolver('alignments')
+		
 		self.add_parameter(ModuleParameter('nreplicates', int, 2))
 	#end __init__()
 	

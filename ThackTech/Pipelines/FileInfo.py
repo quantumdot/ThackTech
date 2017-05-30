@@ -116,8 +116,21 @@ class FileInfo(object):
 		return self.context
 	
 	@property
+	def isfile(self):
+		return os.path.isfile(self.__fullpath)
+	
+	@property
+	def exists(self):
+		return os.path.exists(self.__fullpath)
+	
+	@property
 	def fullpath(self):
 		"""Gets the fully-qualified path to this file
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.fullpath
+		>>> '/path/to/some/file.txt.gz'
 		"""
 		return os.path.abspath(self.__fullpath)
 	
@@ -125,6 +138,11 @@ class FileInfo(object):
 	def dirname(self):
 		"""Gets the directory where this file is located
 		Equivelent to os.path.dirname()
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.dirname
+		>>> '/path/to/some'
 		"""
 		return os.path.dirname(self.__fullpath)
 	
@@ -132,6 +150,11 @@ class FileInfo(object):
 	def basename(self):
 		"""Gets the name of this file, including the file extension
 		Equivelent to os.path.basename()
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.basename
+		>>> 'file.txt.gz'
 		"""
 		return os.path.basename(self.__fullpath)
 		
@@ -139,6 +162,11 @@ class FileInfo(object):
 	def filename(self):
 		"""Gets the name of this file, without the terminal file extension
 		Equivelent to os.path.splitext(os.path.basename())[0]
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.filename
+		>>> 'file.txt'
 		"""
 		return os.path.splitext(self.basename)[0]
 	
@@ -147,13 +175,23 @@ class FileInfo(object):
 		"""Gets the name of this file, without ANY file extensions
 		Equivelent to looping os.path.splitext(os.path.basename())[0]
 		until no extensions are remaining
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.fullpath
+		>>> 'file'
 		"""
-		return filetools.basename_noext(self.fullpath)
+		return filetools.basename_noext(self.fullpath, complete=True)
 		
 	@property
 	def ext(self):
 		"""Gets the extension of this file
 		Equivelent to os.path.splitext()[1]
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.fullpath
+		>>> '.gz'
 		"""
 		return os.path.splitext(self.basename)[1]
 	
@@ -168,7 +206,11 @@ class FileInfo(object):
 		
 		Parameters:
 			new_extension: string file extension to replace terminal file extension with
-			
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.fullpath_with_ext('bz2')
+		>>> '/path/to/some/file.txt.bz2'
 		"""
 		return os.path.join(self.dirname, self.basename_with_ext(new_extension))
 	
@@ -177,7 +219,11 @@ class FileInfo(object):
 		
 		Parameters:
 			new_extension: string file extension to replace terminal file extension with
-			
+		
+		example:
+		>>> f = FileInfo('/path/to/some/file.txt.gz')
+		>>> f.basename_with_ext('bz2')
+		>>> 'file.txt.bz2'
 		"""
 		return "{}.{}".format(self.filename, new_extension)
 	
@@ -197,7 +243,7 @@ class FileInfo(object):
 	#end __str__()
 	
 	def __repr__(self):
-		return "FileInfo(%s)" % (self.fullpath,)
+		return "FileInfo('%s')" % (self.fullpath,)
 	#end __repr__()
 		
 #end class FileInfo

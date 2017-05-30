@@ -1,16 +1,16 @@
 import os
 import subprocess
-import gzip
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 from ThackTech import filetools
-from IPython.utils.io import stdout
 
 
 class EpicSICER(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(EpicSICER, self).__init__('EpicSICER', 'Peak Calling with Epic (SICER-based)', **kwargs)
+		super_args = dict(name='EpicSICER', short_description='Peak Calling with Epic (SICER-based)')
+		super_args.update(**kwargs)
+		super(EpicSICER, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('keep_duplicates', bool, False, desc="Keep reads mapping to the same position on the same strand within a library."))
 		self.add_parameter(ModuleParameter('window_size', int, 200, desc="Size of the windows to scan the genome. WINDOW_SIZE is the smallest possible island."))

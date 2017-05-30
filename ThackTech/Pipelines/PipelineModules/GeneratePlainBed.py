@@ -4,29 +4,35 @@ from ThackTech.Pipelines import PipelineModule
 
 class GeneratePlainBed(PipelineModule):
 	def __init__(self, **kwargs):
-		super(GeneratePlainBed, self).__init__('PlainBed', 'Generate bed from peaks', **kwargs)
+		super_args = dict(name='PlainBed', short_description='Generate bed6 from peaks')
+		super_args.update(**kwargs)
+		super(GeneratePlainBed, self).__init__(**super_args)
+		
+		self._name_resolver('encode_beds')
 	#end __init__()
-
-	def supported_types(self):
-		return None
-	#end supported_types()
 	
 	def run(self, cxt):
-		try_paths = [
-			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.narrowPeak'),
-			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.broadPeak'),
-			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.gappedPeak')
-		]
+		try_paths = self.resolve_input('encode_beds', cxt)
 		
+		ext_to_ranges = {
+			'.narrowPeak': '$1, $2, $3, $4, $7, $6',
+			'.broadPeak':  '$1, $2, $3, $4, $7, $6',
+			'.gappedPeak': '$1, $2, $3, $4, $13, $6'	
+		}
+		
+		output_files = {}
 		for path in try_paths:
-			if os.path.isfile(path):
-				with open(path, 'r') as encodepeaks:
-					with open(os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed'), 'w') as outfile:
-						self._run_subprocess(['cut', '-f', '1-6'], stdin=encodepeaks, stderr=cxt.log, stdout=outfile, cwd=cxt.sample.dest)
-				return {
-					'simple_bed': os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed')
-				}
-		cxt.log.write('no conversion necessary...\n')
-		cxt.log.flush()
+			outbed = os.path.join(cxt.sample.dest, path.basename_with_ext('bed'))
+			
+			with open(path, 'r') as encodepeaks, open(outbed, 'w') as outfile:
+				cmd = ['awk', '-F', '\t', '-v', 'OFS="\t"', "'{print "+ext_to_ranges[path.ext]+"}"]
+				cxt.log.write('Converting {} to BED6 format and writing to {}....'.format(path.fullpath, outbed))
+				cxt.log.write("\n..............................................\n")
+				cxt.log.write(" ".join(cmd))
+				cxt.log.write("\n..............................................\n")
+				cxt.log.flush()
+				self._run_subprocess(cmd, stdin=encodepeaks, stderr=cxt.log, stdout=outfile, cwd=cxt.sample.dest)
+				
+			output_files[path.cxt.role] = outbed
 	#end run()
 #end class GeneratePlainBed

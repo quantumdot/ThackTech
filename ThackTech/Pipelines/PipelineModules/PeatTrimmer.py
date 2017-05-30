@@ -8,7 +8,9 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class PeatTrimmer(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(PeatTrimmer, self).__init__('PEAT', 'Trim reads with PEAT', **kwargs)
+		super_args = dict(name='PEAT', short_description='Trim reads with PEAT')
+		super_args.update(**kwargs)
+		super(PeatTrimmer, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('l', int, 30, desc="Minimum gene fragment length, i.e. the fragment length for reverse complement check"))
 		self.add_parameter(ModuleParameter('r', float, 0.3, desc="Mismatch rate applied in first stage reverse complement scan"))

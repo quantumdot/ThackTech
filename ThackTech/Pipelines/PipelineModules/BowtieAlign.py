@@ -10,7 +10,9 @@ from ThackTech import filetools
 class BowtieAlign(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(BowtieAlign, self).__init__('BowtieAlign', 'Alignment using Bowtie', **kwargs)
+		super_args = dict(name='BowtieAlign', short_description='Alignment using Bowtie')
+		super_args.update(**kwargs)
+		super(BowtieAlign, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('bowtie_path', 		str, 	'bowtie',	desc="Path to the bowtie executable."))
 		

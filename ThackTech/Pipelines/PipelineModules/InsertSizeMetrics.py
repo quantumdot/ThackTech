@@ -8,7 +8,9 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class InsertSizeMetrics(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(InsertSizeMetrics, self).__init__('InsertSizeMetrics', 'Calculating Insert Size Metrics', **kwargs)
+		super_args = dict(name='InsertSizeMetrics', short_description='Calculating Insert Size Metrics')
+		super_args.update(**kwargs)
+		super(InsertSizeMetrics, self).__init__(**super_args)
 		
 		self._name_resolver('bam')
 	#end __init__()

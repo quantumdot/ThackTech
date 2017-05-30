@@ -5,8 +5,12 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class DecompressFiles(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(DecompressFiles, self).__init__('DecompressFiles', 'Decompress Files', **kwargs)
+		super_args = dict(name='DecompressFiles', short_description='Decompress Files')
+		super_args.update(**kwargs)
+		super(DecompressFiles, self).__init__(**super_args)
+		
 		self._name_resolver('files')
+		
 		self.add_parameter(ModuleParameter('overwrite',	bool, False, desc="Overwrite the decompressed file if it already exists."))
 	#end __init__()
 

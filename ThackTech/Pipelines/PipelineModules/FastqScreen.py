@@ -9,7 +9,9 @@ from ThackTech.Pipelines.ModuleParameter import ModuleParameter
 class FastqScreen(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(FastqScreen, self).__init__('FastqScreen', 'Screen FASTQ against reference genomes', **kwargs)
+		super_args = dict(name='FastqScreen', short_description='Screen FASTQ against reference genomes')
+		super_args.update(**kwargs)
+		super(FastqScreen, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('aligner', str, 'bowtie', choices=['bowtie', 'bowtie2', 'bwa'], desc="Aligner to use for the mapping"))
 		self.add_parameter(ModuleParameter('conf', str, None, nullable=True, desc="Specify a location for the configuration (other than default)"))

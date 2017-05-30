@@ -9,7 +9,9 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class BamFingerprint(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(BamFingerprint, self).__init__('BamFingerprint', 'Bam Fingerprint', **kwargs)
+		super_args = dict(name='BamFingerprint', short_description='Bam Fingerprint')
+		super_args.update(**kwargs)
+		super(BamFingerprint, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('plotFileFormat', str, 'pdf', choices=['png', 'pdf', 'svg', 'eps'], desc="Plot output format"))
 		self.add_parameter(ModuleParameter('outputRawCounts', bool, True, desc="Output raw count data"))

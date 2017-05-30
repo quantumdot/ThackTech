@@ -10,13 +10,6 @@ from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_r
 #manifest should be structured as follows (with headers)
 #Name    Group    Treatment    Control    Genome    Broad    Dest
 
-gopts = {
-    'shm_enabled': False,
-    'conv_bdg_to_bw': True,
-}
-
-
-
 
 class MacsPipelineSample(PipelineSample):
 
@@ -273,35 +266,44 @@ def make_peak_calling_and_qc_pipeline(args):
             
         
     from ThackTech.Pipelines.PipelineModules import GeneratePlainBed
-    pipeline.append_module(GeneratePlainBed.GeneratePlainBed())
+    x = GeneratePlainBed.GeneratePlainBed()
+    x.set_resolver('encode_beds', lambda cxt: cxt.sample.find_files(lambda f: f.ext in ['.narrowPeak', '.broadPeak', '.gappedPeak']))
+    pipeline.append_module()
     
-    if (args.sigout == 'bdg' or args.macs_version == 'macs2') and gopts['conv_bdg_to_bw']:
-        from ThackTech.Pipelines.PipelineModules import ConvertBedgraphToBigWig
-        pipeline.append_module(ConvertBedgraphToBigWig.ConvertBedgraphToBigWig())
+    from ThackTech.Pipelines.PipelineModules import ConvertBedgraphToBigWig
+    x = ConvertBedgraphToBigWig.ConvertBedgraphToBigWig()
+    x.set_resolver('bedgraphs', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role in ['treatment_signal', 'control_signal'] and f.ext == '.bdg'))
+    pipeline.append_module(x)
         
-    if 'chance' in args.qc:
-        from ThackTech.Pipelines.PipelineModules import ChanceAnalysis
-        pipeline.append_module(ChanceAnalysis.ChanceAnalysis())
+    #if 'chance' in args.qc:
+    #    from ThackTech.Pipelines.PipelineModules import ChanceAnalysis
+    #    pipeline.append_module(ChanceAnalysis.ChanceAnalysis())
         
     if 'fingerprint' in args.qc:
         from ThackTech.Pipelines.PipelineModules import BamFingerprint
-        pipeline.append_module(BamFingerprint.BamFingerprint())
+        x = BamFingerprint.BamFingerprint(processors=args.threads)
+        x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam'))
+        pipeline.append_module(x)
         
     if 'frip' in args.qc:
         from ThackTech.Pipelines.PipelineModules import FRiPAnalysis
         x = FRiPAnalysis.FRiPAnalysis()
-        def resolve_frip_input(s):
-            if s.has_file_group('MACS1'):
-                return os.path.join(s.dest, s.name+'_peaks.bed')
-            elif s.has_file_group('MACS2'):
-                if s.has_attribute('broad') and s.get_attribute('broad'):
-                    return os.path.join(s.dest, s.name+'_peaks.broadPeak')
-                else:
-                    return os.path.join(s.dest, s.name+'_peaks.narrowPeak')
-            else:
-                return None
+        def resolve_frip_input(cxt):
+            finders = [
+                lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.narrowPeak'),
+                lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.broadPeak'),
+                lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.bed')
+            ]
+            for finder in finders:
+                results = finder(cxt)
+                if results is not None and len(results) > 0:
+                    for r in results:
+                        if 'peaks' in r.cxt.role.lower():
+                            return r
+            return None
         #end resolve_frip_input()
-        x.set_resolver('peaks', resolve_frip_input)
+        x.set_resolver('bed', resolve_frip_input)
+        x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam'))
         pipeline.append_module(x)
         
     if args.shm:
@@ -310,8 +312,12 @@ def make_peak_calling_and_qc_pipeline(args):
         
     if args.rpkmbw:
         from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
-        x = BamToRpkmNormBigWig.BamToRpkmNormBigWig()
-        x.set_resolver('bam', lambda s: s.get_file('source', 'treatment'))
+        x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Treatment_RPKM_Norm")
+        x.set_resolver('bam',  lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam' and f.cxt.role == 'treatment'))
+        pipeline.append_module(x) 
+        
+        x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Control_RPKM_Norm")
+        x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam' and f.cxt.role == 'control'))
         pipeline.append_module(x)    
         
     from ThackTech.Pipelines.PipelineModules import OutputManifest

@@ -5,7 +5,9 @@ from ThackTech.Pipelines import PipelineModule
 class RemoveDecompressedFiles(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(RemoveDecompressedFiles, self).__init__('RemoveDecompressedFiles', 'Remove Decompressed Files', **kwargs)
+		super_args = dict(name='RemoveDecompressedFiles', short_description='Remove Decompressed Files')
+		super_args.update(**kwargs)
+		super(RemoveDecompressedFiles, self).__init__(**super_args)
 	#end __init__()
 	
 	def run(self, cxt):

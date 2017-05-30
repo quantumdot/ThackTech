@@ -7,7 +7,10 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class SamToBam(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(SamToBam, self).__init__('SamToBam', 'Convert SAM to BAM', **kwargs)
+		super_args = dict(name='SamToBam', short_description='Convert SAM to BAM')
+		super_args.update(**kwargs)
+		super(SamToBam, self).__init__(**super_args)
+		
 		self._name_resolver('sam')
 	#end __init__()
 	

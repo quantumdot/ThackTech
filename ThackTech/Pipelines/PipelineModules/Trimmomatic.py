@@ -8,7 +8,9 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class Trimmomatic(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(Trimmomatic, self).__init__('Trimmomatic', 'Trim reads with Trimmomatic', **kwargs)
+		super_args = dict(name='Trimmomatic', short_description='Trim reads with Trimmomatic')
+		super_args.update(**kwargs)
+		super(Trimmomatic, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('trim_adapt_fa_SE', str, '/mnt/ref/adapters/TruSeq3-SE.fa'))
 		self.add_parameter(ModuleParameter('trim_adapt_fa_PE', str, '/mnt/ref/adapters/TruSeq3-PE-2.fa'))

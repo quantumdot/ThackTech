@@ -9,7 +9,10 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class PbcAnalysis(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(PbcAnalysis, self).__init__('PBC', 'PCR Bottleneck Analysis', **kwargs)
+		super_args = dict(name='PBC', short_description='PCR Bottleneck Analysis')
+		super_args.update(**kwargs)
+		super(PbcAnalysis, self).__init__(**super_args)
+		
 		self._name_resolver('bam')
 	#end __init__()
 	

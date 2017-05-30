@@ -5,7 +5,9 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class Sleep(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(Sleep, self).__init__('Sleep', 'Take a nap.', **kwargs)
+		super_args = dict(name='Sleep', short_description='Take a nap.')
+		super_args.update(**kwargs)
+		super(Sleep, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep for."))
 	#end __init__()

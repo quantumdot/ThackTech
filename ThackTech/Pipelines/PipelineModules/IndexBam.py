@@ -8,7 +8,10 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class IndexBam(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(IndexBam, self).__init__('IndexBam', 'Index BAM file', **kwargs)
+		super_args = dict(name='IndexBam', short_description='Index BAM file')
+		super_args.update(**kwargs)
+		super(IndexBam, self).__init__(**super_args)
+
 		self._name_resolver('alignments')
 	#end __init__()
 	

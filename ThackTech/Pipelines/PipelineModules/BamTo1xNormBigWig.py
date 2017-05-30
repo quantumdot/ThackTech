@@ -6,7 +6,9 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class RPKMNormBigWig(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(RPKMNormBigWig, self).__init__('RPKMBigwig', 'RPKM Norm BigWig', **kwargs)
+		super_args = dict(name='RPKMBigwig', short_description='RPKM Norm BigWig')
+		super_args.update(**kwargs)
+		super(RPKMNormBigWig, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('output_format', str, 	'bigwig',	desc="Output file type. Either 'bigwig' or 'bedgraph'."))
 		self.add_parameter(ModuleParameter('bin_size', 		int, 	1,			desc="Size of the bins, in bases, for the output of the bigwig/bedgraph file."))

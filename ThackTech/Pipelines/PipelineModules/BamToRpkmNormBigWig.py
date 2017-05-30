@@ -6,7 +6,9 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class BamToRpkmNormBigWig(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(BamToRpkmNormBigWig, self).__init__('BamToRpkmNormBigWig', 'Make RPKM Norm BigWig from BAM', **kwargs)
+		super_args = dict(name='BamToRpkmNormBigWig', short_description='Make RPKM Norm BigWig from BAM')
+		super_args.update(**kwargs)
+		super(BamToRpkmNormBigWig, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('output_format', str, 	'bigwig',	desc="Output file type. Either 'bigwig' or 'bedgraph'."))
 		self.add_parameter(ModuleParameter('bin_size', 		int, 	1,			desc="Size of the bins, in bases, for the output of the bigwig/bedgraph file."))
@@ -22,6 +24,11 @@ class BamToRpkmNormBigWig(PipelineModule):
 	
 	def run(self, cxt):
 		bam = self.resolve_input('bam', cxt)
+		if bam is None or len(bam) <= 0:
+			cxt.log.write('No file returned for resolver "bam", exiting...\n')
+			cxt.log.flush()
+			return
+		
 		out_ext = ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw')
 		#dest = cxt.sample.get_attribute('origional_dest') if cxt.sample.has_attribute('origional_dest') else cxt.sample.dest
 		sample_basename = bam.basename_with_ext('rpkm_norm.{}'.format(out_ext))

@@ -7,7 +7,9 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class ReadOutputManifest(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(ReadOutputManifest, self).__init__('ReadOutputManifest', 'Read Output Manifest', **kwargs)
+		super_args = dict(name='ReadOutputManifest', short_description='Read Output Manifest')
+		super_args.update(**kwargs)
+		super(ReadOutputManifest, self).__init__(**super_args)
 	#end __init__()
 	
 	def run(self, cxt):

@@ -7,47 +7,54 @@ from ThackTech.Pipelines import PipelineModule
 class FRiPAnalysis(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(FRiPAnalysis, self).__init__('FRiP', 'Fraction of Reads in Peaks', **kwargs)
+		super_args = dict(name='FRiP', short_description='Fraction of Reads in Peaks')
+		super_args.update(**kwargs)
+		super(FRiPAnalysis, self).__init__(**super_args)
 		
-		self._name_resolver('peaks')
+		self._name_resolver('bed')
+		self._name_resolver('bams')
 	#end __init__()
-
-	def supported_types(self):
-		return ['bam', 'bampe']
-	#end supported_types()
 	
 	def run(self, cxt):
-		dest_dir = os.path.join(cxt.sample.dest, 'FRiP')
-		filetools.ensure_dir(dest_dir)
-		with open(os.path.join(dest_dir, cxt.sample.name+'.FRiP.txt'), 'w') as results_file:
-			#results_file.write("FRiP (Fraction of Reads in Peaks) for cxt.sample group %s\n" % (cxt.sample.name,))
-			#results_file.write("================================================================================\n")
-			results_file.write("cxt.sample\tType\tMapped_Reads\tReads_In_Bed_Regions\tFRiP\n")
+		
+		peak_file = self.resolve_input('bed', cxt)
+		if not peak_file.isfile:
+			raise IOError('Unable to locate peak file {}!'.format(peak_file.fullpath))
+		peak_type = peak_file.ext.lower()
+		if peak_type == '.bed':
+			cut_col = 6
+		elif peak_type == '.broadpeak':
+			cut_col = 10
+		elif peak_type == '.narrowpeak':
+			cut_col = 11
+		else:
+			cxt.log.write("Peak file {} not in correct format. Should be one of bed, broadpeak, or narrowpeak\n".format(peak_file.fullpath))
+			return False
+		
+		
+		bam_files = self.resolve_input('bams', cxt)
+		
+		frip_output_path = os.path.join(cxt.sample.dest, cxt.sample.name+'.FRiP.txt')
+		with open(frip_output_path, 'w') as results_file:
+			results_file.write("Sample\tRole\tMapped_Reads\tReads_In_Bed_Regions\tFRiP\n")
 			
-			for label, file_path in cxt.sample.get_file_group('source').iteritems():
-				cxt.log.write("Computing FRiP for %s\n" % (label,))
+			for finfo in bam_files:
+				cxt.log.write("Computing FRiP for {}\n".format(finfo.fullpath))
 				cxt.log.flush()
-				peak_file = self.resolve_input('peaks', cxt)
-				if not os.path.isfile(peak_file):
-					raise IOError('Unable to locate peaks file [%s]!' % (peak_file,))
-				peak_type = os.path.splitext(peak_file)[1][1:]
-				if peak_type == 'bed':
-					cut_col = 6
-				elif peak_type == 'broadPeak':
-					cut_col = 10
-				elif peak_type == 'narrowPeak':
-					cut_col = 11
-				else:
-					cxt.log.write("Unable to find suitable intervals for %s\n" % (label,))
-					return False
-
-				total_mapped_reads   = float(subprocess.check_output('samtools flagstat "%s" | grep -Po "([0-9]+)(?= \+ [0-9]+ mapped)"' % (file_path,), shell=True))
-				reads_in_bed_regions = float(subprocess.check_output('bedtools coverage -abam "%s" -b "%s" -counts | cut -f %d | paste -sd+ - | bc' % (file_path, peak_file, cut_col), shell=True))
+				
+				total_mapped_reads_cmd = 'samtools flagstat "{}" | grep -Po "([0-9]+)(?= \+ [0-9]+ mapped)"'.format(finfo.fullpath)
+				cxt.log.write(total_mapped_reads_cmd+'\n')
+				cxt.log.flush()
+				total_mapped_reads   = float(subprocess.check_output(total_mapped_reads_cmd, shell=True))
+				
+				reads_in_bed_regions_cmd = 'bedtools coverage -abam "{}" -b "{}" -counts | cut -f {} | paste -sd+ - | bc'.format(finfo.fullpath, peak_file, cut_col)
+				cxt.log.write(reads_in_bed_regions_cmd+'\n')
+				cxt.log.flush()
+				reads_in_bed_regions = float(subprocess.check_output(reads_in_bed_regions_cmd, shell=True))
 				frip = reads_in_bed_regions / total_mapped_reads
 
-				results_file.write("%s\t%s\t%d\t%d\t%f\n" % (cxt.sample.name, label, total_mapped_reads, reads_in_bed_regions, frip))
-		return {
-			'frip': os.path.join(dest_dir, cxt.sample.name+'.FRiP.txt')
-		}
+				results_file.write("%s\t%s\t%d\t%d\t%f\n" % (cxt.sample.name, finfo.cxt.role, total_mapped_reads, reads_in_bed_regions, frip))
+		
+		return { 'frip': frip_output_path }
 	#end run()
 #end class FrIPAnalysis

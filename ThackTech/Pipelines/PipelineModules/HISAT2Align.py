@@ -6,7 +6,9 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class HISAT2Align(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(HISAT2Align, self).__init__('HISAT2Align', 'Alignment using HISAT2', **kwargs)
+		super_args = dict(name='HISAT2Align', short_description='Alignment using HISAT2')
+		super_args.update(**kwargs)
+		super(HISAT2Align, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('hisat2_path', 		str, 	'HISAT2',	desc="Path to the hisat2 executable."))
 		

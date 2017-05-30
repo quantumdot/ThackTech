@@ -9,7 +9,9 @@ from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 class Bowtie2Align(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(Bowtie2Align, self).__init__('Bowtie2Align', 'Alignment using Bowtie2', **kwargs)
+		super_args = dict(name='Bowtie2Align', short_description='Alignment using Bowtie2')
+		super_args.update(**kwargs)
+		super(Bowtie2Align, self).__init__(**super_args)
 		
 		self.add_parameter(ModuleParameter('bowtie2_path', 		str, 	'bowtie2',	desc="Path to the bowtie2 executable."))
 		

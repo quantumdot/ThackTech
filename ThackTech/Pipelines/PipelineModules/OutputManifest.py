@@ -6,7 +6,9 @@ from ThackTech.Pipelines import PipelineModule
 class OutputManifest(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(OutputManifest, self).__init__('OutputManifest', 'Generate Output Manifest', **kwargs)
+		super_args = dict(name='OutputManifest', short_description='Generate Output Manifest')
+		super_args.update(**kwargs)
+		super(OutputManifest, self).__init__(**super_args)
 	#end __init__()
 
 	

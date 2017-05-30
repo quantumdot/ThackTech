@@ -8,7 +8,9 @@ from ThackTech.Pipelines import PipelineModule
 class TransferToShm(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(TransferToShm, self).__init__('toshm', 'Transfer To RAM disk', **kwargs)
+		super_args = dict(name='toshm', short_description='Transfer To RAM disk')
+		super_args.update(**kwargs)
+		super(TransferToShm, self).__init__(**super_args)
 		
 		self._name_resolver('files')
 	#end __init__()

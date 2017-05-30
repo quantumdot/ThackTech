@@ -7,7 +7,9 @@ from ThackTech.Pipelines import PipelineModule
 class SPP(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(SPP, self).__init__('SPP', 'Cross-correlation analysis using SPP', **kwargs)
+		super_args = dict(name='SPP', short_description='Cross-correlation analysis using SPP')
+		super_args.update(**kwargs)
+		super(SPP, self).__init__(**super_args)
 	#end __init__()
 	
 	def run(self, cxt):
