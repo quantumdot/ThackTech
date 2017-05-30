@@ -11,6 +11,9 @@ class MACS2Peakcall(PipelineModule):
 		self.add_parameter(ModuleParameter('duplicates', str, 	'auto',	desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
 		self.add_parameter(ModuleParameter('bw', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
 		self.add_parameter(ModuleParameter('sigout', 	str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
+		
+		self._name_resolver('treatments')
+		self._name_resolver('controls')
 	#end __init__()
 
 	def supported_types(self):
@@ -30,16 +33,21 @@ class MACS2Peakcall(PipelineModule):
 			'--verbose', '3',
 			'--name', cxt.sample.name,
 			'--gsize', cxt.sample.genome.gsize,
-			'--format', cxt.sample.format.upper(),
+			#'--format', cxt.sample.format.upper(),
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
 			'--cutoff-analysis',
-			'--bdg',
-			'--treatment', cxt.sample.get_file('source', 'treatment')
+			'--bdg'
 		]
 
-		if cxt.sample.has_file('source', 'control'):
-			macs_args += [ '--control', cxt.sample.get_file('source', 'control') ]
+		treatments = self.resolve_input('treatments', cxt)
+		macs_args.extend(['--treatment'] + treatments)
+		
+		controls = self.resolve_input('controls', cxt)
+		if len(controls) > 0:
+			macs_args.extend(['--control'] + controls)
+
+		
 			
 		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
 			macs_args.append('--broad')

@@ -3,11 +3,7 @@ import pandas as pd
 import argparse
 import sys
 import copy
-import multiprocessing
-from ThackTech import Common
-from ThackTech import filetools
-from ThackTech import aligntools
-from ThackTech.Pipelines import PipelineSample, AnalysisPipeline
+from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
 
@@ -26,13 +22,14 @@ class MacsPipelineSample(PipelineSample):
 
     def __init__(self, sample):
         PipelineSample.__init__(self, sample['Name'], sample['Genome'], sample['Dest'])
-        self.add_file('source', 'treatment', sample['Treatment'])
+        self.add_file(FileInfo(sample['Treatment'], FileContext.from_origin('treatment')))
+                      
         if 'Control' in sample:
-            self.add_file('source', 'control', sample['Control'])
+            self.add_file(FileInfo(sample['Control'], FileContext.from_origin('control')))
         if 'Broad' in sample and sample['Broad']:
-            self.add_attribute('broad', True)
+            self.set_attribute('broad', True)
         if 'Group' in sample:
-            self.add_attribute('group', sample['Group'])
+            self.set_attribute('group', sample['Group'])
     #end __init__()
 #end PipelineSample
 
@@ -80,7 +77,7 @@ def main():
     if args.ignore_control:
         sample_manifest.drop('Control', axis=1, inplace=True)
     
-    samples = [MacsPipelineSample(s, args.format) for s in sample_manifest.to_dict(orient='records')]
+    samples = [MacsPipelineSample(s) for s in sample_manifest.to_dict(orient='records')]
     sample_count = len(samples)
     sys.stdout.write('-> Found %d item%s for processing.\n\n' % (sample_count, ('s' if sample_count > 1 else '')))
     
@@ -92,7 +89,7 @@ def main():
             group = sample.get_attribute('group')
             if group not in group_samples:
                 group_samples[group] = PipelineSample(group, sample.genome, sample.dest)
-                group_samples[group].add_attribute('template', sample.name)
+                group_samples[group].set_attribute('template', sample.name)
             source_count = len(group_samples[group].get_file_group('source')) if group_samples[group].has_file_group('source') else 0
             group_samples[group].add_file('source', 'rep'+str(source_count), sample.get_file('source', 'treatment'))
         
@@ -122,7 +119,7 @@ def main():
                     gtemplate = s
                     break
             gsample_data = copy.deepcopy(gtemplate)
-            gsample_data.add_attribute('pooledreplicate', True)
+            gsample_data.set_attribute('pooledreplicate', True)
             gsample_data.name = gsample.name+'_pooled'
             gsample_data.add_file('source', 'treatment', gsample.get_file('MergeBams', 'merged_bam'))
             samples.append(gsample_data)
@@ -157,9 +154,9 @@ def main():
             psr1 = copy.deepcopy(sample)
             if psr1.has_attribute('pooledreplicate'):
                 psr1.remove_attribute('pooledreplicate')
-                psr1.add_attribute('pooledpseudoreplicate', True)
+                psr1.set_attribute('pooledpseudoreplicate', True)
             else:
-                psr1.add_attribute('pseudoreplicate', True)
+                psr1.set_attribute('pseudoreplicate', True)
             psr1.name = sample.name+'_psrep1'
             psr1.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr1'))
             pseudo_reps.append(psr1)
@@ -168,16 +165,16 @@ def main():
             psr2 = copy.deepcopy(sample)
             if psr2.has_attribute('pooledreplicate'):
                 psr2.remove_attribute('pooledreplicate')
-                psr2.add_attribute('pooledpseudoreplicate', True)
+                psr2.set_attribute('pooledpseudoreplicate', True)
             else:
-                psr2.add_attribute('pseudoreplicate', True)
+                psr2.set_attribute('pseudoreplicate', True)
             psr2.name = sample.name+'_psrep2'
             psr2.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr2'))
             pseudo_reps.append(psr2)
             
             #mark the sample as primary replicate if necessary (should be last to avoid dirtying the psr from copy)
             if not sample.has_attribute('pooledreplicate'):
-                sample.add_attribute('primaryreplicate', True)
+                sample.set_attribute('primaryreplicate', True)
                 
         samples = psr_samples_to_run + psr_samples_to_skip + pseudo_reps
         sample_count = len(samples)
@@ -218,7 +215,7 @@ def main():
             samples_in_group = [s for s in samples if s.get_attribute('group') == group]
             gsample = PipelineSample(group, samples_in_group[0].genome, samples_in_group[0].dest)
             if samples_in_group[0].has_attribute('broad'):
-                gsample.add_attribute('broad', True)
+                gsample.set_attribute('broad', True)
             for s in samples_in_group:
                 if s.has_attribute('primaryreplicate'):
                     gsample.add_file('primaryreplicate', s.name, resolve_idr_peak_file(s))
@@ -261,6 +258,8 @@ def make_peak_calling_and_qc_pipeline(args):
             x = MACS2Peakcall.MACS2Peakcall()
             x.set_parameter('duplicates', args.duplicates)
             x.set_parameter('bw', args.bw)
+            x.set_resolver('treatments', lambda cxt: cxt.sample.find_files(lambda f: f.is_origin and f.role == 'treatment'))
+            x.set_resolver('controls', lambda cxt: cxt.sample.find_files(lambda f: f.is_origin and f.role == 'control'))
             pipeline.append_module(x, critical=True)
         else:
             from ThackTech.Pipelines.PipelineModules import MACS1Peakcall
@@ -268,6 +267,8 @@ def make_peak_calling_and_qc_pipeline(args):
             x.set_parameter('duplicates', args.duplicates)
             x.set_parameter('bw', args.bw)
             x.set_parameter('sigout', args.sigout)
+            x.set_resolver('treatments', lambda cxt: cxt.sample.find_files(lambda f: f.is_origin and f.role == 'treatment'))
+            x.set_resolver('controls', lambda cxt: cxt.sample.find_files(lambda f: f.is_origin and f.role == 'control'))
             pipeline.append_module(x, critical=True)
             
         from ThackTech.Pipelines.PipelineModules import GenerateMACsModelFigure
