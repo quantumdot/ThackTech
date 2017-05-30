@@ -19,13 +19,6 @@ gopts = {
     'conv_bdg_to_bw': True,
 }
 
-try:
-    cpu_count = multiprocessing.cpu_count()
-except:
-    cpu_count = 1
-if cpu_count is None:
-    cpu_count = 1
-
 
 
 
@@ -98,7 +91,7 @@ def main():
         for sample in samples:
             group = sample.get_attribute('group')
             if group not in group_samples:
-                group_samples[group] = PipelineSample(group, sample.genome, sample.dest, sample.format)
+                group_samples[group] = PipelineSample(group, sample.genome, sample.dest)
                 group_samples[group].add_attribute('template', sample.name)
             source_count = len(group_samples[group].get_file_group('source')) if group_samples[group].has_file_group('source') else 0
             group_samples[group].add_file('source', 'rep'+str(source_count), sample.get_file('source', 'treatment'))
@@ -223,7 +216,7 @@ def main():
         groups = set([s.get_attribute('group') for s in samples])
         for group in groups:
             samples_in_group = [s for s in samples if s.get_attribute('group') == group]
-            gsample = PipelineSample(group, samples_in_group[0].genome, samples_in_group[0].dest, 'peaks')
+            gsample = PipelineSample(group, samples_in_group[0].genome, samples_in_group[0].dest)
             if samples_in_group[0].has_attribute('broad'):
                 gsample.add_attribute('broad', True)
             for s in samples_in_group:

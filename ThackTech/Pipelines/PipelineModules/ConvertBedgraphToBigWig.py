@@ -10,6 +10,8 @@ class ConvertBedgraphToBigWig(PipelineModule):
 		self.add_parameter(ModuleParameter('bgtobw_path', str,	'bedGraphToBigWig'))
 		self.add_parameter(ModuleParameter('bedtools_path', str,	'bedtools'))
 		self.add_parameter(ModuleParameter('bedclip_path', str,	'bedClip'))
+		
+		self._name_resolver('bedgraphs')
 	#end __init__()
 	
 	
