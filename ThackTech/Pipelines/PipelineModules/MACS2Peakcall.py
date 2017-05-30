@@ -32,7 +32,7 @@ class MACS2Peakcall(PipelineModule):
 			'callpeak',
 			'--verbose', '3',
 			'--name', cxt.sample.name,
-			'--gsize', cxt.sample.genome.gsize,
+			'--gsize', str(cxt.sample.genome.gsize),
 			#'--format', cxt.sample.format.upper(),
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
