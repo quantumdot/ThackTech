@@ -41,11 +41,11 @@ class MACS2Peakcall(PipelineModule):
 		]
 
 		treatments = self.resolve_input('treatments', cxt)
-		macs_args.extend(['--treatment'] + treatments)
+		macs_args.extend(['--treatment'] + [f.fullpath for f in treatments])
 		
 		controls = self.resolve_input('controls', cxt)
 		if len(controls) > 0:
-			macs_args.extend(['--control'] + controls)
+			macs_args.extend(['--control'] + [f.fullpath for f in controls])
 
 		
 			
