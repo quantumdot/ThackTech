@@ -71,8 +71,10 @@ class MACS2Peakcall(PipelineModule):
 		}
 		if os.path.isfile(os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')):
 			output_files['model_Rscript'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')
-		if cxt.sample.has_file('source', 'control'):
+			
+		if len(controls) > 0:
 			output_files['control_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_control_lambda.bdg')
+			
 		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
 			output_files['broad_peaks'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.broadPeak')
 			output_files['gapped_peaks'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.gappedPeak')
