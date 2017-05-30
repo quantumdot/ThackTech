@@ -56,7 +56,7 @@ class MACS2Peakcall(PipelineModule):
 			
 		cxt.log.write("Performing peak calling with MACS......\n")
 		#cxt.log.write("-> "+subprocess.check_output('/bin/bash -c "source /home/josh/scripts/macs2dev/bin/activate && macs2 --version"', shell=True, stderr=subprocess.STDOUT)+"\n")
-		cxt.log.write("-> "+subprocess.check_output('macs2 --version', shell=True, stderr=subprocess.STDOUT)+"\n")
+		cxt.log.write("-> "+self._call_output('macs2 --version', shell=True, stderr=subprocess.STDOUT)+"\n")
 		cxt.log.write("\n..............................................\n")
 		cxt.log.write(" ".join(macs_args))
 		cxt.log.write("\n..............................................\n")
