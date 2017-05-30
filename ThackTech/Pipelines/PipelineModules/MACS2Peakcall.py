@@ -34,6 +34,7 @@ class MACS2Peakcall(PipelineModule):
 			'--name', cxt.sample.name,
 			'--gsize', str(cxt.sample.genome.gsize),
 			#'--format', cxt.sample.format.upper(),
+			'--format', 'BAM',
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
 			'--cutoff-analysis',
