@@ -47,7 +47,7 @@ class FRiPAnalysis(PipelineModule):
 				cxt.log.flush()
 				total_mapped_reads   = float(subprocess.check_output(total_mapped_reads_cmd, shell=True))
 				
-				reads_in_bed_regions_cmd = 'bedtools coverage -abam "{}" -b "{}" -counts | cut -f {} | paste -sd+ - | bc'.format(finfo.fullpath, peak_file, cut_col)
+				reads_in_bed_regions_cmd = 'bedtools coverage -abam "{}" -b "{}" -counts | cut -f {} | paste -sd+ - | bc'.format(finfo.fullpath, peak_file.fullpath, cut_col)
 				cxt.log.write(reads_in_bed_regions_cmd+'\n')
 				cxt.log.flush()
 				reads_in_bed_regions = float(subprocess.check_output(reads_in_bed_regions_cmd, shell=True))

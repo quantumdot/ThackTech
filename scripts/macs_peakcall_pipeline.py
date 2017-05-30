@@ -282,7 +282,7 @@ def make_peak_calling_and_qc_pipeline(args):
     if 'fingerprint' in args.qc:
         from ThackTech.Pipelines.PipelineModules import BamFingerprint
         x = BamFingerprint.BamFingerprint(processors=args.threads)
-        x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam'))
+        x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == '.bam'))
         pipeline.append_module(x)
         
     if 'frip' in args.qc:
@@ -303,7 +303,7 @@ def make_peak_calling_and_qc_pipeline(args):
             return None
         #end resolve_frip_input()
         x.set_resolver('bed', resolve_frip_input)
-        x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam'))
+        x.set_resolver('bams', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == '.bam'))
         pipeline.append_module(x)
         
     if args.shm:
@@ -313,11 +313,11 @@ def make_peak_calling_and_qc_pipeline(args):
     if args.rpkmbw:
         from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
         x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Treatment_RPKM_Norm")
-        x.set_resolver('bam',  lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam' and f.cxt.role == 'treatment'))
+        x.set_resolver('bam',  lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == '.bam' and f.cxt.role == 'treatment'))
         pipeline.append_module(x) 
         
         x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Control_RPKM_Norm")
-        x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == 'bam' and f.cxt.role == 'control'))
+        x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == '.bam' and f.cxt.role == 'control'))
         pipeline.append_module(x)    
         
     from ThackTech.Pipelines.PipelineModules import OutputManifest

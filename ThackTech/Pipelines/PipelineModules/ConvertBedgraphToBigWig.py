@@ -21,17 +21,17 @@ class ConvertBedgraphToBigWig(PipelineModule):
 	def run(self, cxt):
 		bdgs = self.resolve_input('bedgraphs', cxt)
 		
-		cxt.log.write('Found %d bedgraph files for conversion.\n' % (len(bdgs),))
+		cxt.log.write('Found {} bedgraph files for conversion.\n'.format(len(bdgs)))
 		cxt.log.flush()
 		procs = []
 		output_files = {}
 		for bdg in bdgs:
-			if bdg.endswith('.gz'):
+			if bdg.fullpath.endswith('.gz'):
 				bdg_nogz = os.path.splitext(bdg.fullpath)[0]
 			else:
 				bdg_nogz = bdg.fullpath
 			if os.path.splitext(bdg_nogz)[1].lower() not in ['.bdg', '.bedgraph']:
-				cxt.log.write('Skipping file "%s" as it does not appear to be a bedgraph file!\n' % (bdg,))
+				cxt.log.write('Skipping file "{}" as it does not appear to be a bedgraph file!\n'.format(bdg.fullpath))
 				cxt.log.flush()
 				continue
 			bw = os.path.splitext(bdg_nogz)[0]+'.bw'
@@ -49,7 +49,7 @@ class ConvertBedgraphToBigWig(PipelineModule):
 			cmd += self.get_parameter_value('bgtobw_path')+' "'+bdg_nogz+'.clip" "'+cxt.sample.genome.chrsize+'" "'+bw+'"'			#finally, convert to bigwig
 			cmd += '; rm -f "'+bdg_nogz+'.clip"' #make sure we cleanup our mess!
 
-			cxt.log.write('Converting Bedgraph to BigWig for %s....' % (bdg,))
+			cxt.log.write('Converting Bedgraph to BigWig for {}....'.format(bdg.fullpath))
 			cxt.log.write("\n..............................................\n")
 			cxt.log.write(cmd)
 			cxt.log.write("\n..............................................\n\n")
