@@ -15,7 +15,39 @@ class FRiPAnalysis(PipelineModule):
 		self._name_resolver('bams')
 	#end __init__()
 	
+	
+	def run2(self, cxt):
+		import deeptools.countReadsPerBin
+		import pysam
+		
+		peak_file = self.resolve_input('bed', cxt)
+		bam_files = self.resolve_input('bams', cxt)
+		
+		with open(peak_file.fullpath, 'r') as bed_file:
+			cr = countReadsPerBin.CountReadsPerBin([f.fullpath for f in bam_files],
+			                                        bedFile=bed_file,
+			                                        numberOfProcessors=self.processors)
+			reads_at_peaks = cr.run()
+			sum_reads_in_peaks = reads_at_peaks.sum(axis=0)
+			
+		frip_output_path = os.path.join(cxt.sample.dest, cxt.sample.name+'.FRiP.txt')
+		with open(frip_output_path, 'w') as results_file:	
+			results_file.write("Sample\tRole\tMapped_Reads\tReads_In_Bed_Regions\tFRiP\n")
+			
+			for i in range(len(bam_files)):
+				finfo = bam_files[i]
+				b = pysam.AlignmentFile(f.fullpath)
+				results_file.write("{name}\t{role}\t{mapped}\t{overlap}\t{frip}\n".format(name=cxt.sample.name, 
+																						  role=finfo.cxt.role,
+																						  mapped=b.mapped, 
+																						  overlap=sum_reads_in_peaks[i], 
+																						  frip=(float(sum_reads_in_peaks[i]) / b.mapped)))
+		return { 'frip': frip_output_path }
+	#end run2()
+	
 	def run(self, cxt):
+		return self.run2(cxt)
+		 
 		
 		peak_file = self.resolve_input('bed', cxt)
 		if not peak_file.isfile:

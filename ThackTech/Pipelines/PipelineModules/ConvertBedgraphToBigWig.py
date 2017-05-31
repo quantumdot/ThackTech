@@ -10,9 +10,9 @@ class ConvertBedgraphToBigWig(PipelineModule):
 		super_args.update(**kwargs)
 		super(ConvertBedgraphToBigWig, self).__init__(**super_args)
 		
-		self.add_parameter(ModuleParameter('bgtobw_path', str,	'bedGraphToBigWig'))
-		self.add_parameter(ModuleParameter('bedtools_path', str,	'bedtools'))
-		self.add_parameter(ModuleParameter('bedclip_path', str,	'bedClip'))
+		self.add_parameter(ModuleParameter('bgtobw_path', str, 'bedGraphToBigWig'))
+		self.add_parameter(ModuleParameter('bedtools_path', str, 'bedtools'))
+		self.add_parameter(ModuleParameter('bedclip_path', str, 'bedClip'))
 		
 		self._name_resolver('bedgraphs')
 	#end __init__()
@@ -42,12 +42,22 @@ class ConvertBedgraphToBigWig(PipelineModule):
 			#This is done to reduce memory usage, however if memory is not a concern, tham it is possible to use the 
 			#wigToBigwig utility on the clipped bedgraph through stdin, but this uses a lot of memory!
 			#see: https://gist.github.com/taoliu/2469050 
-			cmd  = 'zcat -f "'+bdg.fullpath+'" '																					#read compressed bedgraph
-			cmd += '| '+self.get_parameter_value('bedtools_path')+' slop -i /dev/stdin -g "'+cxt.sample.genome.chrsize+'" -b 0 '	#convert bedgraph to bed
-			cmd += '| '+self.get_parameter_value('bedclip_path')+' /dev/stdin "'+cxt.sample.genome.chrsize+'" "'+bdg_nogz+'.clip"'	#remove bed entries extending outside valid coordinates
-			cmd += '; ' #critical that we pause until the clipped version is complete
-			cmd += self.get_parameter_value('bgtobw_path')+' "'+bdg_nogz+'.clip" "'+cxt.sample.genome.chrsize+'" "'+bw+'"'			#finally, convert to bigwig
-			cmd += '; rm -f "'+bdg_nogz+'.clip"' #make sure we cleanup our mess!
+			cmd  = 'zcat -f "{in_bdg}" '										#read compressed bedgraph
+			cmd += '| {bedtools_path} slop -i /dev/stdin -g "{chrsize}" -b 0 '	#convert bedgraph to bed
+			cmd += '| {bedclip_path} /dev/stdin "{chrsize}" "{tmp_bdg}"'		#remove bed entries extending outside valid coordinates
+			cmd += '; ' 														#critical that we pause until the clipped version is complete
+			cmd += '{bgtobw_path} "{tmp_bdg}" "{chrsize}" "{out_bw}"'			#finally, convert to bigwig
+			cmd += '; ' 														#critical that we pause until the conversion to bigwig is complete
+			cmd += 'rm -f "{tmp_bdg}"' 											#make sure we cleanup our mess!
+			
+			cmd.format(bedtools_path=self.get_parameter_value('bedtools_path'),
+					   bedclip_path=self.get_parameter_value('bedclip_path'),
+					   bgtobw_path=self.get_parameter_value('bgtobw_path'),
+					   chrsize=cxt.sample.genome.chrsize,
+					   tmp_bdg=bdg_nogz+'.clip',
+					   out_bw=bw,
+					   in_bdg=bdg.fullpath
+			)
 
 			cxt.log.write('Converting Bedgraph to BigWig for {}....'.format(bdg.fullpath))
 			cxt.log.write("\n..............................................\n")
