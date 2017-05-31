@@ -11,9 +11,18 @@ __config_dirs_to_search = [
     os.path.dirname(__file__), #built in default config (conf directory within package)
     "/etc/thacktech", #system-wide config
     os.path.expanduser("~/.config/thacktech"), #local per-user config
-    os.environ.get("THACKTECH_CONF"), #dynamic settable config dir
-    os.getcwd() #check the current working directory
+    os.environ.get("THACKTECH_CONF") #dynamic settable config dir
 ]
+
+
+try:
+    #calling os.getcwd() sometimes fails with an exception
+    #this was observed in an interactive python session
+    #check the current working directory
+    __config_dirs_to_search.append(os.getcwd())
+except:
+    pass
+
 
 __known_configs = {}
 
