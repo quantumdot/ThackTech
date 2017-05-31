@@ -47,7 +47,7 @@ class GenomeInfo(object):
 			self.wg_fasta = wg_fasta_results[0]
 		
 		#chromsizes
-		if self.chrsize is not None:
+		if self.chrsize is None:
 			chrsize_results = glob.glob(os.path.join(basepath, 'Sequence', 'WholeGenomeFasta', 'chrom.sizes'))
 			if len(chrsize_results) > 0:
 				self.chrsize = chrsize_results[0]
