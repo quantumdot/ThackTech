@@ -50,14 +50,13 @@ class ConvertBedgraphToBigWig(PipelineModule):
 			cmd += '; ' 														#critical that we pause until the conversion to bigwig is complete
 			cmd += 'rm -f "{tmp_bdg}"' 											#make sure we cleanup our mess!
 			
-			cmd.format(bedtools_path=self.get_parameter_value('bedtools_path'),
-					   bedclip_path=self.get_parameter_value('bedclip_path'),
-					   bgtobw_path=self.get_parameter_value('bgtobw_path'),
-					   chrsize=cxt.sample.genome.chrsize,
-					   tmp_bdg=bdg_nogz+'.clip',
-					   out_bw=bw,
-					   in_bdg=bdg.fullpath
-			)
+			cmd = cmd.format(bedtools_path=self.get_parameter_value('bedtools_path'),
+							 bedclip_path=self.get_parameter_value('bedclip_path'),
+							 bgtobw_path=self.get_parameter_value('bgtobw_path'),
+							 chrsize=cxt.sample.genome.chrsize,
+							 tmp_bdg=bdg_nogz+'.clip',
+							 out_bw=bw,
+							 in_bdg=bdg.fullpath)
 
 			cxt.log.write('Converting Bedgraph to BigWig for {}....'.format(bdg.fullpath))
 			cxt.log.write("\n..............................................\n")

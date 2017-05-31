@@ -248,7 +248,7 @@ def make_peak_calling_and_qc_pipeline(args):
     if not args.skipmacs: 
         if args.macs_version == 'macs2':
             from ThackTech.Pipelines.PipelineModules import MACS2Peakcall
-            x = MACS2Peakcall.MACS2Peakcall()
+            x = MACS2Peakcall.MACS2Peakcall(processors=args.threads)
             x.set_parameter('duplicates', args.duplicates)
             x.set_parameter('bw', args.bw)
             x.set_resolver('treatments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.cxt.role == 'treatment'))
@@ -256,7 +256,7 @@ def make_peak_calling_and_qc_pipeline(args):
             pipeline.append_module(x, critical=True)
         else:
             from ThackTech.Pipelines.PipelineModules import MACS1Peakcall
-            x = MACS1Peakcall.MACS1Peakcall()
+            x = MACS1Peakcall.MACS1Peakcall(processors=args.threads)
             x.set_parameter('duplicates', args.duplicates)
             x.set_parameter('bw', args.bw)
             x.set_parameter('sigout', args.sigout)
@@ -266,12 +266,12 @@ def make_peak_calling_and_qc_pipeline(args):
             
         
     from ThackTech.Pipelines.PipelineModules import GeneratePlainBed
-    x = GeneratePlainBed.GeneratePlainBed()
+    x = GeneratePlainBed.GeneratePlainBed(processors=args.threads)
     x.set_resolver('encode_beds', lambda cxt: cxt.sample.find_files(lambda f: f.ext in ['.narrowPeak', '.broadPeak', '.gappedPeak']))
     pipeline.append_module(x)
     
     from ThackTech.Pipelines.PipelineModules import ConvertBedgraphToBigWig
-    x = ConvertBedgraphToBigWig.ConvertBedgraphToBigWig()
+    x = ConvertBedgraphToBigWig.ConvertBedgraphToBigWig(processors=args.threads)
     x.set_resolver('bedgraphs', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role in ['treatment_signal', 'control_signal'] and f.ext == '.bdg'))
     pipeline.append_module(x)
         
@@ -287,7 +287,7 @@ def make_peak_calling_and_qc_pipeline(args):
         
     if 'frip' in args.qc:
         from ThackTech.Pipelines.PipelineModules import FRiPAnalysis
-        x = FRiPAnalysis.FRiPAnalysis()
+        x = FRiPAnalysis.FRiPAnalysis(processors=args.threads)
         def resolve_frip_input(cxt):
             finders = [
                 lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.narrowPeak'),
@@ -312,11 +312,11 @@ def make_peak_calling_and_qc_pipeline(args):
         
     if args.rpkmbw:
         from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
-        x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Treatment_RPKM_Norm")
+        x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Treatment_RPKM_Norm", processors=args.threads)
         x.set_resolver('bam',  lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == '.bam' and f.cxt.role == 'treatment'))
         pipeline.append_module(x) 
         
-        x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Control_RPKM_Norm")
+        x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Control_RPKM_Norm", processors=args.threads)
         x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == '.bam' and f.cxt.role == 'control'))
         pipeline.append_module(x)    
         
