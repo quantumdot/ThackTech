@@ -12,13 +12,17 @@ class FastqScreen(PipelineModule):
 		super_args = dict(name='FastqScreen', short_description='Screen FASTQ against reference genomes')
 		super_args.update(**kwargs)
 		super(FastqScreen, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('aligner', str, 'bowtie', choices=['bowtie', 'bowtie2', 'bwa'], desc="Aligner to use for the mapping"))
 		self.add_parameter(ModuleParameter('conf', str, None, nullable=True, desc="Specify a location for the configuration (other than default)"))
 		self.add_parameter(ModuleParameter('force', bool, True, desc="Do not terminate if output files already exist, instead overwrite the files."))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('fastqs')
-	#end __init__()
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {

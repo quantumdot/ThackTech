@@ -13,20 +13,22 @@ class PerformIDRv2Analysis(PipelineModule):
 		super_args = dict(name='IDRv2', short_description='Perform IDRv2 Analysis')
 		super_args.update(**kwargs)
 		super(PerformIDRv2Analysis, self).__init__(**super_args)
-		
-		self._name_resolver('primary_replicates')
-		self._name_resolver('pseudo_replicates')
-		self._name_resolver('pooled_pseudo_replicates')
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		#self.add_parameter('peak_half_width', '-1')
 		#self.add_parameter('min_overlap_ratio', '0')
 		self.add_parameter(ModuleParameter('ranking_measure', str, 'p.value'))
-		
 		self.add_parameter(ModuleParameter('primary_replicates_IDR_threshold', float, 0.01))
 		self.add_parameter(ModuleParameter('pseudo_replicates_IDR_threshold', float, 0.01))
 		self.add_parameter(ModuleParameter('pooled_pseudo_replicates_IDR_threshold', float, 0.0025))
-		
-	#end __init__()
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('primary_replicates')
+		self._name_resolver('pseudo_replicates')
+		self._name_resolver('pooled_pseudo_replicates')
+	#end __declare_resolvers()
 
 	def supported_types(self):
 		return None

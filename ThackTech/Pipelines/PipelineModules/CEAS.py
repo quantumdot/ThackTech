@@ -10,14 +10,18 @@ class CEAS(PipelineModule):
 		super_args = dict(name='CEAS', short_description='Cis-Regulatory Annotation System')
 		super_args.update(**kwargs)
 		super(CEAS, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('ceas_wig_path', str, 'ceas'))
 		self.add_parameter(ModuleParameter('ceas_bw_path', str, '/home/josh/scripts/cistrome/ceasBW'))
 		self.add_parameter(ModuleParameter('additional_args', list, []))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('signal')
 		self._name_resolver('peaks')
-	#end __init__()
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		versions = {}

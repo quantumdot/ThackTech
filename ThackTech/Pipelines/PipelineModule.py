@@ -22,9 +22,25 @@ class PipelineModule(object):
 		self.resolvers = {}
 		self.processors = processors
 		self._critical = critical
+		
+		self.__declare_resolvers()
+		self.__declare_parameters()
+		self.set_parameters_from_config()
 	#end __init__()
 	
+	@abstractmethod
+	def __declare_parameters(self):
+		"""Implement this method and place all parameter declerations within. 
+		"""
+		pass
+	#end __declare_parameters()
 	
+	@abstractmethod
+	def __declare_resolvers(self):
+		"""Implement this method and place all resolver declerations within. 
+		"""
+		pass
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		"""Return a dict of tool versions used by this module

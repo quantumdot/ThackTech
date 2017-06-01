@@ -11,13 +11,15 @@ class TransferToShm(PipelineModule):
 		super_args = dict(name='toshm', short_description='Transfer To RAM disk')
 		super_args.update(**kwargs)
 		super(TransferToShm, self).__init__(**super_args)
-		
-		self._name_resolver('files')
 	#end __init__()
-
-	def supported_types(self):
-		return None
-	#end supported_types()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('files')
+	#end __declare_resolvers()
 	
 	def run(self, cxt):
 		cxt.log.write('-> Copying source files to RAM disk....\n')

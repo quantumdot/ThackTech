@@ -12,12 +12,16 @@ class SortBam(PipelineModule):
 		super_args = dict(name='SortBam', short_description='Sort BAM file')
 		super_args.update(**kwargs)
 		super(SortBam, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('sort_name', bool, False, desc="Sort by read name rather than coordinate."))
 		self.add_parameter(ModuleParameter('overwrite', bool, True, desc="Overwrite the source, non-sorted, BAM."))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('alignments')
-	#end __init__()
+	#end __declare_resolvers()
 
 	def tool_versions(self):
 		return {

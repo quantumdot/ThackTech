@@ -11,11 +11,15 @@ class GeneratePseudoreplicates(PipelineModule):
 		super_args = dict(name='Pseudoreplicates', short_description='Generate Pseudoreplicates')
 		super_args.update(**kwargs)
 		super(GeneratePseudoreplicates, self).__init__(**super_args)
-		
-		self._name_resolver('alignments')
-		
-		self.add_parameter(ModuleParameter('nreplicates', int, 2))
 	#end __init__()
+	
+	def __declare_parameters(self):
+		self.add_parameter(ModuleParameter('nreplicates', int, 2))
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('alignments')
+	#end __declare_resolvers()
 	
 	def run(self, cxt):
 		dest_dir = os.path.join(cxt.sample.dest, 'pseudoreps')

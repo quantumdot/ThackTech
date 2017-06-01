@@ -11,15 +11,18 @@ class PeatTrimmer(PipelineModule):
 		super_args = dict(name='PEAT', short_description='Trim reads with PEAT')
 		super_args.update(**kwargs)
 		super(PeatTrimmer, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('l', int, 30, desc="Minimum gene fragment length, i.e. the fragment length for reverse complement check"))
 		self.add_parameter(ModuleParameter('r', float, 0.3, desc="Mismatch rate applied in first stage reverse complement scan"))
 		self.add_parameter(ModuleParameter('g', float, 0.6, desc="Mismatch rate applied in second stage gene portion check"))
 		self.add_parameter(ModuleParameter('a', float, 0.4, desc="Mismatch rate applied in second stage adapter portion check"))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('fastq')
-		self.set_parameters_from_config()
-	#end __init__()
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {

@@ -7,9 +7,15 @@ class GeneratePlainBed(PipelineModule):
 		super_args = dict(name='PlainBed', short_description='Generate bed6 from peaks')
 		super_args.update(**kwargs)
 		super(GeneratePlainBed, self).__init__(**super_args)
-		
-		self._name_resolver('encode_beds')
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('encode_beds')
+	#end __declare_resolvers()
 	
 	def run(self, cxt):
 		try_paths = self.resolve_input('encode_beds', cxt)

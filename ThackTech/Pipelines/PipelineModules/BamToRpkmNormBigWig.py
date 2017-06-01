@@ -9,12 +9,16 @@ class BamToRpkmNormBigWig(PipelineModule):
 		super_args = dict(name='BamToRpkmNormBigWig', short_description='Make RPKM Norm BigWig from BAM')
 		super_args.update(**kwargs)
 		super(BamToRpkmNormBigWig, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('output_format', str, 	'bigwig',	desc="Output file type. Either 'bigwig' or 'bedgraph'."))
 		self.add_parameter(ModuleParameter('bin_size', 		int, 	1,			desc="Size of the bins, in bases, for the output of the bigwig/bedgraph file."))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('bam')
-	#end __init__()
+	#end __declare_resolvers()
 
 	def tool_versions(self):
 		return {

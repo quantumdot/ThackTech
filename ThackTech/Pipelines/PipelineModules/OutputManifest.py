@@ -10,6 +10,14 @@ class OutputManifest(PipelineModule):
 		super_args.update(**kwargs)
 		super(OutputManifest, self).__init__(**super_args)
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		pass
+	#end __declare_resolvers()
 
 	
 	def run(self, cxt):

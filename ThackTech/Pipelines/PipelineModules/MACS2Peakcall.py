@@ -1,6 +1,7 @@
 import os
 import subprocess
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech import aligntools
 
 
 class MACS2Peakcall(PipelineModule):
@@ -9,18 +10,23 @@ class MACS2Peakcall(PipelineModule):
 		super_args = dict(name='MACS2', short_description='Peak calling with MACS2')
 		super_args.update(**kwargs)
 		super(MACS2Peakcall, self).__init__(**super_args)
-		
-		self.add_parameter(ModuleParameter('duplicates', str, 	'auto',	desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
-		self.add_parameter(ModuleParameter('bw', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
-		self.add_parameter(ModuleParameter('sigout', 	str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
+		self.add_parameter(ModuleParameter('duplicates', str, 'auto', desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
+		self.add_parameter(ModuleParameter('bandwith', int, 300, desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
+		self.add_parameter(ModuleParameter('cutoff_analysis', bool, True, desc="Perform cutoff analysis."))
+		self.add_parameter(ModuleParameter('tag_size', int, None, nullable=True, desc="Size of sequencing tags. If None, then MACS will determine automatically."))
+		self.add_parameter(ModuleParameter('broad_cutoff', float, 0.1, desc="Cutoff for broad region."))
+		self.add_parameter(ModuleParameter('pvalue', float, None, nullable=True, desc="Pvalue cutoff for peak detection."))
+		self.add_parameter(ModuleParameter('qvalue', float, 0.05, desc="Minimum FDR (q-value) cutoff for peak detection."))
+		self.add_parameter(ModuleParameter('spmr', bool, True, desc="Save signal as signal per mission reads."))
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('treatments')
 		self._name_resolver('controls')
-	#end __init__()
-
-	def supported_types(self):
-		return ["bed", "eland", "elandmulti", "elandmultipet", "elandexport", "sam", "bam", "bampe", "bowtie"]
-	#end supported_types()
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {
@@ -35,26 +41,45 @@ class MACS2Peakcall(PipelineModule):
 			'--verbose', '3',
 			'--name', cxt.sample.name,
 			'--gsize', str(cxt.sample.genome.gsize),
-			#'--format', cxt.sample.format.upper(),
-			'--format', 'BAM',
+			'--outdir', cxt.sample.dest,
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
-			'--cutoff-analysis',
 			'--bdg'
 		]
+		
+		if self.get_parameter_value('cutoff_analysis'):
+			macs_args.append('--cutoff-analysis')
+		
+		if self.get_parameter_value('tag_size') is not None:
+			macs_args.extend(['--tsize', self.get_parameter_value_as_string('tag_size')])
+			
+		if self.get_parameter_value('pvalue') is not None:
+			macs_args.extend(['--pvalue', self.get_parameter_value_as_string('pvalue')])
+		else:
+			macs_args.extend(['--qvalue', self.get_parameter_value_as_string('qvalue')])
+			
+		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
+			macs_args.extend(['--broad', '--broad-cutoff', '0.1' ])
 
+		formats = []
 		treatments = self.resolve_input('treatments', cxt)
 		macs_args.extend(['--treatment'] + [f.fullpath for f in treatments])
+		formats.extend([self.get_file_format(f) for f in treatments])
 		
 		controls = self.resolve_input('controls', cxt)
 		if controls is not None and len(controls) > 0:
 			macs_args.extend(['--control'] + [f.fullpath for f in controls])
+			formats.extend([self.get_file_format(f) for f in treatments])
 
+		formats = set(formats)
+		if len(formats) > 1:
+			#macs reccomends using 'auto' if multiple formats are given
+			macs_args.extend(['--format', 'AUTO'])
+		else:
+			macs_args.extend(['--format', list(formats)[0]])
 		
 			
-		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
-			macs_args.append('--broad')
-			macs_args += [ '--broad-cutoff', '0.1' ]
+		
 			
 		cxt.log.write("Performing peak calling with MACS......\n")
 		#cxt.log.write("-> "+subprocess.check_output('/bin/bash -c "source /home/josh/scripts/macs2dev/bin/activate && macs2 --version"', shell=True, stderr=subprocess.STDOUT)+"\n")
@@ -95,4 +120,24 @@ class MACS2Peakcall(PipelineModule):
 			
 		return output_files
 	#end run()
+	
+	
+	def get_file_format(self, fileinfo):
+		ext = fileinfo.ext.lower()
+		if ext == '.bam':
+			if aligntools.is_bam_PE(fileinfo.fullpath):
+				return 'BAMPE'
+			else:
+				return 'BAM'
+		elif ext == '.sam':
+			return 'SAM'
+		elif ext == '.bed':
+			return 'BED'
+		elif ext == '.bedpe':
+			return 'BEDPE'
+		elif ext == '.bowtie':
+			return 'BOWTIE'
+		else:
+			return 'AUTO'
+	#end get_file_format()
 #end class MACS2Peakcall

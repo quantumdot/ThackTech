@@ -10,9 +10,15 @@ class MergeBams(PipelineModule):
 		super_args = dict(name='MergeBams', short_description='Merge BAM files')
 		super_args.update(**kwargs)
 		super(MergeBams, self).__init__(**super_args)
-		
-		self._name_resolver('alignments')
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('alignments')
+	#end __declare_resolvers()
 
 	
 	def tool_versions(self):

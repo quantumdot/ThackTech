@@ -8,11 +8,15 @@ class DecompressFiles(PipelineModule):
 		super_args = dict(name='DecompressFiles', short_description='Decompress Files')
 		super_args.update(**kwargs)
 		super(DecompressFiles, self).__init__(**super_args)
-		
-		self._name_resolver('files')
-		
-		self.add_parameter(ModuleParameter('overwrite',	bool, False, desc="Overwrite the decompressed file if it already exists."))
 	#end __init__()
+	
+	def __declare_parameters(self):
+		self.add_parameter(ModuleParameter('overwrite',	bool, False, desc="Overwrite the decompressed file if it already exists."))
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('files')
+	#end __declare_resolvers()
 
 	
 	def run(self, cxt):

@@ -11,14 +11,21 @@ class InsertSizeMetrics(PipelineModule):
 		super_args = dict(name='InsertSizeMetrics', short_description='Calculating Insert Size Metrics')
 		super_args.update(**kwargs)
 		super(InsertSizeMetrics, self).__init__(**super_args)
-		
-		self._name_resolver('bam')
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('bam')
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {
 			"picard-tools:CollectInsertSizeMetrics": self._call_output(["picard-tools", "CollectInsertSizeMetrics", "--version"], stderr=subprocess.STDOUT)
 		}
+	#end tool_versions()
 	
 	def run(self, cxt):
 		if not cxt.sample.get_attribute('PE'):

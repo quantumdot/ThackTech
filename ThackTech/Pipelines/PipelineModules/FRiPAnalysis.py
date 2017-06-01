@@ -1,6 +1,6 @@
 import os
-import subprocess
-from ThackTech import filetools
+#import subprocess
+#from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule
 from deeptools import countReadsPerBin
 import pysam
@@ -11,15 +11,19 @@ class FRiPAnalysis(PipelineModule):
 		super_args = dict(name='FRiP', short_description='Fraction of Reads in Peaks')
 		super_args.update(**kwargs)
 		super(FRiPAnalysis, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('bed')
 		self._name_resolver('bams')
-	#end __init__()
+	#end __declare_resolvers()
 	
 	
 	def run(self, cxt):
-		
-		
 		peak_file = self.resolve_input('bed', cxt)
 		bam_files = self.resolve_input('bams', cxt)
 		

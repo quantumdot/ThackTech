@@ -12,11 +12,15 @@ class BamToBed(PipelineModule):
 		super_args = dict(name='BamToBed', short_description='Convert BAM to BED')
 		super_args.update(**kwargs)
 		super(BamToBed, self).__init__(**super_args)
-		
-		self.add_parameter(ModuleParameter('gzip', bool, True, desc="Gzip output"))
-		
-		self._name_resolver('bam')
 	#end __init__()
+	
+	def __declare_parameters(self):
+		self.add_parameter(ModuleParameter('gzip', bool, True, desc="Gzip output"))
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('bam')
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {

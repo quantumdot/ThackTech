@@ -11,9 +11,15 @@ class IndexBam(PipelineModule):
 		super_args = dict(name='IndexBam', short_description='Index BAM file')
 		super_args.update(**kwargs)
 		super(IndexBam, self).__init__(**super_args)
-
-		self._name_resolver('alignments')
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('alignments')
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {

@@ -12,12 +12,16 @@ class BamFingerprint(PipelineModule):
 		super_args = dict(name='BamFingerprint', short_description='Bam Fingerprint')
 		super_args.update(**kwargs)
 		super(BamFingerprint, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('plotFileFormat', str, 'pdf', choices=['png', 'pdf', 'svg', 'eps'], desc="Plot output format"))
 		self.add_parameter(ModuleParameter('outputRawCounts', bool, True, desc="Output raw count data"))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('bams')
-	#end __init__()
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {

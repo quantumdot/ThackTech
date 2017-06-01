@@ -9,9 +9,10 @@ class HISAT2Align(PipelineModule):
 		super_args = dict(name='HISAT2Align', short_description='Alignment using HISAT2')
 		super_args.update(**kwargs)
 		super(HISAT2Align, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('hisat2_path', 		str, 	'HISAT2',	desc="Path to the hisat2 executable."))
-		
 		self.add_parameter(ModuleParameter('unaligned', 		bool, 	False,	desc="Report reads that fail to align."))
 		self.add_parameter(ModuleParameter('multimap', 			bool, 	False,	desc="Report reads that map to multiple locations in the reference."))
 		self.add_parameter(ModuleParameter('max_align', 		int, 	None,	nullable=True, desc="If not none, maximum number of valid alignments to report."))
@@ -23,9 +24,11 @@ class HISAT2Align(PipelineModule):
 		#self.add_parameter(ModuleParameter('chunkmbs', 		int, 	512,	desc="give more memory for searching.. prevents warnings and increases alignment rate especially for longer reads"))
 		#self.add_parameter(ModuleParameter('pairtries', 		int, 	1000,	desc="number of tries for finding valid paired-end alignments"))
 		self.add_parameter(ModuleParameter('additional_args', 	list, 	[],		desc="Additional arguments to pass to Bowtie2"))
-
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('fastq')
-	#end __init__()
+	#end __declare_resolvers()
 	
 	def load_modules(self):
 		subprocess.call("module load HISAT2", shell=True)

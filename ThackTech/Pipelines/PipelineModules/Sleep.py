@@ -8,9 +8,15 @@ class Sleep(PipelineModule):
 		super_args = dict(name='Sleep', short_description='Take a nap.')
 		super_args.update(**kwargs)
 		super(Sleep, self).__init__(**super_args)
-		
-		self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep for."))
 	#end __init__()
+	
+	def __declare_parameters(self):
+		self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep for."))
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		pass
+	#end __declare_resolvers()
 
 	
 	def run(self, cxt):

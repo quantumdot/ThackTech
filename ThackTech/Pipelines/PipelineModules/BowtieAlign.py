@@ -13,9 +13,10 @@ class BowtieAlign(PipelineModule):
 		super_args = dict(name='BowtieAlign', short_description='Alignment using Bowtie')
 		super_args.update(**kwargs)
 		super(BowtieAlign, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('bowtie_path', 		str, 	'bowtie',	desc="Path to the bowtie executable."))
-		
 		self.add_parameter(ModuleParameter('tryhard', 			bool,	False,	desc=""))
 		self.add_parameter(ModuleParameter('best', 				bool, 	False,	desc="Report only the best possible singleton alignment."))
 		self.add_parameter(ModuleParameter('unaligned', 		bool, 	False,	desc="Report reads that fail to align."))
@@ -26,11 +27,11 @@ class BowtieAlign(PipelineModule):
 		self.add_parameter(ModuleParameter('max_mismatches',	int, 	2,		desc="max allowed mismatches in the sead region, corresponds to -n"))
 		self.add_parameter(ModuleParameter('pairtries', 		int, 	1000,	desc="number of tries for finding valid paired-end alignments"))
 		self.add_parameter(ModuleParameter('additional_args', 	list, 	[],		desc="Additional arguments to pass to Bowtie"))
-
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('fastq')
-		
-		self.set_parameters_from_config()
-	#end __init__()
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {

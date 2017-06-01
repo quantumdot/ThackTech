@@ -14,9 +14,15 @@ class Conditional(PipelineModule):
 		
 		self.true_children = []
 		self.false_children = []
-		
-		self._name_resolver('condition')
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('condition')
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {}

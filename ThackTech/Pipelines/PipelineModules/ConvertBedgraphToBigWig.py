@@ -9,13 +9,17 @@ class ConvertBedgraphToBigWig(PipelineModule):
 		super_args = dict(name='BedgraphToBigWig', short_description='Converting Bedgraph To BigWig')
 		super_args.update(**kwargs)
 		super(ConvertBedgraphToBigWig, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('bgtobw_path', str, 'bedGraphToBigWig'))
 		self.add_parameter(ModuleParameter('bedtools_path', str, 'bedtools'))
 		self.add_parameter(ModuleParameter('bedclip_path', str, 'bedClip'))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('bedgraphs')
-	#end __init__()
+	#end __declare_resolvers()
 	
 	
 	def run(self, cxt):

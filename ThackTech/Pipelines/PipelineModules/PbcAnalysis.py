@@ -12,9 +12,15 @@ class PbcAnalysis(PipelineModule):
 		super_args = dict(name='PBC', short_description='PCR Bottleneck Analysis')
 		super_args.update(**kwargs)
 		super(PbcAnalysis, self).__init__(**super_args)
-		
-		self._name_resolver('bam')
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		self._name_resolver('bam')
+	#end __declare_resolvers()
 	
 	def run(self, cxt):
 		cxt.log.write('\t-> Running PBC QC...\n')

@@ -1,4 +1,4 @@
-'Peak Calling with MACS1'import os
+import os
 import subprocess
 from ThackTech.Pipelines import PipelineModule, ModuleParameter
 
@@ -6,19 +6,23 @@ from ThackTech.Pipelines import PipelineModule, ModuleParameter
 class MACS1Peakcall(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super_args = dict(name='MACS1', short_description='Sort BAM file')
+		super_args = dict(name='MACS1', short_description='Peak Calling with MACS1')
 		super_args.update(**kwargs)
 		super(MACS1Peakcall, self).__init__(**super_args)
-		
+	#end __init__()
+	
+	def __declare_parameters(self):
 		self.add_parameter(ModuleParameter('duplicates', str, 	'auto',	desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
 		self.add_parameter(ModuleParameter('bw', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
 		self.add_parameter(ModuleParameter('sigout',	 str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
 		self.add_parameter(ModuleParameter('tsize',		 int, 	None, nullable=True,	desc="Tag size. This will overide the auto detected tag size."))
 		self.add_parameter(ModuleParameter('pvalue',	 float,	1e-5, desc="Pvalue cutoff for peak detection."))
-		
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
 		self._name_resolver('treatments')
 		self._name_resolver('controls')
-	#end __init__()
+	#end __declare_resolvers()
 	
 	def tool_versions(self):
 		return {

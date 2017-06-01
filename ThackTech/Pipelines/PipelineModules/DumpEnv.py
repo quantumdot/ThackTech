@@ -6,10 +6,19 @@ from ThackTech.Pipelines import PipelineModule
 class DumpEnv(PipelineModule):
 	
 	def __init__(self, **kwargs):
-		super(DumpEnv, self).__init__('DumpEnv', 'Dump environment information', **kwargs)
-		
-		#self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep after saying hello."))
+		super_args = dict(name='DumpEnv', short_description='Dump environment information')
+		super_args.update(**kwargs)
+		super(DumpEnv, self).__init__(**super_args)
 	#end __init__()
+	
+	def __declare_parameters(self):
+		pass
+		#self.add_parameter(ModuleParameter('sleep_time', int, 10, desc="Amount of time, in seconds, to sleep after saying hello."))
+	#end __declare_parameters()
+	
+	def __declare_resolvers(self):
+		pass
+	#end __declare_resolvers()
 	
 	def load_modules(self, log):
 		# """ Loads any system modules required for this module to function. """
