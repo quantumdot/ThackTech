@@ -13,15 +13,43 @@ class MACS2Peakcall(PipelineModule):
 	#end __init__()
 	
 	def __declare_parameters(self):
+		#input arguments
 		self.add_parameter(ModuleParameter('duplicates', str, 'auto', desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
-		self.add_parameter(ModuleParameter('bandwith', int, 300, desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
-		self.add_parameter(ModuleParameter('cutoff_analysis', bool, True, desc="Perform cutoff analysis."))
+		
+		#output arguments
+		self.add_parameter(ModuleParameter('save_bedgraph', bool, True, desc="Whether to save extended fragment pileup, and local lambda tracks (two files) at every bp into a bedGraph file."))
+		self.add_parameter(ModuleParameter('bdg_trackline', bool, False, desc="Include trackline with bedGraph files."))
+		self.add_parameter(ModuleParameter('spmr', bool, True, desc="Save signal as signal per mission reads."))
+		self.add_parameter(ModuleParameter('verbosity', int, 3, desc="Set verbose level of runtime message. 0: only show critical message, 1: show additional warning message, 2: show process information, 3: show debug messages."))
+	
+		#shift model arguments
 		self.add_parameter(ModuleParameter('tag_size', int, None, nullable=True, desc="Size of sequencing tags. If None, then MACS will determine automatically."))
-		self.add_parameter(ModuleParameter('broad_cutoff', float, 0.1, desc="Cutoff for broad region."))
+		self.add_parameter(ModuleParameter('bandwith', int, 300, desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
+		#--mfold
+		#--fix-bimodal
+		#--nomodel
+		#--shift
+		#--extsize
+		
+		#peak calling arguments
 		self.add_parameter(ModuleParameter('pvalue', float, None, nullable=True, desc="Pvalue cutoff for peak detection."))
 		self.add_parameter(ModuleParameter('qvalue', float, 0.05, desc="Minimum FDR (q-value) cutoff for peak detection."))
-		self.add_parameter(ModuleParameter('spmr', bool, True, desc="Save signal as signal per mission reads."))
-	#end __declare_parameters()
+		self.add_parameter(ModuleParameter('broad_cutoff', float, 0.1, desc="Cutoff for broad region."))
+		#--to-large
+		#--ratio
+		#--down-sample
+		#--seed
+		#--tempdir
+		#--nolambda
+		#--slocal
+		#--llocal
+		self.add_parameter(ModuleParameter('cutoff_analysis', bool, True, desc="Perform cutoff analysis."))
+		
+		#post-processing option
+		#--call-summits
+		#--fe-cutoff
+		
+		#end __declare_parameters()
 	
 	def __declare_resolvers(self):
 		self._name_resolver('treatments')
@@ -35,20 +63,29 @@ class MACS2Peakcall(PipelineModule):
 	#end tool_versions()
 	
 	def run(self, cxt):
+		output_files = {}
+		
 		macs_args = [
 			'macs2',
 			'callpeak',
-			'--verbose', '3',
+			'--verbose', self.get_parameter_value_as_string('verbosity'),
 			'--name', cxt.sample.name,
 			'--gsize', str(cxt.sample.genome.gsize),
 			'--outdir', cxt.sample.dest,
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bw'),
-			'--bdg'
 		]
+		
+		if self.get_parameter_value('save_bedgraph'):
+			macs_args.append('--bdg')
+			if self.get_parameter_value('spmr'):
+				macs_args.append('--SPMR')
+			if self.get_parameter_value('bdg_trackline'):
+				macs_args.append('--trackline')
 		
 		if self.get_parameter_value('cutoff_analysis'):
 			macs_args.append('--cutoff-analysis')
+			output_files['cutoff_analysis'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_cutoff_analysis.txt')
 		
 		if self.get_parameter_value('tag_size') is not None:
 			macs_args.extend(['--tsize', self.get_parameter_value_as_string('tag_size')])
@@ -90,7 +127,7 @@ class MACS2Peakcall(PipelineModule):
 		cxt.log.flush()		
 
 		self._run_subprocess(macs_args, cwd=cxt.sample.dest, stderr=subprocess.STDOUT, stdout=cxt.log)
-		output_files = {}
+		
 		
 		
 		if os.path.isfile(os.path.join(cxt.sample.dest, cxt.sample.name+'_model.r')):
@@ -104,7 +141,7 @@ class MACS2Peakcall(PipelineModule):
 			cxt.log.flush()
 		
 		
-		output_files['cutoff_analysis'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_cutoff_analysis.txt')
+		
 		output_files['treatment_signal'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_treat_pileup.bdg')
 		output_files['peaks_xls'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.xls')
 		
