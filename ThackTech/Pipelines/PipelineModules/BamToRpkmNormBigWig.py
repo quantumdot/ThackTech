@@ -28,7 +28,7 @@ class BamToRpkmNormBigWig(PipelineModule):
 	
 	def run(self, cxt):
 		bam = self.resolve_input('bam', cxt)
-		if bam is None or len(bam) <= 0:
+		if bam is None or (isinstance(bam, list) and len(bam) <= 0):
 			cxt.log.write('No file returned for resolver "bam", exiting...\n')
 			cxt.log.flush()
 			return
