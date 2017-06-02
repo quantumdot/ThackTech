@@ -132,7 +132,7 @@ def make_read_alignment_pipeline(args, additional_args):
                     return [] + resolve_trimmomatic_reads(cxt) + resolve_bowtie1(cxt)
             else:
                 def fastqc_resolver(cxt):
-                    return resolve_trimmomatic_reads(cxt)
+                    return resolve_bowtie1(cxt)
                 
             from ThackTech.Pipelines.PipelineModules import FastQC
             x = FastQC.FastQC(processors=args.threads)
