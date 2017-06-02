@@ -253,7 +253,7 @@ def make_peak_calling_and_qc_pipeline(args):
             from ThackTech.Pipelines.PipelineModules import MACS2Peakcall
             x = MACS2Peakcall.MACS2Peakcall(processors=args.threads)
             x.set_parameter('duplicates', args.duplicates)
-            x.set_parameter('bw', args.bw)
+            x.set_parameter('bandwith', args.bw)
             x.set_resolver('treatments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.cxt.role == 'treatment'))
             x.set_resolver('controls', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.cxt.role == 'control'))
             pipeline.append_module(x, critical=True)
