@@ -28,14 +28,12 @@ class PipelineModule(object):
 		self.set_parameters_from_config()
 	#end __init__()
 	
-	@abstractmethod
 	def _declare_parameters(self):
 		"""Implement this method and place all parameter declerations within. 
 		"""
 		pass
 	#end __declare_parameters()
 	
-	@abstractmethod
 	def _declare_resolvers(self):
 		"""Implement this method and place all resolver declerations within. 
 		"""
