@@ -6,6 +6,9 @@ import copy
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
+#BEFORE RUNNING SCRIPT WHEN USING LMOD
+#module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 bowtie2/2.2.9
+
 
 #manifest should be structured as follows (with headers)
 #Name    Group    Treatment    Control    Genome    Broad    Dest
@@ -38,7 +41,7 @@ def main():
     parser.add_argument('manifest', help="Manifest file containing sample information. Manifest file should contain the following columns (tsv, case sensitive): [Name] [Genome] [Dest] [Treatment] [Control<optional>] [Broad<optional; bool-like>]")
     parser.add_argument('--macs-version', choices=['macs1', 'macs2'], help="Specifies which version of MACS to run")
     parser.add_argument('-d', '--duplicates', default='auto', help="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}.")
-    parser.add_argument('-f', '--format', default=None, choices=["BED", "SAM", "BAM", "BAMPE", "BOWTIE", "ELAND", "ELANDMULTI", "ELANDEXPORT", "ELANDMULTIPET"], help="Format of the alignment files for the entire run. If not specified, format will be auto-detected.")
+    #parser.add_argument('-f', '--format', default=None, choices=["BED", "SAM", "BAM", "BAMPE", "BOWTIE", "ELAND", "ELANDMULTI", "ELANDEXPORT", "ELANDMULTIPET"], help="Format of the alignment files for the entire run. If not specified, format will be auto-detected.")
     parser.add_argument('-bw', default=300, type=int, help="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab.")
     parser.add_argument('--sigout', default='bdg', choices=['wig', 'bdg'], help="Output type for signal. Either wig or bedgraph.")
     available_qc_choices = ['chance', 'fingerprint', 'frip']

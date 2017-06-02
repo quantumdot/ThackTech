@@ -54,6 +54,9 @@ def add_runner_args(argparser):
 	performance_group.add_argument('--slurm-partition', action='store', default='main', help="For slurm runner, the partition to run jobs on.")
 	performance_group.add_argument('--slurm-time', action='store', default='5:00:00', help="For slurm runner, time limit for jobs.")
 	
+	performance_group.add_argument('--module-config', action='append', default=[], help="Specify additional pipeline module config files.")
+	performance_group.add_argument('--pipeline-config', action='append', default=[], help="Specify additional pipeline config files.")
+	performance_group.add_argument('--genome-config', action='append', default=[], help="Specify additional genome config files.")
 	return performance_group
 #end get_runner_args()
 
