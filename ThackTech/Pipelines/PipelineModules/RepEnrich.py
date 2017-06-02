@@ -22,13 +22,13 @@ class RepEnrich(PipelineModule):
 		super(RepEnrich, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('repenrich_path', str, '/home/josh/scripts/RepEnrich3.py', desc="Location of RepEnrich script."))
 		self.add_parameter(ModuleParameter('cleanup', bool, False, desc="Indicates if cleanup should be performed on intermediary files."))
 		#self.add_parameter(ModuleParameter('cleanup', bool, False, desc="Indicates if cleanup should be performed on intermediary files."))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('multimap_fastq')
 		self._name_resolver('unique_bam')
 		self.set_resolver('annotation_file', lambda cxt: cxt.sample.genome.get_index('repenrich_annot'))

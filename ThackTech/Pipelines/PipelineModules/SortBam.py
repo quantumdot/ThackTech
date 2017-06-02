@@ -14,12 +14,12 @@ class SortBam(PipelineModule):
 		super(SortBam, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('sort_name', bool, False, desc="Sort by read name rather than coordinate."))
 		self.add_parameter(ModuleParameter('overwrite', bool, True, desc="Overwrite the source, non-sorted, BAM."))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('alignments')
 	#end __declare_resolvers()
 

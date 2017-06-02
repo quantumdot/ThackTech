@@ -14,7 +14,7 @@ class PerformIDRAnalysis(PipelineModule):
 		super(PerformIDRAnalysis, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('peak_half_width', int, '-1'))
 		self.add_parameter(ModuleParameter('min_overlap_ratio', float, '0'))
 		self.add_parameter(ModuleParameter('ranking_measure', str, 'p.value'))
@@ -23,7 +23,7 @@ class PerformIDRAnalysis(PipelineModule):
 		self.add_parameter(ModuleParameter('pooled_pseudo_replicates_IDR_threshold', float, 0.0025))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('primary_replicates')
 		self._name_resolver('pseudo_replicates')
 		self._name_resolver('pooled_pseudo_replicates')

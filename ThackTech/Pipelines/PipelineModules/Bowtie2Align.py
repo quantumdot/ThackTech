@@ -14,7 +14,7 @@ class Bowtie2Align(PipelineModule):
 		super(Bowtie2Align, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('bowtie2_path', 		str, 	'bowtie2',	desc="Path to the bowtie2 executable."))
 		self.add_parameter(ModuleParameter('multimap', 			bool, 	False,	desc="Report reads that map to multiple locations in the reference."))
 		self.add_parameter(ModuleParameter('max_align', 		int, 	None,	nullable=True, desc="If not none, maximum number of valid alignments to report."))
@@ -29,7 +29,7 @@ class Bowtie2Align(PipelineModule):
 		self.add_parameter(ModuleParameter('additional_args', 	list, 	[],		desc="Additional arguments to pass to Bowtie2"))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('fastq')
 	#end __declare_resolvers()
 	

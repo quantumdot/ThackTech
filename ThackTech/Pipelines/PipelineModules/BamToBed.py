@@ -14,11 +14,11 @@ class BamToBed(PipelineModule):
 		super(BamToBed, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('gzip', bool, True, desc="Gzip output"))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('bam')
 	#end __declare_resolvers()
 	

@@ -13,7 +13,7 @@ class EpicSICER(PipelineModule):
 		super(EpicSICER, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('keep_duplicates', bool, False, desc="Keep reads mapping to the same position on the same strand within a library."))
 		self.add_parameter(ModuleParameter('window_size', int, 200, desc="Size of the windows to scan the genome. WINDOW_SIZE is the smallest possible island."))
 		self.add_parameter(ModuleParameter('gaps_allowed', int, 3, desc="Multiple of window size used to determine the gap size."))
@@ -21,7 +21,7 @@ class EpicSICER(PipelineModule):
 		self.add_parameter(ModuleParameter('fdr_cutoff', float, 1.0, desc="Remove all islands with an FDR below cutoff."))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('treatments')
 		self._name_resolver('controls')
 	#end __declare_resolvers()

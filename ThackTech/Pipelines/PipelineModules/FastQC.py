@@ -14,14 +14,14 @@ class FastQC(PipelineModule):
 		super(FastQC, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('kmers', int, 7, desc="Specifies the length of Kmer to look for in the Kmer content module. Specified Kmer length must be between 2 and 10."))
 		self.add_parameter(ModuleParameter('limits', str, None, nullable=True, desc="Specify a location for the limits file (--limits option in fastqc)"))
 		self.add_parameter(ModuleParameter('adapters', str, None, nullable=True, desc="Specify a location for the adapters file (--adapters option in fastqc)"))
 		self.add_parameter(ModuleParameter('contaminants', str, None, nullable=True, desc="Specify a location for the contaminants file (--contaminants option in fastqc)"))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('fastqs')
 	#end __declare_resolvers()
 	

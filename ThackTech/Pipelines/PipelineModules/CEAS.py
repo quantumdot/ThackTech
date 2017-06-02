@@ -12,13 +12,13 @@ class CEAS(PipelineModule):
 		super(CEAS, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('ceas_wig_path', str, 'ceas'))
 		self.add_parameter(ModuleParameter('ceas_bw_path', str, '/home/josh/scripts/cistrome/ceasBW'))
 		self.add_parameter(ModuleParameter('additional_args', list, []))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('signal')
 		self._name_resolver('peaks')
 	#end __declare_resolvers()

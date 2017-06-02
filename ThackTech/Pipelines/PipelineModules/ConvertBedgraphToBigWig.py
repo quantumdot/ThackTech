@@ -11,13 +11,13 @@ class ConvertBedgraphToBigWig(PipelineModule):
 		super(ConvertBedgraphToBigWig, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('bgtobw_path', str, 'bedGraphToBigWig'))
 		self.add_parameter(ModuleParameter('bedtools_path', str, 'bedtools'))
 		self.add_parameter(ModuleParameter('bedclip_path', str, 'bedClip'))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('bedgraphs')
 	#end __declare_resolvers()
 	

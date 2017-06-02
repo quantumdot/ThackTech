@@ -13,7 +13,7 @@ class Trimmomatic(PipelineModule):
 		super(Trimmomatic, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('trim_adapt_fa_SE', str, '/mnt/ref/adapters/TruSeq3-SE.fa'))
 		self.add_parameter(ModuleParameter('trim_adapt_fa_PE', str, '/mnt/ref/adapters/TruSeq3-PE-2.fa'))
 		self.add_parameter(ModuleParameter("compress_trimlog", bool, True, desc="Determines if the trim log is compressed."))
@@ -26,7 +26,7 @@ class Trimmomatic(PipelineModule):
 		#self.add_parameter(ModuleParameter('head_crop', int, None, nullable=True, desc="Cut the specified number of bases from the start of the read"))
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('fastq')
 	#end __declare_resolvers()
 	

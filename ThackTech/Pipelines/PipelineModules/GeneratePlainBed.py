@@ -9,11 +9,11 @@ class GeneratePlainBed(PipelineModule):
 		super(GeneratePlainBed, self).__init__(**super_args)
 	#end __init__()
 	
-	def __declare_parameters(self):
+	def _declare_parameters(self):
 		pass
 	#end __declare_parameters()
 	
-	def __declare_resolvers(self):
+	def _declare_resolvers(self):
 		self._name_resolver('encode_beds')
 	#end __declare_resolvers()
 	
