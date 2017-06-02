@@ -117,7 +117,7 @@ class Bowtie2Align(PipelineModule):
 		#OK, we now have all the arguments setup, lets actually run bowtie2
 		cxt.log.write("\t-> Performing alignment with bowtie2......")
 		cxt.log.write("\n..............................................\n")
-		cxt.log.write(" ".join(bowtiecmd))
+		cxt.log.write(" ".join([str(p) for p in bowtiecmd]))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
 		tmpout = tempfile.NamedTemporaryFile()
