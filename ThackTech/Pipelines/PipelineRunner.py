@@ -71,6 +71,7 @@ def add_runner_args(argparser):
 	default_threads = default_args[runner_type]['threads']
 	
 	print default_args
+	print cfg
 	sys.exit()
 		
 	performance_group = argparser.add_argument_group('Performance')
