@@ -65,7 +65,10 @@ def add_runner_args(argparser):
 	cfg = conf.get_config('pipelines')
 	for section in default_args.keys():
 		for option in default_args[section].keys():
-			default_args[section][option] = cfg.get(section, option, vars=default_args[section])
+			try:
+				default_args[section][option] = cfg.get(section, option)
+			except:
+				pass
 	
 	runner_type = default_args['general']['runner']+'_runner'
 	default_threads = default_args[runner_type]['threads']
