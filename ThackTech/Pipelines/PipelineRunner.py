@@ -69,6 +69,9 @@ def add_runner_args(argparser):
 	
 	runner_type = default_args['general']['runner']+'_runner'
 	default_threads = default_args[runner_type]['threads']
+	
+	print default_args
+	sys.exit()
 		
 	performance_group = argparser.add_argument_group('Performance')
 	performance_group.add_argument('-p', '--threads', type=int, default=default_threads, help="Number of processors to use for processing.")
