@@ -42,17 +42,42 @@ def add_runner_args(argparser):
 	Returns:
 		argument group for performance options
 	"""
+	default_args = {
+		'general': {
+			'runner': 'serial',
+			'shm_dir': '/run/shm'
+		},
+		'slurm_runner': {
+			'partition': "main",
+			'nodes': 1,
+			'threads': CPU_COUNT,
+			'time_limit': "1:00:00"
+		},
+		'parallel_runner': {
+			'threads': CPU_COUNT
+		},
+		'serial_runner': {
+			'threads': CPU_COUNT
+		}
+	}
+	
+	
 	cfg = conf.get_config('pipelines')
-	#if cfg.has_section('general'):
+	for section in default_args.keys():
+		for option in default_args[section].keys():
+			default_args[section][option] = cfg.get(section, option, vars=default_args[section])
+	
+	runner_type = default_args['general']['runner']+'_runner'
+	default_threads = default_args[runner_type]['threads']
 		
 	performance_group = argparser.add_argument_group('Performance')
-	performance_group.add_argument('-p', '--threads', type=int, default=CPU_COUNT, help="Number of processors to use for processing.")
+	performance_group.add_argument('-p', '--threads', type=int, default=default_threads, help="Number of processors to use for processing.")
 	performance_group.add_argument('--shm', action='store_true', help="Use ramfs for file IO.")
-	performance_group.add_argument('--shm-path', action='store', default='/mnt/ramdisk/bowtie'+'_'+str( os.getuid() ), help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
-	performance_group.add_argument('--runner', action='store', default='parallel', choices=['slurm', 'parallel', 'serial'], help="Which pipeline runner to use.")
+	performance_group.add_argument('--shm-path', action='store', default=default_args['general']['shm_dir'], help='When --shm is passed, the path to use for ram disk storage. Individual samples will have dedicated subfolders on this path. Please ensure this path has appropriate permissions.')
+	performance_group.add_argument('--runner', action='store', default=default_args['general']['runner'], choices=['slurm', 'parallel', 'serial'], help="Which pipeline runner to use.")
 	
-	performance_group.add_argument('--slurm-partition', action='store', default='main', help="For slurm runner, the partition to run jobs on.")
-	performance_group.add_argument('--slurm-time', action='store', default='5:00:00', help="For slurm runner, time limit for jobs.")
+	performance_group.add_argument('--slurm-partition', action='store', default=default_args['slurm_runner']['partition'], help="For slurm runner, the partition to run jobs on.")
+	performance_group.add_argument('--slurm-time', action='store', default=default_args['slurm_runner']['time_limit'], help="For slurm runner, time limit for jobs.")
 	
 	performance_group.add_argument('--module-config', action='append', default=[], help="Specify additional pipeline module config files.")
 	performance_group.add_argument('--pipeline-config', action='append', default=[], help="Specify additional pipeline config files.")
