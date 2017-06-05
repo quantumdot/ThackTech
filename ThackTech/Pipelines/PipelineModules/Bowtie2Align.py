@@ -17,11 +17,15 @@ class Bowtie2Align(PipelineModule):
 	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('bowtie2_path', 		str, 	'bowtie2',	desc="Path to the bowtie2 executable."))
 		self.add_parameter(ModuleParameter('multimap', 			bool, 	False,	desc="Report reads that map to multiple locations in the reference."))
+		self.add_parameter(ModuleParameter('max_align', 		int, 	None,	nullable=True, desc="If not none, maximum number of valid alignments to report."))
 		self.add_parameter(ModuleParameter('max_insert', 		int, 	1200,	desc="--maxins: max insert size allowed for PE reads"))
 		self.add_parameter(ModuleParameter('max_mismatches',	int, 	1,		desc="-N: max allowwd mismatches in the sead region"))
 		self.add_parameter(ModuleParameter('unaligned', 		bool, 	False,	desc="--un: Report reads that fail to align."))
 		self.add_parameter(ModuleParameter('no_unaligned', 		bool,	False,	desc="--no-unal: Suppress SAM records for reads that failed to align."))
-		self.add_parameter(ModuleParameter('num_dva', 			int,	None, nullable=True, desc="Number of distinct, valid alignments to report. This corresponds to -k and -a. Leave None to disable, -1 for all, or a positive int."))
+		#self.add_parameter(ModuleParameter('tryhard', 			bool,	False,	desc=""))
+		#self.add_parameter(ModuleParameter('best', 				bool, 	True,	desc="Report only the best possible singleton alignment."))
+		#self.add_parameter(ModuleParameter('chunkmbs', 			int, 	512,	desc="give more memory for searching.. prevents warnings and increases alignment rate especially for longer reads"))
+		#self.add_parameter(ModuleParameter('pairtries', 		int, 	1000,	desc="number of tries for finding valid paired-end alignments"))
 		self.add_parameter(ModuleParameter('additional_args', 	list, 	[],		desc="Additional arguments to pass to Bowtie2"))
 	#end __declare_parameters()
 	
@@ -34,9 +38,8 @@ class Bowtie2Align(PipelineModule):
 	#end load_modules()
 	
 	def tool_versions(self):
-		bt2p = self.get_parameter_value_as_string('bowtie2_path')
 		return {
-			'bowtie2': self._call_output(bt2p+" --version 2>&1 | perl -ne 'if(m/.*bowtie2.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'bowtie2': self._call_output("bowtie2 --version 2>&1 | perl -ne 'if(m/.*bowtie2.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
@@ -58,25 +61,24 @@ class Bowtie2Align(PipelineModule):
 		if cxt.sample.get_attribute('PE'):
 			bowtiecmd += ['--maxins', 		self.get_parameter_value_as_string('max_insert')]
 			
+		if self.get_parameter_value('max_align') is not None:
+			bowtiecmd += ['-m', self.get_parameter_value_as_string('max_align')]
 		
 		if self.get_parameter_value('no_unaligned'):
 			bowtiecmd.append('--no-unal')
-			
-		if self.get_parameter_value('num_dva') is not None:
-			if self.get_parameter_value('num_dva') == -1:
-				bowtiecmd.append('-a')
-			else:
-				bowtiecmd.extend(['-k', self.get_parameter_value_as_string('num_dva')])
-
+		#if self.get_parameter_value('best'):
+		#	bowtiecmd.append('--best')
+		#if self.get_parameter_value('tryhard'):
+		#	bowtiecmd.append('--tryhard')
 		
 		#check if we need to output reads that multimap
-# 		if self.get_parameter_value('multimap'):
-# 			if cxt.sample.get_attribute('PE'):
-# 				output_result['multimap_1'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap_1.fastq')
-# 				output_result['multimap_2'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap_2.fastq')
-# 			else:
-# 				output_result['multimap'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap.fastq')
-# 			bowtiecmd += ['--max', os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap.fastq')]
+		if self.get_parameter_value('multimap'):
+			if cxt.sample.get_attribute('PE'):
+				output_result['multimap_1'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap_1.fastq')
+				output_result['multimap_2'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap_2.fastq')
+			else:
+				output_result['multimap'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap.fastq')
+			bowtiecmd += ['--max', os.path.join(cxt.sample.dest, cxt.sample.name+'_multimap.fastq')]
 		
 		#check if we need to output reads that fail to align
 		if self.get_parameter_value('unaligned'):
@@ -100,12 +102,12 @@ class Bowtie2Align(PipelineModule):
 		#add the input file arguments
 		if cxt.sample.get_attribute('PE'):
 			bowtiecmd += [
-				'-1', ",".join([f.fullpath for f in read_files if f.has_attribute_value("mate", 1)]), 
-				'-2', ",".join([f.fullpath for f in read_files if f.has_attribute_value("mate", 2)])
+				'-1', [f for f in read_files if f.has_attribute_value("mate", 1)][0].fullpath, 
+				'-2', [f for f in read_files if f.has_attribute_value("mate", 2)][0].fullpath
 			]
 		else:
 			bowtiecmd += [
-				'-U', ",".join([f.fullpath for f in read_files])
+				'-U', read_files[0].fullpath
 			]
 		#specify the destination SAM file
 		output_result['sam'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.sam')
