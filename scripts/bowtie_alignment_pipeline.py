@@ -19,29 +19,32 @@ from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_r
 
 class AlignmentPipelineSample(PipelineSample):
 
-    def __init__(self, sample, pe_prefix='_R'):
+    def __init__(self, sample, pe_prefix='_R', postfix=""):
         super(AlignmentPipelineSample, self).__init__(sample['Basename'], sample['Genome'], sample['Dest'])
         self.set_attribute('PE', ('PE' in sample and sample['PE']))
-        self.discover_files(sample['Path'], pe_prefix)
+        self.discover_files(sample['Path'], pe_prefix, postfix)
     #end __init__()
     
-    def discover_files(self, path, pe_prefix):
+    def discover_files(self, path, pe_prefix, postfix):
         files = []
         compressed_extensions = ['.gz', '.bz2', '.zip', '.tar', '.tar.gz']
         if self.get_attribute('PE'):
-            base = os.path.join(path, self.name + pe_prefix)
-            #print "trying %s, %s" % (base+'1.fastq', base+'2.fastq')
-            if os.path.exists(base+'1.fastq') and os.path.exists(base+'2.fastq'):
-                files.append(FileInfo(base+'1.fastq', FileContext.from_origin('reads'), mate=1))
-                files.append(FileInfo(base+'2.fastq', FileContext.from_origin('reads'), mate=2))
+            base = "{path}/{name}{prefix}{read}{postfix}.{ext}"
+            fmtvars = {'path': path, 'name': self.name, 'prefix': pe_prefix, 'postfix': postfix}
+            r1 = base.format(dict(fmtvars, read=1, ext='fastq'))
+            r2 = base.format(dict(fmtvars, read=2, ext='fastq'))
+            #print "trying:\n{}\n{}\n".format(r1, r2)
+            if os.path.exists(r1) and os.path.exists(r2):
+                files.append(FileInfo(r1, FileContext.from_origin('reads'), mate=1))
+                files.append(FileInfo(r2, FileContext.from_origin('reads'), mate=2))
             else:
                 for ext in compressed_extensions:
-                    if os.path.exists(base+'1.fastq'+ext) and os.path.exists(base+'2.fastq'+ext):
-                        files.append(FileInfo(base+'1.fastq'+ext, FileContext.from_origin('reads'), mate=1))
-                        files.append(FileInfo(base+'2.fastq'+ext, FileContext.from_origin('reads'), mate=2))
+                    if os.path.exists(r1+ext) and os.path.exists(r2+ext):
+                        files.append(FileInfo(r1+ext, FileContext.from_origin('reads'), mate=1))
+                        files.append(FileInfo(r2+ext, FileContext.from_origin('reads'), mate=2))
                         continue
         else:
-            base = os.path.join(path, self.name+'.fastq')
+            base = os.path.join(path, self.name+postfix+'.fastq')
             if os.path.exists(base):
                 files.append(FileInfo(base, FileContext.from_origin('reads')))
             else:
@@ -65,6 +68,7 @@ def main():
     available_qc_choices = ['spp', 'pbc', 'ism', 'fpt', 'rpkm', 'fqscreen', 'fastqc']
     parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC pipelines to run after the alignment process completes. SPP is the cross-correlation analysis provided by ccQualityControl/phantompeakqualtools. PBC is the PRC bottleneck/library complexity estimation. ISM computes the distribution of insert size. FPT computes the \"BAM Fingerprint\" using DeepTools bamFingerprint program, and give a good idea of IP strength, especially for TF-like IPs. rpkm will generate a RPKM normalized BigWig from the aligned BAM file. All will run all available QC modules.")
     parser.add_argument('--pe_pre', default='_R', help="Paired-end prefix. String to insert between the file basename and the pair number when searching for read files. If your FASTQ files are names as [reads_R1.fastq, reads_R2.fastq] then use '_R1', or if reads_1.fastq then use '_1'. This option is only used when in paired end mode. default: _R1")
+    parser.add_argument('--sample_postfix', default="", help="Postfix to append when looking for read files (ex lane number: '_001')")
     parser.add_argument('--unaligned', action='store_true', help='Output reads that fail to align to the reference genome.')
     parser.add_argument('--trim', action='store_true', help="Use trimmomatic to perform adapter clipping.")
     parser.add_argument('--override-dest', action='store', default=None, help="Override the destination read from the sample manifest.")
@@ -82,7 +86,7 @@ def main():
     #Path    Basename    PE    Genome    Dest
     #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
-    samples = [AlignmentPipelineSample(s, args.pe_pre) for s in sample_manifest.to_dict(orient='records')]
+    samples = [AlignmentPipelineSample(s, args.pe_pre, args.sample_postfix) for s in sample_manifest.to_dict(orient='records')]
     if args.override_dest is not None:
         sys.stdout.write("Override Destination is turned ON\n")
         sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
