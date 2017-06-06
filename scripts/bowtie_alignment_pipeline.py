@@ -27,33 +27,38 @@ class AlignmentPipelineSample(PipelineSample):
     
     def discover_files(self, path, pe_prefix, postfix):
         files = []
+        paths_tried = []
         compressed_extensions = ['.gz', '.bz2', '.zip', '.tar', '.tar.gz']
         if self.get_attribute('PE'):
             base = "{path}/{name}{prefix}{read}{postfix}.{ext}"
             fmtvars = {'path': path, 'name': self.name, 'prefix': pe_prefix, 'postfix': postfix}
             r1 = base.format(dict(fmtvars, read=1, ext='fastq'))
             r2 = base.format(dict(fmtvars, read=2, ext='fastq'))
+            paths_tried.extend([r1, r2])
             #print "trying:\n{}\n{}\n".format(r1, r2)
             if os.path.exists(r1) and os.path.exists(r2):
                 files.append(FileInfo(r1, FileContext.from_origin('reads'), mate=1))
                 files.append(FileInfo(r2, FileContext.from_origin('reads'), mate=2))
             else:
                 for ext in compressed_extensions:
+                    paths_tried.extend([r1+ext, r2+ext])
                     if os.path.exists(r1+ext) and os.path.exists(r2+ext):
                         files.append(FileInfo(r1+ext, FileContext.from_origin('reads'), mate=1))
                         files.append(FileInfo(r2+ext, FileContext.from_origin('reads'), mate=2))
                         continue
         else:
             base = os.path.join(path, self.name+postfix+'.fastq')
+            paths_tried.append(base)
             if os.path.exists(base):
                 files.append(FileInfo(base, FileContext.from_origin('reads')))
             else:
                 for ext in compressed_extensions:
+                    paths_tried.append(base+ext)
                     if os.path.exists(base+ext):
                         files.append(FileInfo(base+ext, FileContext.from_origin('reads')))
                         continue
         if len(files) <= 0:
-            raise IOError('Unable to find '+('PE ' if self.get_attribute('PE') else '')+'reads for '+self.name)
+            raise IOError('Unable to find '+('PE ' if self.get_attribute('PE') else '')+'reads for '+self.name+'\nTried the following paths:\n'+'\n'.join(paths_tried))
         for f in files:
             self.add_file(f)
     #end find_files()
