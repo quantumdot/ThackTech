@@ -82,7 +82,7 @@ class FileInfo(object):
 		Args:
 			filepath (str): Path of the file this object represents
 		"""
-		self.__fullpath = filepath
+		self.__fullpath = os.path.abspath(filepath)
 		self.__context = context
 		
 		#support for companion files
