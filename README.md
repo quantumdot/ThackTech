@@ -4,6 +4,8 @@
 # Introduction
 The `ThackTech` package contains several modules and subpackages for genomic-related analysis. A centerpiece of the packages is the `ThackTech.Pipelines` package, which offers portable pipline systems and standardized analysis modules. By portability, the system attempts to be system agnostic (with the limitation of being mostly linux-bound), but can be run on anything from a laptop, workstation, or even a SLURM-managed cluster.
 
+Importantly, the pipelines are declerative in nature and decouple data from the logic of execution. 
+
 # Install
 
 ## Framework Install
@@ -185,10 +187,61 @@ End Pipeline: Hello World
 ========================================
 ```
 
+# Authoring Analysis Modules
+Creating an analysis module is pretty straightforward.
+### Create a new class that extends `ThackTech.Pipelines.PipelineModule`
+```python
+from ThackTech.Pipelines import PipelineModule
+class HelloWorld(PipelineModule):
+	def __init__(self, **kwargs):
+		super_args = dict(name='HelloWorld', short_description='Say "Hello World".')
+		super_args.update(**kwargs)
+		super(HelloWorld, self).__init__(**super_args)
+```
+Notes:
+* It is important to call the super constructor in the way shown so that consumers of the module may override parameters such as the module name
 
+### Implement some methods
+At the minimum, an analysis module must implement the `run()` method:
+```python
+def run(self, cxt):
+	cxt.log.write("Hello World from:\n%s\n" % (platform.uname(),))
+	cxt.log.flush()
+#end run()
+```
+The run method is passed a context object derived from `ThackTech.Pipelines.ModuleRunContext` and contains references to the sample, logging utilities, and information regarding the pipeline state. All computational work should occur within the `run()` method or methods directly called by `run()`
 
+### Declare Module Parameters
+In all but the very simplest analysis modules, it is useful to declare parameters that affect how the module runs. `PipelineModule`'s contain a collection of `ModuleParameter` objects that provide type-safe decleration of options for a given module. This parameters may also have values assigned at runtime from installed configuration files.
 
+Module parameters should be declared by overriding the `PipelineModule._declare_parameters()` method. Within the method decleration, call the `PipelineModule.add_parameter()` method, passing a `ModuleParameter` object:
+```python
+def _declare_parameters(self):
+	self.add_parameter(ModuleParameter('samtools_path', str, 'samtools', desc="Path to samtools"))
+#end _declare_parameters()
+```
+Here we define a string type parameter named `samtools_path` with a default value of 'samtools'. We can get the value of this parameter at runtime by using the ``PipelineModule.get_parameter_value()` method.
 
+Other important information about `ModuleParameters`
+* Value is type-safe, so on setting `value`, the passed value is coerced to the type set for the parameter
+* Parameters can be nullable (i.e. accept `None` values)
+* Parameters can define valid values (besides type) using the `choices` attribute
 
+### Declare Module Resolvers
+Most modules will require some input that can only be determined at runtime, for example, a file that is created by a module earlier in the pipeline. To facilitate a declaritive approach that decouples data from the computation, Modules offer resolvers are essentially named callables.
 
+Resolvers should be declared by overriding the `PipelineModule._declare_resolvers()` method, and place in the body calls to `PipelineModule._name_resolver()`. 
+```python
+def _declare_resolvers(self):
+	self._name_resolver('alignments')
+#end _declare_resolvers()
+```
+
+Within the `run()` method, one can retrieve the runtime result of the resolver by calling `PipelineModule.resolve_input()` with the resolver name and the current module run context.
+
+### Other Notes about Modules
+* Set the number of processors dedicated to this module using the `processors` attribute.
+* Set the criticalness of the module with the `critical` boolean attribute. Modules marked as critical will cause the entire pipeline to fail if the module fails, otherwise the module fault will be marked as a warning and pipeline will continue to execute.
+* The `critical` and `processors` attributes may be passed to the module constructor.
+* It may be sometimes useful to override the module name by passing a `name` kwarg to the constructor to differentiate multiple of the same module within a given pipeline.
 
