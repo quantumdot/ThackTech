@@ -90,7 +90,7 @@ min_length=25
 Pipeline-related infrastructure is located in the `ThackTech.Pipelines` package.  
 
 There are a few pre-configured pipelines ready for use (these should be installed into your bin directory automagically):
-* `bowtie_alignment_pipeline.py`
+* [`bowtie_alignment_pipeline.py`](https://github.com/quantumdot/ThackTech/wiki/bowtie_alignment_pipeline)
 * `macs_peakcall_pipeline.py`
 * `epic_peakcall_pipeline.py`
 
