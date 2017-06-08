@@ -95,14 +95,29 @@ def get_configured_runner(args, pipeline, **kwargs):
 		from ThackTech.Pipelines import SlurmPipelineRunner
 		runner = SlurmPipelineRunner(pipeline, partition=args.slurm_partition, nodes=1, threads=args.threads, time_limit=args.slurm_time, **kwargs)
 	elif args.runner == 'parallel':
+		do_slurm_safety_check()
 		from ThackTech.Pipelines import ParallelPipelineRunner
 		runner = ParallelPipelineRunner(pipeline, args.threads)
 	else: #serial runner
+		do_slurm_safety_check()
 		from ThackTech.Pipelines import SerialPipelineRunner
 		runner = SerialPipelineRunner(pipeline)
 	
 	return runner
 #end get_configured_runner()
+
+def do_slurm_safety_check():
+	#call some slurm command to check if slurm present
+	
+	#if slurm present:
+	#	alert user
+	#	ask for confirmation that you want to use non-slurm runner on a slurm system
+	#	if user confirms usage:
+	#		continue
+	#	otherwise:
+	#		die
+	pass
+#end do_slurm_safety_check()
 
 
 
