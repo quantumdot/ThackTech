@@ -119,11 +119,14 @@ class Bowtie2Align(PipelineModule):
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
 		tmpout = tempfile.NamedTemporaryFile()
-		self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=tmpout)
-		tmpout.seek(0)
-		bowtie_output = tmpout.read()
-		tmpout.close()
-		cxt.log.write(bowtie_output)
+		try:
+			self._run_subprocess(bowtiecmd, stderr=subprocess.STDOUT, stdout=tmpout)
+		finally:	
+			tmpout.seek(0)
+			bowtie_output = tmpout.read()
+			tmpout.close()
+			cxt.log.write(bowtie_output)
+			
 		output_result['align_stats'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.align_stats.tsv')
 		self.parse_bowtie_output(cxt, bowtie_output, output_result['align_stats'])
 		
