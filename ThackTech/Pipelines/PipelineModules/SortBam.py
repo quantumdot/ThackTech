@@ -15,6 +15,7 @@ class SortBam(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
+		self.add_parameter(ModuleParameter('samtools_path', str, 'samtools', desc="Path to samtools"))
 		self.add_parameter(ModuleParameter('sort_name', bool, False, desc="Sort by read name rather than coordinate."))
 		self.add_parameter(ModuleParameter('overwrite', bool, True, desc="Overwrite the source, non-sorted, BAM."))
 	#end __declare_parameters()
@@ -25,7 +26,7 @@ class SortBam(PipelineModule):
 
 	def tool_versions(self):
 		return {
-			'samtools': self._call_output("samtools 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+			'samtools': self._call_output(self.get_parameter_value('samtools_path')+" 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
@@ -42,7 +43,7 @@ class SortBam(PipelineModule):
 			#we should return the FileInfo though as resolvers may depend on it.
 			return [FileInfo(sorted_bam+'.bam', FileContext.from_module_context(cxt, "sorted_bam"))]
 		
-		sort_cmd = ['samtools', 'sort', '-@', str(self.processors), bam.fullpath, sorted_bam]
+		sort_cmd = [self.get_parameter_value('samtools_path'), 'sort', '-@', str(self.processors), bam.fullpath, sorted_bam]
 		
 		if self.get_parameter_value('sort_name'):
 			sort_cmd.insert(2, '-n')

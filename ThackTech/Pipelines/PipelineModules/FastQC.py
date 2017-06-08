@@ -15,6 +15,7 @@ class FastQC(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
+		self.add_parameter(ModuleParameter('fastqc_path', str, 'fastqc', desc="Path to FastQC"))
 		self.add_parameter(ModuleParameter('kmers', int, 7, desc="Specifies the length of Kmer to look for in the Kmer content module. Specified Kmer length must be between 2 and 10."))
 		self.add_parameter(ModuleParameter('limits', str, None, nullable=True, desc="Specify a location for the limits file (--limits option in fastqc)"))
 		self.add_parameter(ModuleParameter('adapters', str, None, nullable=True, desc="Specify a location for the adapters file (--adapters option in fastqc)"))
@@ -27,7 +28,7 @@ class FastQC(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'fastqc': self._call_output("fastqc --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'fastqc': self._call_output(self.get_parameter_value('fastqc_path')+" --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
@@ -37,7 +38,7 @@ class FastQC(PipelineModule):
 		
 		out_files = []
 		fastqc_args = [
-			'fastqc',
+			self.get_parameter_value('fastqc_path'),
 			'--quiet', #disable progress reporting
 			'--threads', str(self.processors),
 			'--outdir',  dest_dir,

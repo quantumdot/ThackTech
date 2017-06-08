@@ -31,8 +31,24 @@ Genome configuration is setup to take advantage of the iGenomes reference setup,
 ```
 [mm9] #genome name
 size=1.91e9	#effective_genome_size
-goldenpath=/mnt/ref/reference/Mus_musculus/UCSC/mm9 #root of reference genome
+goldenpath=/mnt/reference/Mus_musculus/UCSC/mm9 #root of reference genome
 ```
+
+Genome configuration may also be specified more manually:
+```
+[mm9]
+size=1.91e9
+chrsize=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/WholeGenomeFasta/chrom.sizes
+index.BowtieIndex=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/BowtieIndex/genome
+index.Bowtie2Index=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/Bowtie2Index/genome
+index.BWAIndex=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/BWAIndex/genome
+fasta.Genome=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/WholeGenomeFasta/genome.fa
+fasta.chr1=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/WholeGenomeFasta/chr1.fa
+fasta.chr2=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/WholeGenomeFasta/chr2.fa
+#...
+fasta.chrX=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/WholeGenomeFasta/chrX.fa
+```
+One interesting note: Specifying an "goldenpath" will first parse the directory specified looking for valid indicies/fasta files/other stuff, but then later directives may override the auto-discovered locations which may be useful for specifying, for example, a bowtie index with higer density of the suffix-array sample (`--offrate`). 
 
 ### pipeline
 Pipeline configuration elements go here. This mostly deals with pipeline runner configurations

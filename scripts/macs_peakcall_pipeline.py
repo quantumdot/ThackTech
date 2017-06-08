@@ -86,8 +86,11 @@ def main():
             if group not in group_samples:
                 group_samples[group] = PipelineSample(group, sample.genome, sample.dest)
                 group_samples[group].set_attribute('template', sample.name)
-            source_count = len(group_samples[group].get_file_group('source')) if group_samples[group].has_file_group('source') else 0
-            group_samples[group].add_file('source', 'rep'+str(source_count), sample.get_file('source', 'treatment'))
+                
+            for sf in sample.find_files(lambda f: f.cxt.is_origin()):
+                c = len(group_samples[group].find_files(lambda f: f.cxt.is_origin() and f.cxt.role == sf.role))
+                group_samples[group].add_file(FileInfo(sf.fullpath, FileContext.from_origin(sf.role+'_rep'+str(c))))
+            
         
         #lets alleviate the load of generating pooled bams if they already exist.
         sys.stdout.write('Generating pooled samples.\n')
@@ -98,7 +101,7 @@ def main():
             merged_bam_dest = os.path.join(s.dest, 'merged_bam', s.name+'.merged.bam')
             if os.path.isfile(merged_bam_dest):
                 sys.stdout.write('-> It appears that %s has already been pooled. Skipping this sample...\n' % (s.name,))
-                s.add_file('MergeBams', 'merged_bam', merged_bam_dest)
+                s.add_file(FileInfo(merged_bam_dest, FileContext('Generate Pooled Samples', (1 if args.shm else 0), 'MergeBams', 'merged_bam')))
                 group_samples_to_skip.append(s)
             else:
                 group_samples_to_run.append(s)
@@ -337,23 +340,24 @@ def make_replicate_pool_pipeline(args):
         x = TransferToShm.TransferToShm()
         x.set_parameter('shm_path', args.shm_path)
         pool_pipeline.append_module(x, critical=True)
+        
     #merge bam files
     from ThackTech.Pipelines.PipelineModules import MergeBams
     x = MergeBams.MergeBams()
-    x.set_resolver('alignments', lambda s: list(s.get_file_group('source').values()))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin()))
     pool_pipeline.append_module(x, critical=True)
     
     #sort merged bam file
     from ThackTech.Pipelines.PipelineModules import SortBam
     x = SortBam.SortBam()
-    x.set_resolver('alignments', lambda s: s.get_file('MergeBams', 'merged_bam'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'MergeBams' and f.ext == '.bam'))
     x.set_available_cpus(3)
     pool_pipeline.append_module(x, critical=True)
     
     #index sorted merged bam file
     from ThackTech.Pipelines.PipelineModules import IndexBam
     x = IndexBam.IndexBam()
-    x.set_resolver('alignments', lambda s: s.get_file('MergeBams', 'merged_bam'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'MergeBams' and f.ext == '.bam'))
     pool_pipeline.append_module(x, critical=True)
     
     if args.shm:

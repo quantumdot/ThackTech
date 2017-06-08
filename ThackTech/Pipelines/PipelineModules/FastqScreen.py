@@ -15,6 +15,7 @@ class FastqScreen(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
+		self.add_parameter(ModuleParameter('fastq_screen_path', str, 'fastq_screen', desc="Path to fastq_screen"))
 		self.add_parameter(ModuleParameter('aligner', str, 'bowtie', choices=['bowtie', 'bowtie2', 'bwa'], desc="Aligner to use for the mapping"))
 		self.add_parameter(ModuleParameter('conf', str, None, nullable=True, desc="Specify a location for the configuration (other than default)"))
 		self.add_parameter(ModuleParameter('force', bool, True, desc="Do not terminate if output files already exist, instead overwrite the files."))
@@ -26,7 +27,7 @@ class FastqScreen(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'fastq_screen': self._call_output("fastq_screen --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'fastq_screen': self._call_output(self.get_parameter_value('fastq_screen_path')+" --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
@@ -36,7 +37,7 @@ class FastqScreen(PipelineModule):
 		
 		out_files = []
 		fqscreen_args = [
-			'fastq_screen',
+			self.get_parameter_value('fastq_screen_path'),
 			'--aligner', self.get_parameter_value_as_string('aligner'),
 			'--threads', str(self.processors),
 			'--outdir',  dest_dir

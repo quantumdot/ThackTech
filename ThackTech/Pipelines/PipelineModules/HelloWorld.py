@@ -19,7 +19,7 @@ class HelloWorld(PipelineModule):
 	#end __declare_resolvers()
 	
 	def run(self, cxt):
-		cxt.log.write("Hello World from:\n%s\n" % (platform.uname(),))
+		cxt.log.write("Hello World from:\n{}\n".format(platform.uname()))
 		cxt.log.flush()
 	#end run()
 #end class HelloWorld

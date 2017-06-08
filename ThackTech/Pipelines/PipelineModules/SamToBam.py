@@ -1,6 +1,6 @@
 import os
 import subprocess
-from ThackTech.Pipelines import PipelineModule
+from ThackTech.Pipelines import PipelineModule, ModuleParameter
 from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
@@ -13,7 +13,7 @@ class SamToBam(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
-		pass
+		self.add_parameter(ModuleParameter('samtools_path', str, 'samtools', desc="Path to samtools"))
 	#end __declare_parameters()
 	
 	def _declare_resolvers(self):
@@ -22,7 +22,7 @@ class SamToBam(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'samtools': self._call_output("samtools 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+			'samtools': self._call_output(self.get_parameter_value('samtools_path')+" 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
@@ -48,7 +48,7 @@ class SamToBam(PipelineModule):
 		#convert SAM to BAM: -b => output BAM; -S => input is SAM; -@ => multithreading!
 		cxt.log.write("\t-> Converting SAM to BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
 		cxt.log.flush()
-		self._run_subprocess(['samtools', 'view', '-b', '-S', '-@', str(self.processors), '-o', bam, sam.fullpath])#samtools view -bS -@ $nump "${dest}${alnname}.sam" > "${dest}${alnname}.bam"
+		self._run_subprocess([self.get_parameter_value('samtools_path'), 'view', '-b', '-S', '-@', str(self.processors), '-o', bam, sam.fullpath])#samtools view -bS -@ $nump "${dest}${alnname}.sam" > "${dest}${alnname}.bam"
 		
 		#remove the SAM file as it is no longer needed
 		cxt.sample.remove_file(sam)
@@ -58,7 +58,7 @@ class SamToBam(PipelineModule):
 		cxt.log.write("\t-> Sorting BAM (using %d processor%s)...\n" % (self.processors, ('s' if self.processors > 1 else '')))
 		cxt.log.flush()
 		sorted_bam = os.path.splitext(bam)[0]+'_sorted'
-		self._run_subprocess(['samtools', 'sort', '-@', str(self.processors), bam, sorted_bam])#samtools sort -@ $nump "${dest}${alnname}.bam" "${dest}${alnname}_sorted"
+		self._run_subprocess([self.get_parameter_value('samtools_path'), 'sort', '-@', str(self.processors), bam, sorted_bam])#samtools sort -@ $nump "${dest}${alnname}.bam" "${dest}${alnname}_sorted"
 		
 		#move the sorted BAM to overwrite the unsorted BAM
 		os.remove(bam) #first remove the origional unsorted bam, otherwise the move will choke!
@@ -68,7 +68,7 @@ class SamToBam(PipelineModule):
 		#index our sorted BAM file
 		cxt.log.write("\t-> Indexing BAM...\n")
 		cxt.log.flush()
-		self._run_subprocess(['samtools', 'index', bam])#samtools index "${dest}${alnname}.bam"
+		self._run_subprocess([self.get_parameter_value('samtools_path'), 'index', bam])#samtools index "${dest}${alnname}.bam"
 		
 		
 		outbam = FileInfo(bam, FileContext.from_module_context(cxt, "bam"))

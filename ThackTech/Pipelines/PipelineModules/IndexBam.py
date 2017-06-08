@@ -14,7 +14,7 @@ class IndexBam(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
-		pass
+		self.add_parameter(ModuleParameter('samtools_path', str, 'samtools', desc="Path to samtools"))
 	#end __declare_parameters()
 	
 	def _declare_resolvers(self):
@@ -23,17 +23,16 @@ class IndexBam(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'samtools': self._call_output("samtools 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+			'samtools': self._call_output(self.get_parameter_value('samtools_path')+" 2>&1 | perl -ne 'if(m/Version: ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
 	def run(self, cxt):
 		bam = self.resolve_input('alignments', cxt)
 		
-		index_cmd = ['samtools', 'index', bam]
+		index_cmd = [self.get_parameter_value('samtools_path'), 'index', bam]
 		
 		cxt.log.write('-> Indexing BAM "%s"...\n' % (bam,))
-		cxt.log.write("-> "+subprocess.check_output('samtools 2>&1 | grep Version', shell=True, stderr=subprocess.STDOUT)+"")
 		cxt.log.write("..............................................\n")
 		cxt.log.write(" ".join(index_cmd))
 		cxt.log.write("\n..............................................\n")

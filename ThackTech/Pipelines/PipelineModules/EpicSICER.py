@@ -14,6 +14,7 @@ class EpicSICER(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
+		self.add_parameter(ModuleParameter('epic_path', str, 'epic', desc="path to EPIC"))
 		self.add_parameter(ModuleParameter('keep_duplicates', bool, False, desc="Keep reads mapping to the same position on the same strand within a library."))
 		self.add_parameter(ModuleParameter('window_size', int, 200, desc="Size of the windows to scan the genome. WINDOW_SIZE is the smallest possible island."))
 		self.add_parameter(ModuleParameter('gaps_allowed', int, 3, desc="Multiple of window size used to determine the gap size."))
@@ -28,7 +29,7 @@ class EpicSICER(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'epic': self._call_output("epic --version 2>&1 | perl -ne 'if(m/epic ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
+			'epic': self._call_output(self.get_parameter_value('epic_path')+" --version 2>&1 | perl -ne 'if(m/epic ([\d\.-\w]+)/){ print $1; }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
@@ -39,7 +40,7 @@ class EpicSICER(PipelineModule):
 	def run(self, cxt):
 		
 		cmd = [
-			'epic',
+			self.get_parameter_value('epic_path'),
 			'--number-cores', str(self.processors),
 			'--genome', cxt.sample.genome.name,
 			#'--effective_genome_size', str(cxt.sample.genome.gsize),

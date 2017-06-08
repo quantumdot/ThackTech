@@ -5,7 +5,7 @@ from ThackTech import filetools
 
 
 class GenomeInfo(object):
-	def __init__(self, name, gsize, chrsize=None):
+	def __init__(self, name, gsize=0, chrsize=None):
 		"""Initalize a GenomeInfo object
 		
 		Parameters:
@@ -68,12 +68,6 @@ class GenomeInfo(object):
 	#end get_index()
 	
 	__known_references = None
-	#__probe_paths = []
-	#@staticmethod
-	#def register_path(path):
-	#	GenomeInfo.__probe_paths.append(path)
-	#end register_path()
-	
 	@staticmethod
 	def get_reference_genomes():
 		if GenomeInfo.__known_references is None:
@@ -82,29 +76,34 @@ class GenomeInfo(object):
 			from ThackTech import conf
 			genome_config = conf.get_config('genomes')
 			for section in genome_config.sections():
-				gi = GenomeInfo(section, int(genome_config.getfloat(section, "size")))
+				gi = GenomeInfo(section)
+				
+				#run the iGenomes discovery first.... possible to override with later directives.
 				if genome_config.has_option(section, "goldenpath"):
 					gi.try_discover(genome_config.get(section, "goldenpath"))
+					
+				options = genome_config.items(section)
+				for oname, ovalue in options:
+					if oname.startswith('index.'):
+						idx_name = oname.split('.')[1]
+						gi.add_index(idx_name, ovalue)
+						
+					elif oname.startswith('fasta.'):
+						fa_name = oname.split('.')[1]
+						if fa_name.lower() == 'genome':
+							gi.wg_fasta = ovalue
+						else:
+							gi.chr_fasta[fa_name] = ovalue
+					elif oname == 'size':
+						gi.gsize = int(float(ovalue))
+					else:
+						setattr(gi, oname, ovalue)
+				
 				GenomeInfo.__known_references[gi.name] = gi
 				
 		return GenomeInfo.__known_references
 	#end get_reference_genomes()
 #end class GenomeInfo
-
-
-
-
-# GenomeInfo.register_path('/mnt/ref/reference/Homo_sapiens/UCSC')
-# GenomeInfo.register_path('/mnt/ref/reference/Mus_musculus/UCSC')
-# GenomeInfo.register_path('/mnt/ref/reference/Rattus_norvegicus/UCSC')
-# GenomeInfo.register_path('/mnt/ref/reference/Saccharomyces_cerevisiae/UCSC')
-# GenomeInfo.register_path('/mnt/ref/reference/PhiX/UCSC')
-# 
-# GenomeInfo.register_path('/home/thackray/reference/Homo_sapiens/UCSC')
-# GenomeInfo.register_path('/home/thackray/reference/Mus_musculus/UCSC')
-# GenomeInfo.register_path('/home/thackray/reference/Rattus_norvegicus/UCSC')
-# GenomeInfo.register_path('/home/thackray/reference/Saccharomyces_cerevisiae/UCSC')
-# GenomeInfo.register_path('/home/thackray/reference/PhiX/UCSC')
 
 
 
