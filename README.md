@@ -2,9 +2,9 @@
 
 
 # Introduction
-The `ThackTech` package contains several modules and subpackages for genomic-related analysis. A centerpiece of the packages is the `ThackTech.Pipelines` package, which offers portable pipline systems and standardized analysis modules. By portability, the system attempts to be system agnostic (with the limitation of being mostly linux-bound), but can be run on anything from a laptop, workstation, or even a SLURM-managed cluster.
+The `ThackTech` package contains several modules and subpackages for genomic-related analysis. A centerpiece of the packages is the `ThackTech.Pipelines` package, which offers portable pipeline systems and standardized analysis modules. By portability, the system attempts to be system agnostic (with the limitation of being mostly linux-bound), but can be run on anything from a laptop, workstation, or even a SLURM-managed cluster.
 
-Importantly, the pipelines are declerative in nature and decouple data from the logic of execution. 
+Importantly, the pipelines are declarative in nature and decouple data from the logic of execution. 
 
 # Install
 
@@ -16,7 +16,7 @@ Installation should is simple:
 You can also use the `--user` and `--no-deps` options. The repository is currently private, so see the owner for gaining access credentials.
 
 ## Configuration
-Configuration options are set through ini-style files, and can be located in several locations with order precidence. In order, the configuration files are read from the following locations (with files read later having higher precidence):
+Configuration options are set through ini-style files, and can be located in several locations with order precedence. In order, the configuration files are read from the following locations (with files read later having higher precedence):
 1. `<Package_Install_Location>/conf`
 2. `/etc/thacktech`
 3. `~/.config/thacktech`
@@ -48,7 +48,7 @@ fasta.chr2=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/WholeGenomeFasta/chr2.f
 #...
 fasta.chrX=/mnt/reference/Mus_musculus/UCSC/mm9/Sequence/WholeGenomeFasta/chrX.fa
 ```
-One interesting note: Specifying an "goldenpath" will first parse the directory specified looking for valid indicies/fasta files/other stuff, but then later directives may override the auto-discovered locations which may be useful for specifying, for example, a bowtie index with higer density of the suffix-array sample (`--offrate`). 
+One interesting note: Specifying an "goldenpath" will first parse the directory specified looking for valid indices/fasta files/other stuff, but then later directives may override the auto-discovered locations which may be useful for specifying, for example, a bowtie index with higher density of the suffix-array sample (`--offrate`). 
 
 ### pipeline
 Pipeline configuration elements go here. This mostly deals with pipeline runner configurations
@@ -89,7 +89,7 @@ min_length=25
 ## Premade Pipelines
 Pipeline-related infrastructure is located in the `ThackTech.Pipelines` package.  
 
-There are a few pre-configured pipelines ready for use (these should be installed into your bin dir automagically):
+There are a few pre-configured pipelines ready for use (these should be installed into your bin directory automagically):
 * `bowtie_alignment_pipeline.py`
 * `macs_peakcall_pipeline.py`
 * `epic_peakcall_pipeline.py`
@@ -121,12 +121,12 @@ from ThackTech.Pipelines import ParallelPipelineRunner
 runner = ParallelPipelineRunner(pipeline, threads=4)
 
 #run the pipeline over some samples
-samples = [PipelineSample('sample_'+i, 'mm9', '/path/to/destination') for i in range(5)]
+samples = [PipelineSample('sample_{}'.format(i), 'mm9', '/path/to/destination') for i in range(5)]
 runner.run(samples)
 ```
 
 ## Pipeline Documentation
-Documenting pipeline and analysis parameters is of the upmost importance. Therefore, `AnalysisPipeline` and modules derived from `PipelineModule` offer a `documentation()` method that returns a string documentation of the pipeline or module in question. This is also useful for interogating module parameters in and interactive session. Consider the output of the method call `sleeper.documentation()` in the context of the script above:
+Documenting pipeline and analysis parameters is of the upmost importance. Therefore, `AnalysisPipeline` and modules derived from `PipelineModule` offer a `documentation()` method that returns a string documentation of the pipeline or module in question. This is also useful for interrogating module parameters in and interactive session. Consider the output of the method call `sleeper.documentation()` in the context of the script above:
 
 ```
 Sleep
@@ -148,7 +148,7 @@ TOOL VERSIONS:
 ----------------------------------------
 ```
 
-Consider the output of the method call `pipelien.documentation()` in the context of the script above:
+Consider the output of the method call `pipeline.documentation()` in the context of the script above:
 
 ```
 ========================================
@@ -228,9 +228,9 @@ def run(self, cxt):
 The run method is passed a context object derived from `ThackTech.Pipelines.ModuleRunContext` and contains references to the sample, logging utilities, and information regarding the pipeline state. All computational work should occur within the `run()` method or methods directly called by `run()`
 
 ### Declare Module Parameters
-In all but the very simplest analysis modules, it is useful to declare parameters that affect how the module runs. `PipelineModule`'s contain a collection of `ModuleParameter` objects that provide type-safe decleration of options for a given module. This parameters may also have values assigned at runtime from installed configuration files.
+In all but the very simplest analysis modules, it is useful to declare parameters that affect how the module runs. `PipelineModule`'s contain a collection of `ModuleParameter` objects that provide type-safe declaration of options for a given module. These parameters may also have values assigned at runtime from installed configuration files.
 
-Module parameters should be declared by overriding the `PipelineModule._declare_parameters()` method. Within the method decleration, call the `PipelineModule.add_parameter()` method, passing a `ModuleParameter` object:
+Module parameters should be declared by overriding the `PipelineModule._declare_parameters()` method. Within the method declaration, call the `PipelineModule.add_parameter()` method, passing a `ModuleParameter` object:
 ```python
 def _declare_parameters(self):
 	self.add_parameter(ModuleParameter('samtools_path', str, 'samtools', desc="Path to samtools"))
@@ -244,7 +244,7 @@ Other important information about `ModuleParameters`
 * Parameters can define valid values (besides type) using the `choices` attribute
 
 ### Declare Module Resolvers
-Most modules will require some input that can only be determined at runtime, for example, a file that is created by a module earlier in the pipeline. To facilitate a declaritive approach that decouples data from the computation, Modules offer resolvers are essentially named callables.
+Most modules will require some input that can only be determined at runtime, for example, a file that is created by a module earlier in the pipeline. To facilitate a declarative approach that decouples data from the computation, Modules offer resolvers are essentially named callables.
 
 Resolvers should be declared by overriding the `PipelineModule._declare_resolvers()` method, and place in the body calls to `PipelineModule._name_resolver()`. 
 ```python
