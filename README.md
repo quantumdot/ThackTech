@@ -108,11 +108,9 @@ runner.run(samples)
 ```
 
 ## Pipeline Documentation
-Documenting pipeline and analysis parameters is of the upmost importance. Therefore, `AnalysisPipeline` and modules derived from `PipelineModule` offer a `documentation()` method that returns a string documentation of the pipeline or module in question. This is also useful for interogating module parameters in and interactive session. Consider the output of the following command in the context of the script above:
+Documenting pipeline and analysis parameters is of the upmost importance. Therefore, `AnalysisPipeline` and modules derived from `PipelineModule` offer a `documentation()` method that returns a string documentation of the pipeline or module in question. This is also useful for interogating module parameters in and interactive session. Consider the output of the method call `sleeper.documentation()` in the context of the script above:
 
-```python
-sleeper.documentation()
-
+```
 Sleep
 ----------------------------------------
 CRITICAL:    False
@@ -132,7 +130,7 @@ TOOL VERSIONS:
 ----------------------------------------
 ```
 
-Calling the documentation method on the pipeline results in:
+Consider the output of the method call `pipelien.documentation()` in the context of the script above:
 
 ```
 ========================================
