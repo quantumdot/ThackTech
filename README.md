@@ -225,7 +225,15 @@ def run(self, cxt):
 	cxt.log.flush()
 #end run()
 ```
-The run method is passed a context object derived from `ThackTech.Pipelines.ModuleRunContext` and contains references to the sample, logging utilities, and information regarding the pipeline state. All computational work should occur within the `run()` method or methods directly called by `run()`
+The run method is passed a context object derived from `ThackTech.Pipelines.ModuleRunContext` and contains references to the sample, logging utilities, and information regarding the pipeline state. All computational work should occur within the `run()` method or methods directly called by `run()`.
+
+#### Return Values
+If the module generates any output files, these should be returned from the `run()` method as a list of `ThackTech.Pipelines.FileInfo` objects. 
+
+Alternatively, an older style method of returning output files from the module is supported by returning a `dict` with keys representing file role and values representing the file fullpath. This gets translated by the pipeline runtime into `FileInfo` objects using the appropriate module run context to generate `FileContext` objects with the role provided in the returned `dict`. This method is deprecated, and my be fully removed in future versions. 
+
+#### Module Failure
+The pipeline runtime monitors the execution of the a module and reports failure of a module. Essentially any exceptions thrown by the module are caught by the runtime. The action taken by the runtime depends on the value of the `critical` attribute; failing modules marked as critical result in the runtime halting execution of the current pipeline, where as modules marked as not critical result in the runtime continuing execution of the pipeline and marking the failure as a warning. The default value for the critical attribute as defined by `ThackTech.Pipelines.PipelineModule` is `False`, but may be overridden in implementing classes. Further, the user may always mark a module as (not) critical. So, two points to consider: Module authors should raise some exception to signal failure of the module, and module consumers should be aware of the value for the critical attribute.
 
 ### Declare Module Parameters
 In all but the very simplest analysis modules, it is useful to declare parameters that affect how the module runs. `PipelineModule`'s contain a collection of `ModuleParameter` objects that provide type-safe declaration of options for a given module. These parameters may also have values assigned at runtime from installed configuration files.
