@@ -2,7 +2,6 @@ import os
 import sys
 import gzip
 import errno
-import tempfile
 import subprocess
 
 
@@ -49,6 +48,11 @@ def basename_noext(path, complete=False):
 #end basename_noext()
 
 def open_any(path, mode, **kwargs):
+    '''Transparently open a (possibly gzipped) file
+    
+    If the filename ends with '.gz' then the gzip module is used for file opening
+    otherwise falls back to built-in open()
+    '''
     if path.endswith('.gz'):
         return gzip.open(path, mode, **kwargs)
     else:
@@ -155,60 +159,3 @@ def prepend_file(filename, data):
     with open(filename, 'w') as modified:
         modified.write(data + origional_data)
 #end prepend_file()
-
-
-# class Tee(object):
-#     """This object behaves like a file, but "tee-s" the data across multiple files-like objects
-#     
-#     """
-#     def __init__(self, *args):
-#         """Initialize this Tee object
-#         
-#         Parameters:
-#             args: arbitrary number of file-like objects or strings. If string, it is assumed to be a file path and is opened in mode 'w'
-#             
-#         """
-#         self.__innerhandle = tempfile.NamedTemporaryFile()
-#         self.__handles = []
-#         for arg in args:
-#             if isinstance(arg, basestring):
-#                 self.__handles.append(open(arg, 'w'))
-#             else:
-#                 self.__handles.append(arg)
-#                 
-#     def __poll(self):
-#         pass
-#                 
-#     def release(self, filehandle):
-#         self.__handles.remove(filehandle)
-#         
-#     def write(self, text):
-#         """Write a string to the files held by this Tee
-#         
-#         Parameters:
-#             text: String to write
-#         """
-#         for h in self.__handles:
-#             h.write(text)
-#             
-#     def writelines(self, sequence):
-#         """Write a sequence of strings to the files held by this Tee
-#         
-#         Parameters:
-#             text: Sequence of strings to write
-#         """
-#         for text in sequence:
-#             for h in self.__handles: 
-#                 h.write(text)
-# 
-#     def flush(self):
-#         """Flushes the output of all files held by this Tee
-#         """
-#         for h in self.__handles:
-#             h.flush()
-#     
-#     def __del__(self):
-#         for h in self.__handles:
-#             if h != sys.stdout and h != sys.stderr:
-#                 h.close()
-# #end class Tee

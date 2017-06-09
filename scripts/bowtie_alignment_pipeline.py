@@ -35,7 +35,7 @@ class AlignmentPipelineSample(PipelineSample):
             r1 = base.format(dict(fmtvars, read=1, ext='fastq'))
             r2 = base.format(dict(fmtvars, read=2, ext='fastq'))
             paths_tried.extend([r1, r2])
-            #print "trying:\n{}\n{}\n".format(r1, r2)
+            #sys.stderr.write("trying:\n{}\n{}\n".format(r1, r2))
             if os.path.exists(r1) and os.path.exists(r2):
                 files.append(FileInfo(r1, FileContext.from_origin('reads'), mate=1))
                 files.append(FileInfo(r2, FileContext.from_origin('reads'), mate=2))

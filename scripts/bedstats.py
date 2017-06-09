@@ -52,15 +52,15 @@ class DescriptiveStats(object):
         self.stdev  = self.data.std()
     
     def render(self):
-        buffer  = ""
-        buffer += "Count     = "+str(self.count)+"\n"
-        buffer += "Min       = "+str(self.min)+"\n"
-        buffer += "Max       = "+str(self.max)+"\n"
-        buffer += "Mean      = "+str(self.mean)+"\n"
-        buffer += "Median    = "+str(self.median)+"\n"
-        buffer += "Mode      = "+str(self.mode)+"\n"
-        buffer += "Std. Dev. = "+str(self.stdev)+"\n"
-        return buffer        
+        buff  = ""
+        buff += "Count     = "+str(self.count)+"\n"
+        buff += "Min       = "+str(self.min)+"\n"
+        buff += "Max       = "+str(self.max)+"\n"
+        buff += "Mean      = "+str(self.mean)+"\n"
+        buff += "Median    = "+str(self.median)+"\n"
+        buff += "Mode      = "+str(self.mode)+"\n"
+        buff += "Std. Dev. = "+str(self.stdev)+"\n"
+        return buff        
 
 
 
@@ -71,11 +71,11 @@ class MetricContainer(object):
         self.stats = DescriptiveStats(self.data)
     
     def render_stats(self):
-        buffer  = "Statistics for "+self.name+" Distribution:\n"
-        buffer += "----------------------------------\n"
-        buffer += self.stats.render()
-        buffer += "----------------------------------\n\n"
-        return buffer
+        buff  = "Statistics for "+self.name+" Distribution:\n"
+        buff += "----------------------------------\n"
+        buff += self.stats.render()
+        buff += "----------------------------------\n\n"
+        return buff
 
     def plot(self, ax, bins, log, limit):
         ax.hist(self.data, bins=bins, color='b')
@@ -91,7 +91,7 @@ class MetricContainer(object):
             ax.set_xlim(right=limit)
 
 
-class cxt.sampleContainer(object):
+class SampleContainer(object):
     def __init__(self, name):
         self.name = name
         self.metrics = {}
@@ -116,11 +116,11 @@ def main():
     #print args
     #exit()
 
-    cxt.samples = []
+    samples = []
     for b in args.bed:
-        cxt.samples.append(parse_bed(b))
+        samples.append(parse_bed(b))
 
-    metrics = sorted(cxt.samples[0].metrics.keys())
+    metrics = sorted(samples[0].metrics.keys())
     limits = {}
     mi = 0
     for mk in metrics:
@@ -129,14 +129,14 @@ def main():
             limits[mk] = None
         elif args.squeeze[mi] == 'auto':
             #automatic squeezing
-            limits[mk] = find_auto_limit(cxt.samples, mk)
+            limits[mk] = find_auto_limit(samples, mk)
         else:
             #we should have gotten a number from the user
             limits[mk] = float(args.squeeze[mi])
         mi = clamp(mi+1, 0, len(args.squeeze)-1)
         
-    for s in cxt.samples:
-        process_cxt.sample(s, args, limits)
+    for s in samples:
+        process_sample(s, args, limits)
 #end main()
 
 def clamp(val, minval, maxval):
@@ -145,9 +145,9 @@ def clamp(val, minval, maxval):
     return val
 #end clamp()
 
-def find_auto_limit(cxt.samples, metric):
+def find_auto_limit(samples, metric):
     limit = 0
-    for s in cxt.samples:
+    for s in samples:
         limit = max(limit, s.metrics[metric].stats.max)
     return limit
 #end find_auto_limit()
@@ -156,7 +156,7 @@ def parse_bed(bedfile):
     sys.stdout.write("Reading "+bedfile+".....\n")
     bed = pybedtools.BedTool(bedfile)
     savename = os.path.splitext(os.path.basename(bedfile))[0]
-    cxt.sample = cxt.sampleContainer(savename)
+    sample = SampleContainer(savename)
 
     #initialize some vars...
     lengths = numpy.empty(bed.count(), dtype=int)
@@ -166,16 +166,16 @@ def parse_bed(bedfile):
         lengths[i] = interval.length
         scores[i] = interval.score
         i += 1
-    cxt.sample.addMetric('Length', lengths)
-    cxt.sample.addMetric('Score', scores)
-    return cxt.sample
+    sample.addMetric('Length', lengths)
+    sample.addMetric('Score', scores)
+    return sample
 #end parse_bed()
 
 
-def process_cxt.sample(cxt.sample, args, limits):
+def process_sample(sample, args, limits):
 
-    sys.stdout = Tee(cxt.sample.name+'.stats.txt', 'w')
-    sys.stdout.write("\nProcessing "+cxt.sample.name+".bed....\n\n")
+    sys.stdout = Tee(sample.name+'.stats.txt', 'w')
+    sys.stdout.write("\nProcessing "+sample.name+".bed....\n\n")
 
     #allow xkcd style graphs
     if args.xkcd:
@@ -188,8 +188,8 @@ def process_cxt.sample(cxt.sample, args, limits):
     if args.D2:
         gridsize = (4,1)
 
-    lengths = cxt.sample.metrics['Length']
-    scores  = cxt.sample.metrics['Score']
+    lengths = sample.metrics['Length']
+    scores  = sample.metrics['Score']
 
     #plot the lengths    
     ax1 = plt.subplot2grid(gridsize, (0,0))
@@ -214,7 +214,7 @@ def process_cxt.sample(cxt.sample, args, limits):
         plt.title("Interval Length vs. Interval Scores")
         plt.xlabel("Interval Length")
 
-    imgname = cxt.sample.name+'.stats'+'.'+args.format
+    imgname = sample.name+'.stats'+'.'+args.format
     plt.savefig(imgname)
     sys.stdout.write("See graphical output at: "+imgname+"\n\n")
     sys.stdout.release() #release the logger!

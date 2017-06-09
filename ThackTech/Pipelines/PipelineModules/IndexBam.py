@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
+from ThackTech.Pipelines import PipelineModule, ModuleParameter, FileInfo, FileContext
 
 
 class IndexBam(PipelineModule):
@@ -30,14 +30,16 @@ class IndexBam(PipelineModule):
 	def run(self, cxt):
 		bam = self.resolve_input('alignments', cxt)
 		
-		index_cmd = [self.get_parameter_value('samtools_path'), 'index', bam]
+		index_cmd = [self.get_parameter_value('samtools_path'), 'index', bam.fullpath]
 		
-		cxt.log.write('-> Indexing BAM "%s"...\n' % (bam,))
+		cxt.log.write('-> Indexing BAM "%s"...\n' % (bam.fullpath,))
 		cxt.log.write("..............................................\n")
 		cxt.log.write(" ".join(index_cmd))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
 		
 		self._run_subprocess(index_cmd, stderr=subprocess.STDOUT, stdout=cxt.log)
+		
+		bam.companions.append(FileInfo(bam.fullpath+'.bai', FileContext.from_module_context(cxt, "bam_index")))
 	#end run()
 #end class GeneratePseudoreplicates

@@ -81,17 +81,21 @@ class FileInfo(object):
 		
 		Args:
 			filepath (str): Path of the file this object represents
-		"""
-		self.__fullpath = os.path.abspath(filepath)
-		self.__context = context
-		
+		"""	
 		#support for companion files
 		from ThackTech.Pipelines import GLOBAL_MANAGER
 		self.__companions = GLOBAL_MANAGER.list()
 		
 		#random extra data as needed.
+		self.__context = context
 		self.attributes = {}
 		self.attributes.update(attributes)
+		
+		if isinstance(filepath, FileInfo):
+			self.__fullpath = filepath.fullpath
+			self.__companions.extend(filepath.companions)
+		else:
+			self.__fullpath = os.path.abspath(filepath)
 	#end __init__()
 	
 	def has_attribute(self, attribute):

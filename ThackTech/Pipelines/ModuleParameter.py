@@ -69,6 +69,7 @@ class ModuleParameter(object):
 		elif value_type == float:
 			new_value = float(value)
 		elif value_type == long:
+			#TODO: this case will disappear in python 3; long -> int	
 			new_value = long(value)
 		elif value_type == complex:
 			new_value = complex(value)

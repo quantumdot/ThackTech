@@ -40,16 +40,16 @@ class AnalysisPipeline(object):
 		"""Return a string that documents the pipeline
 		"""
 		hash_length = 40
-		buff = "%s\nBegin Pipeline: %s\n%s\n" % ('='*hash_length, self.name, '='*hash_length)
+		buff = "{}\nBegin Pipeline: {}\n{}\n".format('='*hash_length, self.name, '='*hash_length)
 		
 		for m in self.pipeline:
-			buff += "\n%s\n" % (u' | '*(hash_length/3),)
-			buff += "%s\n\n" % (u' V '*(hash_length/3),)
+			buff += "\n{}\n" % (u' | '*(hash_length/3))
+			buff += "{}\n\n" % (u' V '*(hash_length/3))
 			buff += m.documentation()
 		
-		buff += "\n%s\n" % (u' | '*(hash_length/3),)
-		buff += "%s\n\n" % (u' V '*(hash_length/3),)
-		buff += "%s\nEnd Pipeline: %s\n%s\n" % ('='*hash_length, self.name, '='*hash_length)
+		buff += "\n{}\n".format(u' | '*(hash_length/3))
+		buff += "{}\n\n".format(u' V '*(hash_length/3))
+		buff += "{}\nEnd Pipeline: {}\n{}\n".format('='*hash_length, self.name, '='*hash_length)
 		return buff
 	#end explain()
 	

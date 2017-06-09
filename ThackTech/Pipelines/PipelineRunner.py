@@ -63,8 +63,8 @@ def add_runner_args(argparser):
 	
 	
 	cfg = conf.get_config('pipelines')
-	for section in default_args.keys():
-		for option in default_args[section].keys():
+	for section in list(default_args.keys()):
+		for option in list(default_args[section].keys()):
 			try:
 				default_args[section][option] = cfg.get(section, option)
 			except:
@@ -183,7 +183,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 						if isinstance(results, dict):
 							#support the old-style of returning output
 							#this may be removed in the future!
-							for label, path in results.iteritems():
+							for label, path in results.items():
 								sample.add_file(FileInfo(path, FileContext.from_module_context(cxt, label)))
 						else:
 							for f in results:

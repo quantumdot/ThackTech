@@ -131,7 +131,7 @@ class Bowtie2Align(PipelineModule):
 		self.parse_bowtie_output(cxt, bowtie_output, output_result['align_stats'])
 		
 		output_files = []
-		for n, o in output_result.items():
+		for n, o in list(output_result.items()):
 			output_files.append(FileInfo(o, FileContext.from_module_context(cxt, n)))
 		
 		return output_files

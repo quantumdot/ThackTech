@@ -5,6 +5,7 @@ import sys
 import copy
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 #BEFORE RUNNING SCRIPT WHEN USING LMOD
 #module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 bowtie2/2.2.9
@@ -64,9 +65,6 @@ def main():
         sys.stdout.flush()
         return
 
-
-
-
     sys.stdout.write('Reading sample manifest.....\n')
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
     
@@ -80,161 +78,20 @@ def main():
     
     if args.idr:
         #first generate the pooled sample.
-        group_samples = {}
-        for sample in samples:
-            group = sample.get_attribute('group')
-            if group not in group_samples:
-                group_samples[group] = PipelineSample(group, sample.genome, sample.dest)
-                group_samples[group].set_attribute('template', sample.name)
-                
-            for sf in sample.find_files(lambda f: f.cxt.is_origin()):
-                c = len(group_samples[group].find_files(lambda f: f.cxt.is_origin() and f.cxt.role == sf.role))
-                group_samples[group].add_file(FileInfo(sf.fullpath, FileContext.from_origin(sf.role+'_rep'+str(c))))
-            
+        generate_replicate_pools(samples, args)
         
-        #lets alleviate the load of generating pooled bams if they already exist.
-        sys.stdout.write('Generating pooled samples.\n')
-        sys.stdout.flush()
-        group_samples_to_run = []
-        group_samples_to_skip = []
-        for s in group_samples.values():
-            merged_bam_dest = os.path.join(s.dest, 'merged_bam', s.name+'.merged.bam')
-            if os.path.isfile(merged_bam_dest):
-                sys.stdout.write('-> It appears that %s has already been pooled. Skipping this sample...\n' % (s.name,))
-                s.add_file(FileInfo(merged_bam_dest, FileContext('Generate Pooled Samples', (1 if args.shm else 0), 'MergeBams', 'merged_bam')))
-                group_samples_to_skip.append(s)
-            else:
-                group_samples_to_run.append(s)
-        sys.stdout.flush()
-        
-        run_pipeline(make_replicate_pool_pipeline(args), group_samples_to_run, args)
-        
-        
-        
-        for gsample in (group_samples_to_run + group_samples_to_skip):
-            gtemplate = None
-            for s in samples:
-                if s.name == gsample.get_attribute('template'):
-                    gtemplate = s
-                    break
-            gsample_data = copy.deepcopy(gtemplate)
-            gsample_data.set_attribute('pooledreplicate', True)
-            gsample_data.name = gsample.name+'_pooled'
-            gsample_data.add_file('source', 'treatment', gsample.get_file('MergeBams', 'merged_bam'))
-            samples.append(gsample_data)
-        sys.stdout.write("Completed pooled replicate generation!\n\n")
-        sys.stdout.write("--------------------------------------------\n\n")
-        
-    
         #generate pseudoreplicates
-        sys.stdout.write('Generating sample pseudoreplicates.\n')
-        sys.stdout.flush()
-        
-        psr_samples_to_run = []
-        psr_samples_to_skip = []
-        for s in samples:
-            psr1_bam_dest = os.path.join(s.dest, 'pseudoreps', s.name+'.pr1.bam')
-            psr2_bam_dest = os.path.join(s.dest, 'pseudoreps', s.name+'.pr2.bam')
-            if os.path.isfile(psr1_bam_dest) and os.path.isfile(psr2_bam_dest):
-                sys.stdout.write('-> It appears that %s already has pseudoreplicates generated. Skipping this sample...\n' % (s.name,))
-                s.add_file('Pseudoreplicates', 'pr1', psr1_bam_dest)
-                s.add_file('Pseudoreplicates', 'pr2', psr2_bam_dest)
-                psr_samples_to_skip.append(s)
-            else:
-                psr_samples_to_run.append(s)
-        sys.stdout.flush()
-        
-        run_pipeline(make_pseudoreplicate_pipeline(args), psr_samples_to_run, args)
-    
-    
-        pseudo_reps = []
-        for sample in (psr_samples_to_run + psr_samples_to_skip):
-            #generate sample for psuedoreplicate 1
-            psr1 = copy.deepcopy(sample)
-            if psr1.has_attribute('pooledreplicate'):
-                psr1.remove_attribute('pooledreplicate')
-                psr1.set_attribute('pooledpseudoreplicate', True)
-            else:
-                psr1.set_attribute('pseudoreplicate', True)
-            psr1.name = sample.name+'_psrep1'
-            psr1.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr1'))
-            pseudo_reps.append(psr1)
-            
-            #generate sample for psuedoreplicate 2
-            psr2 = copy.deepcopy(sample)
-            if psr2.has_attribute('pooledreplicate'):
-                psr2.remove_attribute('pooledreplicate')
-                psr2.set_attribute('pooledpseudoreplicate', True)
-            else:
-                psr2.set_attribute('pseudoreplicate', True)
-            psr2.name = sample.name+'_psrep2'
-            psr2.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr2'))
-            pseudo_reps.append(psr2)
-            
-            #mark the sample as primary replicate if necessary (should be last to avoid dirtying the psr from copy)
-            if not sample.has_attribute('pooledreplicate'):
-                sample.set_attribute('primaryreplicate', True)
-                
-        samples = psr_samples_to_run + psr_samples_to_skip + pseudo_reps
-        sample_count = len(samples)
-        
-        sys.stdout.write("Completed sample pseudoreplicates generation!\n\n")
-        sys.stdout.write("--------------------------------------------\n\n")
+        generate_psuedoreplicate_samples(samples, args)
     
     ##
-    # Generate the pipeline
+    # Perform Peak calling on samples
     ##
-    # sys.stdout.write('Processing %d samples%s%s....\n' % (sample_count, ('s' if sample_count > 1 else ''), (', including pooled and pseudoreplicates' if args.idr else '')))
-    # sys.stdout.flush()
-    main_pipeline_samples_to_run = []
-    main_pipeline_samples_to_skip = []
-    for s in samples:
-        out_manifest_dest = os.path.join(s.dest, s.name+'_output_manifest.tsv')
-        if os.path.isfile(out_manifest_dest) and not args.skipmacs:
-            sys.stdout.write('-> It appears that %s already has been completed. Skipping this sample...\n' % (s.name,))
-            out_manifest = pd.read_csv(out_manifest_dest, sep='\t', comment='#', skip_blank_lines=True)
-            for i, row in out_manifest.iterrows():
-                s.add_file(row['module'], row['label'], row['path'])
-            main_pipeline_samples_to_skip.append(s)
-        else:
-            main_pipeline_samples_to_run.append(s)
-    sys.stdout.flush()
-    
-    run_pipeline(make_peak_calling_and_qc_pipeline(args), main_pipeline_samples_to_run, args)
-            
-    sys.stdout.write("Completed processing of all manifest items!\n\n")
-    sys.stdout.write("--------------------------------------------\n\n")
-    samples = (main_pipeline_samples_to_run + main_pipeline_samples_to_skip)
+    run_peakcalling(samples, args)
     
     
     if args.idr:
-        idr_samples = []
-        groups = set([s.get_attribute('group') for s in samples])
-        for group in groups:
-            samples_in_group = [s for s in samples if s.get_attribute('group') == group]
-            gsample = PipelineSample(group, samples_in_group[0].genome, samples_in_group[0].dest)
-            if samples_in_group[0].has_attribute('broad'):
-                gsample.set_attribute('broad', True)
-            for s in samples_in_group:
-                if s.has_attribute('primaryreplicate'):
-                    gsample.add_file('primaryreplicate', s.name, resolve_idr_peak_file(s))
-                    
-                elif s.has_attribute('pseudoreplicate'):
-                    gsample.add_file('pseudoreplicate', s.name, resolve_idr_peak_file(s))
-                    
-                elif s.has_attribute('pooledpseudoreplicate'):
-                    gsample.add_file('pooledpseudoreplicate', s.name, resolve_idr_peak_file(s))
-            idr_samples.append(gsample)
-
-        for sample in idr_samples:
-            print sample.name
-            print sample.files
-            print
-        sys.stdout.write('Performing IDR consistency analysis....\n')
-        run_pipeline(make_IDR_analysis_pipeline(args), idr_samples, args)
-                
-        sys.stdout.write("Completed IDR consistency analysis!\n\n")
-        sys.stdout.write("--------------------------------------------\n\n")
+        #run the IDR analysis
+        run_idr_analysis(samples, args)
 #end main()
 
 def run_pipeline(pipeline, samples, args):
@@ -242,6 +99,35 @@ def run_pipeline(pipeline, samples, args):
     runner.run(samples)
 #end get_runner()
 
+def run_read_manifest_pipeline(samples):
+    pipeline = AnalysisPipeline('Reading Sample Manifest')
+    from ThackTech.Pipelines.PipelineModules import ReadOutputManifest
+    pipeline.append_module(ReadOutputManifest.ReadOutputManifest, critical=True)
+    
+    from ThackTech.Pipelines import SerialPipelineRunner
+    runner = SerialPipelineRunner(pipeline)
+    runner.run(samples)
+#end run_read_manifest_pipeline()
+
+def run_peakcalling(samples, args):
+    main_pipeline_samples_to_run = []
+    main_pipeline_samples_to_skip = []
+    for s in samples:
+        out_manifest_dest = os.path.join(s.dest, s.name+'_output_manifest.tsv')
+        if os.path.isfile(out_manifest_dest) and not args.skipmacs:
+            sys.stdout.write('-> It appears that %s already has been completed. Skipping this sample...\n' % (s.name,))
+            main_pipeline_samples_to_skip.append(s)
+        else:
+            main_pipeline_samples_to_run.append(s)
+    sys.stdout.flush()
+    
+    run_read_manifest_pipeline(main_pipeline_samples_to_skip)
+    run_pipeline(make_peak_calling_and_qc_pipeline(args), main_pipeline_samples_to_run, args)
+            
+    sys.stdout.write("Completed processing of all manifest items!\n\n")
+    sys.stdout.write("--------------------------------------------\n\n")
+    samples = (main_pipeline_samples_to_run + main_pipeline_samples_to_skip)
+#end run_peakcalling()
 
 def make_peak_calling_and_qc_pipeline(args):
     pipeline = AnalysisPipeline('Peak Calling and QC')
@@ -333,6 +219,58 @@ def make_peak_calling_and_qc_pipeline(args):
 #end make_peak_calling_and_qc_pipeline
 
 
+def generate_replicate_pools(samples, args):
+    group_samples = {}
+    for sample in samples:
+        group = sample.get_attribute('group')
+        if group not in group_samples:
+            group_samples[group] = PipelineSample(group, sample.genome, sample.dest)
+            group_samples[group].set_attribute('template', sample.name)
+            
+        for sf in sample.find_files(lambda f: f.cxt.is_origin()):
+            c = len(group_samples[group].find_files(lambda f: f.cxt.is_origin() and f.cxt.role == sf.role))
+            group_samples[group].add_file(FileInfo(sf.fullpath, FileContext.from_origin(sf.role+'_rep'+str(c))))
+        
+    
+    #lets alleviate the load of generating pooled bams if they already exist.
+    sys.stdout.write('Generating pooled samples.\n')
+    sys.stdout.flush()
+    group_samples_to_run = []
+    group_samples_to_skip = []
+    for s in group_samples.values():
+        out_manifest_dest = os.path.join(s.dest, s.name+'_output_manifest.tsv')
+        if os.path.isfile(out_manifest_dest):
+            sys.stdout.write('-> It appears that %s has already been pooled. Skipping this sample...\n' % (s.name,))
+            group_samples_to_skip.append(s)
+        else:
+            group_samples_to_run.append(s)
+    sys.stdout.flush()
+    
+    run_read_manifest_pipeline(group_samples_to_skip)
+    run_pipeline(make_replicate_pool_pipeline(args), group_samples_to_run, args)
+    
+    for gsample in (group_samples_to_run + group_samples_to_skip):
+        gtemplate = None
+        for s in samples:
+            if s.name == gsample.get_attribute('template'):
+                gtemplate = s
+                break
+        gsample_data = copy.deepcopy(gtemplate)
+        gsample_data.set_attribute('pooledreplicate', True)
+        gsample_data.name = gsample.name+'_pooled'
+        for f in gsample.files:
+            if f.cxt.module == 'Merge Treatment Bams':
+                gsample_data.add_file(FileInfo(f, FileContext.from_origin('treatment')))
+            elif f.cxt.module == 'Merge Control Bams':
+                gsample_data.add_file(FileInfo(f, FileContext.from_origin('control')))
+        samples.append(gsample_data)
+    sys.stdout.write("Completed pooled replicate generation!\n\n")
+    sys.stdout.write("--------------------------------------------\n\n")
+    
+    return samples
+#end generate_replicate_pools()
+
+
 def make_replicate_pool_pipeline(args):
     pool_pipeline = AnalysisPipeline('Generate Pooled Samples')
     if args.shm:
@@ -343,32 +281,90 @@ def make_replicate_pool_pipeline(args):
         
     #merge bam files
     from ThackTech.Pipelines.PipelineModules import MergeBams
-    x = MergeBams.MergeBams()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin()))
+    x = MergeBams.MergeBams(name='Merge Treatment Bams', processors=args.threads)
+    x.set_parameter('sort', True)
+    x.set_parameter('index', True)
+    x.set_parameter('postfix', 'treatment')
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin() and f.context.role == 'treatment'))
     pool_pipeline.append_module(x, critical=True)
     
-    #sort merged bam file
-    from ThackTech.Pipelines.PipelineModules import SortBam
-    x = SortBam.SortBam()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'MergeBams' and f.ext == '.bam'))
-    x.set_available_cpus(3)
-    pool_pipeline.append_module(x, critical=True)
     
-    #index sorted merged bam file
-    from ThackTech.Pipelines.PipelineModules import IndexBam
-    x = IndexBam.IndexBam()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module == 'MergeBams' and f.ext == '.bam'))
-    pool_pipeline.append_module(x, critical=True)
+    x = MergeBams.MergeBams(name='Merge Control Bams', processors=args.threads)
+    x.set_parameter('sort', True)
+    x.set_parameter('index', True)
+    x.set_parameter('postfix', 'control')
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin() and f.context.role == 'control'))
+    pool_pipeline.append_module(x, critical=False)
+    
     
     if args.shm:
         from ThackTech.Pipelines.PipelineModules import TransferFromShm
         pool_pipeline.append_module(TransferFromShm.TransferFromShm(), critical=True)
         
-    # from ThackTech.Pipelines.PipelineModules import OutputManifest
-    # pool_pipeline.append_module(OutputManifest.OutputManifest())
+    from ThackTech.Pipelines.PipelineModules import OutputManifest
+    pool_pipeline.append_module(OutputManifest.OutputManifest())
 
     return pool_pipeline
 #end make_replicate_pool_pipeline()
+
+
+def generate_psuedoreplicate_samples(samples, args):
+    sys.stdout.write('Generating sample pseudoreplicates.\n')
+    sys.stdout.flush()
+    
+    psr_samples_to_run = []
+    psr_samples_to_skip = []
+    for s in samples:
+        psr1_bam_dest = os.path.join(s.dest, 'pseudoreps', s.name+'.pr1.bam')
+        psr2_bam_dest = os.path.join(s.dest, 'pseudoreps', s.name+'.pr2.bam')
+        if os.path.isfile(psr1_bam_dest) and os.path.isfile(psr2_bam_dest):
+            sys.stdout.write('-> It appears that %s already has pseudoreplicates generated. Skipping this sample...\n' % (s.name,))
+            s.add_file('Pseudoreplicates', 'pr1', psr1_bam_dest)
+            s.add_file('Pseudoreplicates', 'pr2', psr2_bam_dest)
+            psr_samples_to_skip.append(s)
+        else:
+            psr_samples_to_run.append(s)
+    sys.stdout.flush()
+    
+    run_read_manifest_pipeline(psr_samples_to_skip)
+    run_pipeline(make_pseudoreplicate_pipeline(args), psr_samples_to_run, args)
+
+
+    pseudo_reps = []
+    for sample in (psr_samples_to_run + psr_samples_to_skip):
+        #generate sample for psuedoreplicate 1
+        psr1 = copy.deepcopy(sample)
+        if psr1.has_attribute('pooledreplicate'):
+            psr1.remove_attribute('pooledreplicate')
+            psr1.set_attribute('pooledpseudoreplicate', True)
+        else:
+            psr1.set_attribute('pseudoreplicate', True)
+        psr1.name = sample.name+'_psrep1'
+        psr1.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr1'))
+        pseudo_reps.append(psr1)
+        
+        #generate sample for psuedoreplicate 2
+        psr2 = copy.deepcopy(sample)
+        if psr2.has_attribute('pooledreplicate'):
+            psr2.remove_attribute('pooledreplicate')
+            psr2.set_attribute('pooledpseudoreplicate', True)
+        else:
+            psr2.set_attribute('pseudoreplicate', True)
+        psr2.name = sample.name+'_psrep2'
+        psr2.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr2'))
+        pseudo_reps.append(psr2)
+        
+        #mark the sample as primary replicate if necessary (should be last to avoid dirtying the psr from copy)
+        if not sample.has_attribute('pooledreplicate'):
+            sample.set_attribute('primaryreplicate', True)
+            
+    samples = psr_samples_to_run + psr_samples_to_skip + pseudo_reps
+    sample_count = len(samples)
+    
+    sys.stdout.write("Completed sample pseudoreplicates generation!\n\n")
+    sys.stdout.write("--------------------------------------------\n\n")
+    
+#end generate_psuedoreplicate_samples()
 
 
 def make_pseudoreplicate_pipeline(args):
@@ -411,6 +407,37 @@ def make_pseudoreplicate_pipeline(args):
 
     return idr_pre_pipeline
 #end make_pseudoreplicate_pipeline()
+
+
+def run_idr_analysis(samples, args):
+    idr_samples = []
+    groups = set([s.get_attribute('group') for s in samples])
+    for group in groups:
+        samples_in_group = [s for s in samples if s.get_attribute('group') == group]
+        gsample = PipelineSample(group, samples_in_group[0].genome, samples_in_group[0].dest)
+        if samples_in_group[0].has_attribute('broad'):
+            gsample.set_attribute('broad', True)
+        for s in samples_in_group:
+            if s.has_attribute('primaryreplicate'):
+                gsample.add_file('primaryreplicate', s.name, resolve_idr_peak_file(s))
+                
+            elif s.has_attribute('pseudoreplicate'):
+                gsample.add_file('pseudoreplicate', s.name, resolve_idr_peak_file(s))
+                
+            elif s.has_attribute('pooledpseudoreplicate'):
+                gsample.add_file('pooledpseudoreplicate', s.name, resolve_idr_peak_file(s))
+        idr_samples.append(gsample)
+
+    for sample in idr_samples:
+        sys.stderr.write(sample.name+'\n')
+        sys.stderr.write(sample.files+'\n\n')
+        
+    sys.stdout.write('Performing IDR consistency analysis....\n')
+    run_pipeline(make_IDR_analysis_pipeline(args), idr_samples, args)
+            
+    sys.stdout.write("Completed IDR consistency analysis!\n\n")
+    sys.stdout.write("--------------------------------------------\n\n")
+#end run_idr_analysis()
 
 
 def make_IDR_analysis_pipeline(args):

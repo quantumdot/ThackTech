@@ -116,7 +116,7 @@ class PipelineModule(object):
 		""" 
 		cfg = conf.get_config('pipeline_modules')
 		if cfg.has_section(self.name):
-			for param in self.parameters.itervalues():
+			for param in self.parameters.values():
 				if cfg.has_option(self.name, param.name):
 					self.set_parameter(param.name, cfg.get(self.name, param.name))
 	#end set_parameters_from_config()
@@ -180,7 +180,7 @@ class PipelineModule(object):
 	def get_resolver_names(self):
 		"""Gets a list of declared resolver names
 		"""
-		return self.resolvers.keys()
+		return list(self.resolvers.keys())
 	#end get_resolver_names()
 	
 	
@@ -209,7 +209,6 @@ class PipelineModule(object):
 		
 		This method will block until the process has completed!
 		"""
-		#print os.environ
 		proc = subprocess.Popen(cmd, **kwargs)
 		out, err = proc.communicate()
 		
@@ -237,7 +236,7 @@ class PipelineModule(object):
 			buff += "\n"
 			param_headers = ['Name', 'Type', 'Value', 'Default', 'Nullable', 'Choices', 'Description', ]
 			param_table = []
-			for param in self.parameters.itervalues():
+			for param in self.parameters.values():
 				param_table.append([str(param.name), param.type_name, str(param.value), str(param.default), str(param.nullable), str(param.choices), str(param.description)])
 				#buffer += "\t%s: %s\n" % (param, str(self.parameters[param]))
 			buff += tabulate(param_table, headers=param_headers, tablefmt="simple")
@@ -260,7 +259,7 @@ class PipelineModule(object):
 			buff += "\n\tNo Tools Declared\n"
 		else:
 			buff += "\n"
-			for toolname in tools.keys():
+			for toolname in list(tools.keys()):
 				buff += "\t{}: {}\n".format(toolname, tools[toolname])
 		buff += '-' * hash_length
 		buff += '\n'
