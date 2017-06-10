@@ -43,8 +43,8 @@ class AnalysisPipeline(object):
 		buff = "{}\nBegin Pipeline: {}\n{}\n".format('='*hash_length, self.name, '='*hash_length)
 		
 		for m in self.pipeline:
-			buff += "\n{}\n" % (' | '*(hash_length/3))
-			buff += "{}\n\n" % (' V '*(hash_length/3))
+			buff += "\n{}\n".format(' | '*(hash_length/3))
+			buff += "{}\n\n".format(' V '*(hash_length/3))
 			buff += m.documentation()
 		
 		buff += "\n{}\n".format(' | '*(hash_length/3))
