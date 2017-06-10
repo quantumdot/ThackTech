@@ -43,12 +43,12 @@ class AnalysisPipeline(object):
 		buff = "{}\nBegin Pipeline: {}\n{}\n".format('='*hash_length, self.name, '='*hash_length)
 		
 		for m in self.pipeline:
-			buff += "\n{}\n" % (u' | '*(hash_length/3))
-			buff += "{}\n\n" % (u' V '*(hash_length/3))
+			buff += "\n{}\n" % (' | '*(hash_length/3))
+			buff += "{}\n\n" % (' V '*(hash_length/3))
 			buff += m.documentation()
 		
-		buff += "\n{}\n".format(u' | '*(hash_length/3))
-		buff += "{}\n\n".format(u' V '*(hash_length/3))
+		buff += "\n{}\n".format(' | '*(hash_length/3))
+		buff += "{}\n\n".format(' V '*(hash_length/3))
 		buff += "{}\nEnd Pipeline: {}\n{}\n".format('='*hash_length, self.name, '='*hash_length)
 		return buff
 	#end explain()
@@ -78,5 +78,5 @@ class AnalysisPipelineStep(object):
 		return self.__module
 	
 	def __str__(self):
-		return "%s_%s_%s" % (self.pipeline, self.step, self.module.name)
+		return "{}_{}_{}".format(self.pipeline, self.step, self.module.name)
 #end class ModuleContext
