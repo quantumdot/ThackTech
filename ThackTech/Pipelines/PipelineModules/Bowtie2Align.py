@@ -126,6 +126,7 @@ class Bowtie2Align(PipelineModule):
 			bowtie_output = tmpout.read()
 			tmpout.close()
 			cxt.log.write(bowtie_output)
+			cxt.log.flush()
 			
 		output_result['align_stats'] = os.path.join(cxt.sample.dest, cxt.sample.name+'.align_stats.tsv')
 		self.parse_bowtie_output(cxt, bowtie_output, output_result['align_stats'])

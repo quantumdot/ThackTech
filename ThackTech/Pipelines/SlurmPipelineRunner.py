@@ -19,7 +19,7 @@ class SlurmPipelineRunner(PipelineRunner):
 	This PipelineRunner uses the multiprocess worker pool to parallelize running
 	of pipelines on multiple samples.
 	"""
-	def __init__(self, pipeline, partition="main", nodes=1, threads=CPU_COUNT, time_limit="1:00:00"):
+	def __init__(self, pipeline, partition="main", nodes=1, threads=CPU_COUNT, time_limit="1:00:00", mem='4G'):
 		"""
 		
 		Parameters:
@@ -34,6 +34,7 @@ class SlurmPipelineRunner(PipelineRunner):
 		self.nodes = nodes
 		self.threads_per_node = threads
 		self.time_limit = time_limit
+		self.mem = mem
 
 	def run(self, samples):
 		curr_time = int(time.time())
@@ -45,6 +46,7 @@ class SlurmPipelineRunner(PipelineRunner):
 			sample_count = len(samples)
 			if sample_count < 1:
 				logout.write("No samples to run!")
+				logout.flush()
 				return #No samples to run!
 
 			pipeline_pickles = "{prefix}.dill".format(prefix=prefix)
@@ -72,6 +74,7 @@ class SlurmPipelineRunner(PipelineRunner):
 						'-n', str(self.nodes),
 						'--cpus-per-task', str(self.threads_per_node),
 						'--time', str(self.time_limit),
+						'--mem', self.mem,
 						#'--export', 'ALL',
 						'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
 						pipeline_pickles,
@@ -81,6 +84,7 @@ class SlurmPipelineRunner(PipelineRunner):
 					logout.write("Running srun command:\n")
 					logout.write(" ".join(srun_cmd))
 					logout.write("\n\n")
+					logout.flush()
 					subprocess.Popen(srun_cmd, stderr=subprocess.STDOUT, stdout=logout)
 				
 				progress = MultiStatusProgressBar(sample_count, "Total Progress", barlength=50, handle=sys.stderr).start()
@@ -109,10 +113,12 @@ class SlurmPipelineRunner(PipelineRunner):
 				progress.finish()
 			except:
 				traceback.print_exc(file=logout)
+				logout.flush()
 			finally:
 				for p in [pipeline_pickles]+sample_pickles+status_pickles:
 					if os.path.exists(p):
 						subprocess.call(['rm', '-rf', p], stderr=subprocess.STDOUT, stdout=logout)
+						logout.flush()
 	#end run()
 	
 	def monitor(self):
