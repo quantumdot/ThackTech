@@ -101,7 +101,7 @@ def run_pipeline(pipeline, samples, args):
 def run_read_manifest_pipeline(samples):
     pipeline = AnalysisPipeline('Reading Sample Manifest')
     from ThackTech.Pipelines.PipelineModules import ReadOutputManifest
-    pipeline.append_module(ReadOutputManifest.ReadOutputManifest, critical=True)
+    pipeline.append_module(ReadOutputManifest.ReadOutputManifest(), critical=True)
     
     from ThackTech.Pipelines import SerialPipelineRunner
     runner = SerialPipelineRunner(pipeline)
