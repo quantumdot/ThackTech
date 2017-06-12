@@ -25,11 +25,12 @@ class MACS2Peakcall(PipelineModule):
 		#shift model arguments
 		self.add_parameter(ModuleParameter('tag_size', int, None, nullable=True, desc="Size of sequencing tags. If None, then MACS will determine automatically."))
 		self.add_parameter(ModuleParameter('bandwith', int, 300, desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
+		self.add_parameter(ModuleParameter('nomodel', bool, False, desc="bypass building the shifting model."))
+		self.add_parameter(ModuleParameter('fix_bimodal', bool, False, desc="If set, MACS will attempt to build model, but if fails will fall back to nomodel settings."))
+		self.add_parameter(ModuleParameter('extsize', int, 300, nullable=True, desc="When nomodel=True, extend reads this many bp in 5'->3' direction."))
 		#--mfold
-		#--fix-bimodal
-		#--nomodel
 		#--shift
-		#--extsize
+
 		
 		#peak calling arguments
 		self.add_parameter(ModuleParameter('pvalue', float, None, nullable=True, desc="Pvalue cutoff for peak detection."))
@@ -97,6 +98,15 @@ class MACS2Peakcall(PipelineModule):
 			
 		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
 			macs_args.extend(['--broad', '--broad-cutoff', '0.1' ])
+			
+		if self.get_parameter_value('nomodel') or self.get_parameter_value('fix_bimodal'):
+			if self.get_parameter_value('nomodel'):
+				macs_args.append('--nomodel')
+			elif self.get_parameter_value('--fix-bimodal'):
+				macs_args.append('--nomodel')
+				
+			if self.get_parameter_value('extsize') is not None:
+				macs_args.extend(['--extsize', self.get_parameter_value_as_string('extsize')])
 
 		formats = []
 		treatments = self.resolve_input('treatments', cxt)
