@@ -32,8 +32,8 @@ class AlignmentPipelineSample(PipelineSample):
         if self.get_attribute('PE'):
             base = "{path}/{name}{prefix}{read}{postfix}.{ext}"
             fmtvars = {'path': path, 'name': self.name, 'prefix': pe_prefix, 'postfix': postfix}
-            r1 = base.format(dict(fmtvars, read=1, ext='fastq'))
-            r2 = base.format(dict(fmtvars, read=2, ext='fastq'))
+            r1 = base.format(fmtvars + {'read': 1, 'ext': 'fastq'})
+            r2 = base.format(fmtvars + {'read': 2, 'ext': 'fastq'})
             paths_tried.extend([r1, r2])
             #sys.stderr.write("trying:\n{}\n{}\n".format(r1, r2))
             if os.path.exists(r1) and os.path.exists(r2):
