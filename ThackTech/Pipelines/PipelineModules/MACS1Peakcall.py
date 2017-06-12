@@ -13,7 +13,7 @@ class MACS1Peakcall(PipelineModule):
 	
 	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('duplicates', str, 	'auto',	desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
-		self.add_parameter(ModuleParameter('bw', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
+		self.add_parameter(ModuleParameter('bandwith', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
 		self.add_parameter(ModuleParameter('sigout',	 str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
 		self.add_parameter(ModuleParameter('tsize',		 int, 	None, nullable=True,	desc="Tag size. This will overide the auto detected tag size."))
 		self.add_parameter(ModuleParameter('pvalue',	 float,	1e-5, desc="Pvalue cutoff for peak detection."))
@@ -38,7 +38,7 @@ class MACS1Peakcall(PipelineModule):
 			'--gsize', str(cxt.sample.genome.gsize),
 			#'--format', self.get_file_format(treatment),
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
-			'--bw', self.get_parameter_value_as_string('bw'),
+			'--bw', self.get_parameter_value_as_string('bandwith'),
 			'--verbose', '2', 
 			'--single-profile', 
 			'--diag',

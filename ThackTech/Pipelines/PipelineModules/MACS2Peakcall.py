@@ -73,7 +73,7 @@ class MACS2Peakcall(PipelineModule):
 			'--gsize', str(cxt.sample.genome.gsize),
 			'--outdir', cxt.sample.dest,
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
-			'--bw', self.get_parameter_value_as_string('bw'),
+			'--bw', self.get_parameter_value_as_string('bandwith'),
 		]
 		
 		if self.get_parameter_value('save_bedgraph'):
