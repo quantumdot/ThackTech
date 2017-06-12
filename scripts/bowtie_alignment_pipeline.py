@@ -30,10 +30,9 @@ class AlignmentPipelineSample(PipelineSample):
         paths_tried = []
         compressed_extensions = ['.gz', '.bz2', '.zip', '.tar', '.tar.gz']
         if self.get_attribute('PE'):
-            base = "{path}/{name}{prefix}{read}{postfix}.{ext}"
-            fmtvars = {'path': path, 'name': self.name, 'prefix': pe_prefix, 'postfix': postfix}
-            r1 = base.format(fmtvars + {'read': 1, 'ext': 'fastq'})
-            r2 = base.format(fmtvars + {'read': 2, 'ext': 'fastq'})
+            base = "{path}/{name}{pre}{read}{post}.{ext}"
+            r1 = base.format(path=path, name=self.name, pre=pe_prefix, post=postfix, read=1, ext='fastq')
+            r2 = base.format(path=path, name=self.name, pre=pe_prefix, post=postfix, read=2, ext='fastq')
             paths_tried.extend([r1, r2])
             #sys.stderr.write("trying:\n{}\n{}\n".format(r1, r2))
             if os.path.exists(r1) and os.path.exists(r2):
