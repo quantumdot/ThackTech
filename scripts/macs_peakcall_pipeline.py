@@ -5,7 +5,6 @@ import sys
 import copy
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
-from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 #BEFORE RUNNING SCRIPT WHEN USING LMOD
 #module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 bowtie2/2.2.9
