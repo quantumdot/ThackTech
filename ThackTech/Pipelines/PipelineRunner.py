@@ -96,7 +96,7 @@ def get_configured_runner(args, pipeline, **kwargs):
 	
 	if args.runner == 'slurm':
 		from ThackTech.Pipelines import SlurmPipelineRunner
-		runner = SlurmPipelineRunner(pipeline, partition=args.slurm_partition, nodes=1, threads=args.threads, time_limit=args.slurm_time, mem=args.slurm_mem **kwargs)
+		runner = SlurmPipelineRunner(pipeline, partition=args.slurm_partition, nodes=1, threads=args.threads, time_limit=args.slurm_time, mem=args.slurm_mem, **kwargs)
 	elif args.runner == 'parallel':
 		do_slurm_safety_check()
 		from ThackTech.Pipelines import ParallelPipelineRunner
