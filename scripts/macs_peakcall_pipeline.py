@@ -45,9 +45,8 @@ def main():
     #parser.add_argument('-f', '--format', default=None, choices=["BED", "SAM", "BAM", "BAMPE", "BOWTIE", "ELAND", "ELANDMULTI", "ELANDEXPORT", "ELANDMULTIPET"], help="Format of the alignment files for the entire run. If not specified, format will be auto-detected.")
     parser.add_argument('-bw', default=300, type=int, help="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab.")
     parser.add_argument('--sigout', default='bdg', choices=['wig', 'bdg'], help="Output type for signal. Either wig or bedgraph.")
-    available_qc_choices = ['chance', 'fingerprint', 'frip']
-    parser.add_argument('--qc', choices=available_qc_choices+['all'], default=[], action='append', help="Specify which QC routines to run. chance runs the IPStrength and spectrum modules from the chance package (Song et al. Genome Biology 2012. doi:10.1186/gb-2012-13-10-r98). fingerprint runs the DeepTools BamFingerprint module. FRiP computes the Fraction of Reads in Peaks. all will run all available QC modules.")
-    parser.add_argument('--rpkmbw', action='store_true', help="Generate RPKM normailzed bigwig signal files.")
+    available_qc_choices = ['chance', 'fingerprint', 'frip', 'rpkmbw']
+    parser.add_argument('--qc', choices=available_qc_choices+['all'], default=[], action='append', help="Specify which QC routines to run. chance runs the IPStrength and spectrum modules from the chance package (Song et al. Genome Biology 2012. doi:10.1186/gb-2012-13-10-r98). fingerprint runs the DeepTools BamFingerprint module. FRiP computes the Fraction of Reads in Peaks. all will run all available QC modules. rpkmbw generates a RPKM normalized BigWig.")
     parser.add_argument('--idr', action='store_true', help="Perform IDR analysis. Requires that the manifest contain an additional [Group] column that describes group names for replicates. Will generate pooled and psuedoreplicates and pass them through the same processing pipeline as the explicitly defined manifest items. IDR is only supported in combination with MACS2.")
     parser.add_argument('--ignore-control', action='store_true', help="Ignore control data present in the sample manifest.")
     
@@ -202,7 +201,7 @@ def make_peak_calling_and_qc_pipeline(args):
         from ThackTech.Pipelines.PipelineModules import TransferFromShm
         pipeline.append_module(TransferFromShm.TransferFromShm(), critical=True)
         
-    if args.rpkmbw:
+    if 'rpkmbw' in args.qc:
         from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
         x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(name="Treatment_RPKM_Norm", processors=args.threads)
         x.set_resolver('bam',  lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.ext == '.bam' and f.cxt.role == 'treatment'))
