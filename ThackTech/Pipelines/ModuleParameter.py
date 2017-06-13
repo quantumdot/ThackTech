@@ -59,11 +59,28 @@ class ModuleParameter(object):
 	#end get_type_as_string()
 
 	def __coerce_value(self, value, value_type):
+		"""Coerce a the provided value to the provided type.
+		
+		The following types are supported:
+		None - only when self is nullable and value is None
+		bool
+		int
+		float
+		long
+		complex
+		str
+		list
+		tuple
+		set
+		
+		Note that container types (list, tuple, set, etc) do not check/coerce the type of contained values
+		
+		"""
 		new_value = None
-		if self.nullable and value is None:
+		if self.nullable and (value is None or str(value).lower() == 'none'):
 			new_value = None
 		elif value_type == bool:
-			new_value = strtobool(str(value))
+			new_value = bool(strtobool(str(value)))
 		elif value_type == int:
 			new_value = int(value)
 		elif value_type == float:

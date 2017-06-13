@@ -22,6 +22,11 @@ class TestModuleParameter(unittest.TestCase):
         p = ModuleParameter('test', int, 0, value='3')
         self.assertEqual(p.value, 3)
         
+    def test_boolean_parsing(self):
+        p = ModuleParameter('test', bool, False)
+        p.value = 'True'
+        self.assertIsInstance(p.value, bool)
+        self.assertEqual(p.value, True)
 
 
 if __name__ == "__main__":
