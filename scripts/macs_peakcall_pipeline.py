@@ -162,7 +162,7 @@ def make_peak_calling_and_qc_pipeline(args):
     
     from ThackTech.Pipelines.PipelineModules import ConvertBedgraphToBigWig
     x = ConvertBedgraphToBigWig.ConvertBedgraphToBigWig(processors=args.threads)
-    x.set_resolver('bedgraphs', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role in ['treatment_signal', 'control_signal'] and f.ext == '.bdg'))
+    x.set_resolver('bedgraphs', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role in ['treatment_signal', 'control_signal']))
     pipeline.append_module(x)
         
     #if 'chance' in args.qc:
