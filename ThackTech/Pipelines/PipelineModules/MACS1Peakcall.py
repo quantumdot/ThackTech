@@ -12,11 +12,11 @@ class MACS1Peakcall(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
-		self.add_parameter(ModuleParameter('duplicates', str, 	'auto',	desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
-		self.add_parameter(ModuleParameter('bandwith', 		 int, 	300,	desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
-		self.add_parameter(ModuleParameter('sigout',	 str, 	'bdg',	desc="Output type for signal. Either 'wig' or 'bdg'."))
-		self.add_parameter(ModuleParameter('tsize',		 int, 	None, nullable=True,	desc="Tag size. This will overide the auto detected tag size."))
-		self.add_parameter(ModuleParameter('pvalue',	 float,	1e-5, desc="Pvalue cutoff for peak detection."))
+		self.add_parameter(ModuleParameter('duplicates', str, 'auto', desc="Specifies the MACS --keep-dup option. One of {'auto', 'all', <int>}."))
+		self.add_parameter(ModuleParameter('bandwith', int, 300, desc="Bandwith (--bw) parameter for macs. Average sonnication fragment size expected from wet lab."))
+		self.add_parameter(ModuleParameter('sigout', str, 'bdg', desc="Output type for signal. Either 'wig' or 'bdg'."))
+		self.add_parameter(ModuleParameter('tsize', int, None, nullable=True, desc="Tag size. This will overide the auto detected tag size."))
+		self.add_parameter(ModuleParameter('pvalue', float, 1e-5, desc="Pvalue cutoff for peak detection."))
 	#end __declare_parameters()
 	
 	def _declare_resolvers(self):
@@ -39,11 +39,15 @@ class MACS1Peakcall(PipelineModule):
 			#'--format', self.get_file_format(treatment),
 			'--keep-dup', self.get_parameter_value_as_string('duplicates'),
 			'--bw', self.get_parameter_value_as_string('bandwith'),
+			'--pvalue', self.get_parameter_value_as_string('pvalue'),
 			'--verbose', '2', 
 			'--single-profile', 
 			'--diag',
 			('--bdg' if self.get_parameter_value_as_string('sigout') == 'bdg' else '--wig'),
 		]
+		
+		if self.get_parameter_value('tsize') is not None:
+			macs_args.extend(['--tsize', self.get_parameter_value_as_string('tsize')])
 		
 		treatments = self.resolve_input('treatments', cxt)
 		macs_args.extend(['--treatment'] + [f.fullpath for f in treatments])
@@ -54,7 +58,6 @@ class MACS1Peakcall(PipelineModule):
 
 			
 		cxt.log.write("Performing peak calling with MACS......\n")
-		cxt.log.write("-> "+subprocess.check_output(['macs', '--version'], stderr=subprocess.STDOUT)+"")
 		cxt.log.write("\n..............................................\n")
 		cxt.log.write(" ".join(macs_args))
 		cxt.log.write("\n..............................................\n")
