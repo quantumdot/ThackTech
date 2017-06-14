@@ -97,7 +97,7 @@ class MACS2Peakcall(PipelineModule):
 			macs_args.extend(['--qvalue', self.get_parameter_value_as_string('qvalue')])
 			
 		if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
-			macs_args.extend(['--broad', '--broad-cutoff', '0.1' ])
+			macs_args.extend(['--broad', '--broad-cutoff', self.get_parameter_value_as_string('broad_cutoff')])
 			
 		if self.get_parameter_value('nomodel') or self.get_parameter_value('fix_bimodal'):
 			if self.get_parameter_value('nomodel'):
@@ -129,8 +129,6 @@ class MACS2Peakcall(PipelineModule):
 		
 			
 		cxt.log.write("Performing peak calling with MACS......\n")
-		#cxt.log.write("-> "+subprocess.check_output('/bin/bash -c "source /home/josh/scripts/macs2dev/bin/activate && macs2 --version"', shell=True, stderr=subprocess.STDOUT)+"\n")
-		cxt.log.write("-> "+self._call_output('macs2 --version', shell=True, stderr=subprocess.STDOUT)+"\n")
 		cxt.log.write("\n..............................................\n")
 		cxt.log.write(" ".join(macs_args))
 		cxt.log.write("\n..............................................\n")
