@@ -204,11 +204,11 @@ class CollectorOptions:
         
         example: (1e3, 'Kb')
         """
-        if (self.total_bins * self.resolution) > 2e9:
+        if (self.total_bins * self.resolution) >= 2e9:
             return (1e9, 'Gb')
-        if (self.total_bins * self.resolution) > 2e6:
+        if (self.total_bins * self.resolution) >= 2e6:
             return (1e6, 'Mb')
-        elif (self.total_bins * self.resolution) > 2e3:
+        elif (self.total_bins * self.resolution) >= 2e3:
             return (1e3, 'Kb')
         else:
             return (1, 'bp')
