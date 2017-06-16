@@ -98,7 +98,7 @@ def main():
     labeling_group.add_argument('--xnumticks', action='store', type=int, default=4, help='Number of tick marks to use in the x-axis.')
     labeling_group.add_argument('--ynumticks', action='store', type=int, default=4, help='Number of tick marks to use in the y-axis.')
     labeling_group.add_argument('--xlabelrot', action='store', type=int, default=0, help='Angle, in degrees, for x axis label rotation.')
-    labeling_group.add_argument('--ylabelrot', action='store', type=int, default=0, help='Angle, in degrees, for y axis label rotation.')
+    labeling_group.add_argument('--ylabelrot', action='store', type=int, default=90, help='Angle, in degrees, for y axis label rotation.')
     
     profile_group = parser.add_argument_group('Profiling Options')
     profile_group.add_argument('--nochromfilter', action='store_true', help='Do not filter bed file for common chromosomes. By default profiling only occurs on chromosomes common to all files (useful for ignoring random or Un* chromosomes).')
@@ -705,19 +705,27 @@ def make_sig_heatmap(ax, sample):
             percentile=False,
             sort_by=sample.sort_order
     )
-    if len(gopts['args'].bed) > 1:
+    
+    #side label options
+    if gopts['args'].ylabelrot != 90:
         side_label_opts = {'rotation': gopts['args'].ylabelrot, 'verticalalignment': 'top', 'horizontalalignment': 'right'}
     else:
         side_label_opts = {}
+        
+    #top label options
+    if gopts['args'].xlabelrot != 0:
+        top_label_opts = {'rotation': gopts['args'].xlabelrot, 'verticalalignment': 'bottom', 'horizontalalignment': 'left'}
+    else:
+        top_label_opts = {}
     
     if gopts['args'].rotate:
         if sample.sig_id == 0: #first row
-            ax.set_title(sample.bed_label, rotation=gopts['args'].xlabelrot, verticalalignment='bottom', horizontalalignment='left')
+            ax.set_title(sample.bed_label, **top_label_opts)
         if sample.bed_id == 0: #first column
             ax.set_ylabel(sample.sig_label, **side_label_opts)
     else:
         if sample.bed_id == 0: #first row
-            ax.set_title(sample.sig_label, rotation=gopts['args'].xlabelrot, verticalalignment='bottom', horizontalalignment='left')
+            ax.set_title(sample.sig_label, **top_label_opts)
         if sample.sig_id == 0: #first column
             ax.set_ylabel(sample.bed_label, **side_label_opts)
     ax.set_xticklabels([])
