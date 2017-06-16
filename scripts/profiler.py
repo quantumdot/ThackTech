@@ -254,9 +254,9 @@ def main():
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             ps.bedtool = bedtool
-            sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
+            #sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             ps.signal_array = ttstats.correct_invalid_data(ps.signal_array, args.nan)
-            sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
+            #sys.stderr.write("NaN count: %d\n" % (np.isnan(ps.signal_array).sum(),))
             samples.append(ps)
             sys.stderr.write("\n")
     
@@ -613,7 +613,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
         [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
         gopts['plot_axes'][(row,col)] = ax
     
-    sys.stderr.write("getting axis at ({}, {}) in grid ({}, {})\n".format(row, col, gopts['fig_rows'],gopts['fig_cols']))
+    #sys.stderr.write("getting axis at ({}, {}) in grid ({}, {})\n".format(row, col, gopts['fig_rows'],gopts['fig_cols']))
     return gopts['plot_axes'][(row,col)]
 #end get_plot_axes()
 
