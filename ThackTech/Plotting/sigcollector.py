@@ -204,6 +204,7 @@ class CollectorOptions:
         
         example: (1e3, 'Kb')
         """
+        print (self.total_bins * self.resolution)
         if (self.total_bins * self.resolution) >= 2e9:
             return (1e9, 'Gb')
         if (self.total_bins * self.resolution) >= 2e6:
