@@ -164,7 +164,7 @@ def parse_bed(bedfile):
     i = 0
     for interval in bed:
         lengths[i] = interval.length
-        scores[i] = interval.score
+        scores[i] = float(interval.score)
         i += 1
     sample.addMetric('Length', lengths)
     sample.addMetric('Score', scores)
