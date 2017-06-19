@@ -119,7 +119,7 @@ def main():
 
     samples = []
     for b in args.bed:
-        samples.append(parse_bed(b))
+        samples.append(parse_bed(b, args.scorecol))
 
     metrics = sorted(samples[0].metrics.keys())
     limits = {}
@@ -153,7 +153,7 @@ def find_auto_limit(samples, metric):
     return limit
 #end find_auto_limit()
 
-def parse_bed(bedfile, score_col):
+def parse_bed(bedfile, score_col=5):
     sys.stdout.write("Reading "+bedfile+".....\n")
     bed = pybedtools.BedTool(bedfile)
     savename = os.path.splitext(os.path.basename(bedfile))[0]
