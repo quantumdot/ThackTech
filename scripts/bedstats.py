@@ -112,6 +112,7 @@ def main():
     parser.add_argument('--D2', action='store_true', help="Produce a 2D plot using bed scores and lengths.")
     parser.add_argument('--log', action='store_true', help="Use log scale in the frequency axis of histograms.")
     parser.add_argument('--squeeze', action=AutoAction, default=[None], type=str, nargs='*', help="Force the axis max limits to be the same amongst all samples. If not specified then each sample will have independent ranges. If specified with no argument or 'auto', the range will be deduced from all the max of all samples for each distribution. You may also specify a number that will be used for the range. Multiple values affect each distribution in [alphebitical] order. You may mix 'auto' and numbers.")
+    parser.add_argument('--odir', action='store', default=os.getcwd(), help="Output directory for plots and stats.")
     args = parser.parse_args()
 
     #print args
@@ -175,7 +176,7 @@ def parse_bed(bedfile, score_col=5):
 
 def process_sample(sample, args, limits):
 
-    sys.stdout = Tee(sample.name+'.stats.txt', 'w')
+    sys.stdout = Tee(os.path.join(args.odir, sample.name+'.stats.txt'), 'w')
     sys.stdout.write("\nProcessing "+sample.name+".bed....\n\n")
 
     #allow xkcd style graphs
@@ -215,7 +216,7 @@ def process_sample(sample, args, limits):
         plt.title("Interval Length vs. Interval Scores")
         plt.xlabel("Interval Length")
 
-    imgname = sample.name+'.stats'+'.'+args.format
+    imgname = os.path.join(args.odir, sample.name+'.stats'+'.'+args.format)
     plt.savefig(imgname)
     sys.stdout.write("See graphical output at: "+imgname+"\n\n")
     sys.stdout.release() #release the logger!
