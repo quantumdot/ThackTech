@@ -117,6 +117,9 @@ def main():
 
     #print args
     #exit()
+    
+    if not os.path.exists(args.odir):
+        os.makedirs(args.odir)
 
     samples = []
     for b in args.bed:
