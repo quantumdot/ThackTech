@@ -107,6 +107,7 @@ def main():
     parser.add_argument('bed', nargs='+', help="BED file(s) to calculate statistics.")
     parser.add_argument('--bins', default=1000, type=int, help="Number of bins in the histogram. (default = 1000)")
     parser.add_argument('--format', default='png', help="Output format, one of [png, pdf, ps, eps, svg]. (defualt = png)")
+    parser.add_argument('--scorecol', default=5, type=int, help="Column that bed score is located (typically column 5).")
     parser.add_argument('--xkcd', action='store_true', help="Create the plots in the xkcd style")
     parser.add_argument('--D2', action='store_true', help="Produce a 2D plot using bed scores and lengths.")
     parser.add_argument('--log', action='store_true', help="Use log scale in the frequency axis of histograms.")
@@ -152,7 +153,7 @@ def find_auto_limit(samples, metric):
     return limit
 #end find_auto_limit()
 
-def parse_bed(bedfile):
+def parse_bed(bedfile, score_col):
     sys.stdout.write("Reading "+bedfile+".....\n")
     bed = pybedtools.BedTool(bedfile)
     savename = os.path.splitext(os.path.basename(bedfile))[0]
@@ -164,7 +165,7 @@ def parse_bed(bedfile):
     i = 0
     for interval in bed:
         lengths[i] = interval.length
-        scores[i] = float(interval.score)
+        scores[i] = float(interval[score_col - 1])
         i += 1
     sample.addMetric('Length', lengths)
     sample.addMetric('Score', scores)
