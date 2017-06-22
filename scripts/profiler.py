@@ -657,7 +657,7 @@ def make_average_sig_plot(ax, sample, color='k'):
         if gopts['args'].align == 'scale':
             ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
     
-    summary = ttstats.summarize_data(s.signal_array, gopts['args'].summarymethod, axis=0)
+    summary = ttstats.summarize_data(sample.signal_array, gopts['args'].summarymethod, axis=0)
     label = sample.sig_label if gopts['args'].rotate else sample.bed_label
     ax.plot(gopts['x_axis'], summary, color=color, label=label)
     
