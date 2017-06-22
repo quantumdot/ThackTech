@@ -663,7 +663,7 @@ def make_violin_plot(ax, sample, color='k'):
     print summary.shape
     print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
-    ax.violinplot(summary, showextrema=True)
+    ax.violinplot(summary, positions=[sample.sig_id], showextrema=True)
     
     
 #     if gopts['args'].showci:
@@ -671,8 +671,8 @@ def make_violin_plot(ax, sample, color='k'):
 #         ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
 #         ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
 #         
-#     ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
-#     ax.set_ylim(bottom=sample.avg_min, top=sample.avg_max)
+    ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
+    ax.set_ylim(bottom=sample.avg_min, top=sample.avg_max)
 #     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
 #     if not sample.show_yaxis:
 #         ax.set_yticklabels([])
