@@ -663,7 +663,7 @@ def make_violin_plot(ax, sample, color='k'):
     print summary.shape
     print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
-    ax.violinplot(summary, color=color, label=label, showextrema=True)
+    ax.violinplot(summary, showextrema=True)
     
     
 #     if gopts['args'].showci:
