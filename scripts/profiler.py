@@ -670,10 +670,10 @@ def make_violin_plot(ax, sample, color='k'):
         pc.set_alpha(1)
     
     quartile1, medians, quartile3 = np.percentile(summary, [25, 50, 75])
-    whiskers = np.array([adjacent_values(sorted_array, q1, q3) for sorted_array, q1, q3 in zip(summary, quartile1, quartile3)])
-    whiskersMin, whiskersMax = whiskers[:, 0], whiskers[:, 1]
+    whiskers = adjacent_values(sorted(summary), quartile1, quartile3)
+    whiskersMin, whiskersMax = whiskers[0], whiskers[1]
     
-    inds = np.arange(1, len(medians) + 1)
+    inds = [sample.sig_id]
     ax.scatter(inds, medians, marker='o', color='white', s=30, zorder=3)
     ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
     ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1)
