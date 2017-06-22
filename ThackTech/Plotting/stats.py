@@ -4,15 +4,20 @@ from scipy import stats
 
 
 
-def summarize_data(data, method='mean', srange=(0,0), axis=1):
+def summarize_data(data, method='mean', srange=None, axis=1):
     avail_methods = ['mean', 'median', 'max', 'min', 'sum']
     if method not in avail_methods:
         raise ValueError("Method must be one of "+", ".join(avail_methods))
     
-    if method == 'median' and isinstance(data, np.ma.MaskedArray):
-        return np.ma.median(data[:,srange[0]:srange[1]], axis=axis, keepdims=True)
+    if srange is not None:
+        d = data[:,srange[0]:srange[1]]
     else:
-        return getattr(data[:,srange[0]:srange[1]], method)(axis=axis)
+        d = data
+    
+    if method == 'median' and isinstance(data, np.ma.MaskedArray):
+        return np.ma.median(d, axis=axis, keepdims=True)
+    else:
+        return getattr(d, method)(axis=axis)
 
 
 def is_outlier(points, thresh=3.5):
