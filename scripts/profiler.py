@@ -488,7 +488,7 @@ def write_summary_profiles(samples, ranges, method):
     for s in samples:
         b = iv_beds[s.bed_label]
         for r in ranges:
-            b["{}_[{}..{}]".format(s.sig_label, r[0], r[1])] = getattr(s.signal_array[:,r[0]:r[1]], method)(axis=1)
+            b["{}_[{}..{}]".format(s.sig_label, r[0], r[1])] = ttstats.summarize_data(s.signal_array, method, srange=r, axis=1)
     
     for b in iv_beds:
         iv_beds[b].to_csv("{}.summary_{}.tsv".format(gopts['output_base'], b), sep='\t', index=False)
@@ -504,7 +504,7 @@ def compute_sorting(samples, sort_index, method, sort_range):
         sort_orders = {} #sort orders indexed by interval id
         for s in samples:
             if s.sig_id == sort_index:
-                sort_orders[s.bed_id] = getattr(s.signal_array[:,sort_range[0]:sort_range[1]], method)(axis=1)
+                sort_orders[s.bed_id] = ttstats.summarize_data(s.signal_array, method, srange=sort_range, axis=1)
         for s in samples:
             s.sort_order = sort_orders[s.bed_id]
 #end compute_sorting()
@@ -543,7 +543,7 @@ def compute_scales_for_group(group_id, samples, min_saturate, max_saturate):
     avg_min = float('inf')
     avg_max = float('-inf')
     for s in samples:
-        mean_array = s.signal_array.mean(axis=0)
+        mean_array = ttstats.summarize_data(s.signal_array, gopts['args'].summarymethod, axis=0)
         mean_min = mean_array.min()
         mean_max = mean_array.max()
         if mean_min < avg_min:
@@ -657,7 +657,7 @@ def make_average_sig_plot(ax, sample, color='k'):
         if gopts['args'].align == 'scale':
             ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
     
-    summary = getattr(sample.signal_array, gopts['args'].summarymethod)(axis=0)
+    summary = ttstats.summarize_data(s.signal_array, gopts['args'].summarymethod, axis=0)
     label = sample.sig_label if gopts['args'].rotate else sample.bed_label
     ax.plot(gopts['x_axis'], summary, color=color, label=label)
     
