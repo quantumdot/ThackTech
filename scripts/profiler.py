@@ -676,7 +676,7 @@ def make_violin_plot(ax, sample, color='k'):
     whiskersMin, whiskersMax = whiskers[0], whiskers[1]
     
     inds = [sample.sig_id]
-    ax.scatter(inds, medians, marker='o', color='white', zorder=3)
+    ax.scatter(inds, medians, marker='o', color='white', s=1, zorder=3)
     ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
     ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1)
     
