@@ -10,9 +10,9 @@ def summarize_data(data, method='mean', srange=(0,-1), axis=1):
         raise ValueError("Method must be one of "+", ".join(avail_methods))
     
     if method == 'median' and isinstance(data, np.ma.MaskedArray):
-        return np.ma.median(data[:,srange[0]:srange[1]], axis=axis)
+        return np.ma.median(data[:,srange[0]:srange[1]], axis=axis, keepdims=True)
     else:
-        return getattr(data[:,srange[0]:srange[1]], method)(axis=axis)
+        return getattr(data[:,srange[0]:srange[1]], method)(axis=axis, keepdims=True)
 
 
 def is_outlier(points, thresh=3.5):
