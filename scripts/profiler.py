@@ -767,7 +767,7 @@ def make_average_sig_plot(ax, sample, color='k'):
     print summary.shape
     print gopts['x_axis'].shape
     label = sample.sig_label if gopts['args'].rotate else sample.bed_label
-    ax.plot(gopts['x_axis'], summary, color=color, label=label)
+    ax.plot(gopts['x_axis'], summary, color=color, label=label, alpha=0.7)
     
     
     if gopts['args'].showci:
