@@ -728,22 +728,17 @@ def make_violin_plot(ax, sample, color='k'):
     whiskersMin, whiskersMax = whiskers[0], whiskers[1]
     
     inds = [sample.sig_id]
-    ax.scatter(inds, medians, marker='o', color='white', s=0.2, zorder=3)
+    ax.scatter(inds, medians, marker='o', color=color, s=0.2, zorder=3)
     
-    ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
-    ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1)
+    ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5, alpha=0.5)
+    ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1, alpha=0.5)
     #ax.vlines(inds, medians, medians, color='white', linestyle='-', lw=5)
-#     if gopts['args'].showci:
-#         computed_error = ttstats.compute_error(sample, gopts['args'].ciwidth)
-#         ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
-#         ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
-#         
-    #ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
+
     ax.set_ylim(bottom=sample.raw_min, top=sample.raw_max)
 #     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
-#     if not sample.show_yaxis:
-#         ax.set_yticklabels([])
-#         #ax.set_xticklabels([])
+    if not sample.show_yaxis:
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
     return ax
 #end make_average_sig_plot()
 
