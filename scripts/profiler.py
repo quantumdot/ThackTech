@@ -615,11 +615,10 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             row = bed_id * gopts['args'].heatplotrows
     
     elif plot_type == 'avg':
+        rowspan = gopts['args'].avgplotrows
         if 'violin' in gopts['args'].plot:
-            rowspan = gopts['args'].avgplotrows
             row = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
         else:
-            rowspan = gopts['args'].avgplotrows
             row = gopts['fig_rows'] - gopts['args'].avgplotrows
         
     elif plot_type == 'violin':
@@ -639,7 +638,11 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
     
     elif plot_type == 'leg':
         rowspan = gopts['args'].avgplotrows
-        row = gopts['fig_rows'] - gopts['args'].avgplotrows
+        if 'violin' in gopts['args'].plot:
+            row = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
+        else:
+            row = gopts['fig_rows'] - gopts['args'].avgplotrows
+            
         if 'heat' in gopts['args'].plot:
             col = gopts['fig_cols'] - 2
         else:
