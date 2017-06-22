@@ -663,8 +663,20 @@ def make_violin_plot(ax, sample, color='k'):
     #print summary.shape
     #print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
-    ax.violinplot(summary, positions=[sample.sig_id], showextrema=True)
+    vparts = ax.violinplot(summary, positions=[sample.sig_id], showmeans=False, showmedians=False, showextrema=True)
+    for pc in vparts['bodies']:
+        pc.set_facecolor(color)
+        #pc.set_edgecolor('black')
+        pc.set_alpha(1)
     
+    quartile1, medians, quartile3 = np.percentile(summary, [25, 50, 75], axis=1)
+    whiskers = np.array([adjacent_values(sorted_array, q1, q3) for sorted_array, q1, q3 in zip(summary, quartile1, quartile3)])
+    whiskersMin, whiskersMax = whiskers[:, 0], whiskers[:, 1]
+    
+    inds = np.arange(1, len(medians) + 1)
+    ax.scatter(inds, medians, marker='o', color='white', s=30, zorder=3)
+    ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
+    ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1)
     
 #     if gopts['args'].showci:
 #         computed_error = ttstats.compute_error(sample, gopts['args'].ciwidth)
@@ -679,6 +691,14 @@ def make_violin_plot(ax, sample, color='k'):
 #         #ax.set_xticklabels([])
     return ax
 #end make_average_sig_plot()
+
+def adjacent_values(vals, q1, q3):
+    upper_adjacent_value = q3 + (q3 - q1) * 1.5
+    upper_adjacent_value = np.clip(upper_adjacent_value, q3, vals[-1])
+
+    lower_adjacent_value = q1 - (q3 - q1) * 1.5
+    lower_adjacent_value = np.clip(lower_adjacent_value, vals[0], q1)
+    return lower_adjacent_value, upper_adjacent_value
 
 
 def make_average_sig_plot(ax, sample, color='k'):
