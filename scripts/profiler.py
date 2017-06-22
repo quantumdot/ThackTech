@@ -660,8 +660,8 @@ def make_violin_plot(ax, sample, color='k'):
 #             ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
     
     summary = ttstats.summarize_data(sample.signal_array, method=gopts['args'].summarymethod, axis=1)
-    print summary.shape
-    print gopts['x_axis'].shape
+    #print summary.shape
+    #print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
     ax.violinplot(summary, positions=[sample.sig_id], showextrema=True)
     
@@ -672,7 +672,7 @@ def make_violin_plot(ax, sample, color='k'):
 #         ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
 #         
     #ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
-    ax.set_ylim(bottom=sample.heat_min, top=sample.heat_max)
+    #ax.set_ylim(bottom=sample.heat_min, top=sample.heat_max)
 #     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
 #     if not sample.show_yaxis:
 #         ax.set_yticklabels([])
