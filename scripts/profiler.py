@@ -542,20 +542,36 @@ def compute_scales_for_group(group_id, samples, min_saturate, max_saturate):
     heat_max = np.percentile(pooled[np.isfinite(pooled)], ((1-max_saturate)*100))
     avg_min = float('inf')
     avg_max = float('-inf')
+    raw_min = float('inf')
+    raw_max = float('-inf')
     for s in samples:
         mean_array = ttstats.summarize_data(s.signal_array, method=gopts['args'].summarymethod, axis=0)
-        mean_min = mean_array.min()
-        mean_max = mean_array.max()
-        if mean_min < avg_min:
-            avg_min = mean_min
-        if mean_max > avg_max:
-            avg_max = mean_max
+        summary_array = ttstats.summarize_data(s.signal_array, method=gopts['args'].summarymethod, axis=1)
+        t_mean_min = mean_array.min()
+        t_mean_max = mean_array.max()
+        t_raw_min = summary_array.min()
+        t_raw_max  = summary_array.max()
+        if t_mean_min < avg_min:
+            avg_min = t_mean_min
+        if t_mean_max > avg_max:
+            avg_max = t_mean_max
+            
+        if t_raw_min < raw_min:
+            raw_min = t_raw_min
+        if t_raw_max > raw_max:
+            raw_max = t_raw_max
     
     avg_max = avg_max + (abs(avg_max) * 0.1)
     if avg_min >= 0:
         avg_min = 0
     else:
         avg_min = avg_min - (abs(avg_min) * 0.1)
+        
+    raw_max = raw_max + (abs(raw_max) * 0.1)
+    if raw_min >= 0:
+        raw_min = 0
+    else:
+        raw_min = raw_min - (abs(raw_min) * 0.1)
     
     for s in samples:
         s.group = group_id
@@ -565,6 +581,8 @@ def compute_scales_for_group(group_id, samples, min_saturate, max_saturate):
         s.heat_max = heat_max
         s.avg_min = avg_min
         s.avg_max = avg_max
+        s.raw_min = raw_min
+        s.raw_max = raw_max
         
     sys.stderr.write("-> Computed group %d heatmap min/max (%f, %f)\n" % (group_id, heat_min, heat_max))
     sys.stderr.write("-> Computed group %d average profile min/max (%f, %f)\n" % (group_id, avg_min, avg_max))
@@ -686,7 +704,7 @@ def make_violin_plot(ax, sample, color='k'):
 #         ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
 #         
     #ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
-    #ax.set_ylim(bottom=sample.heat_min, top=sample.heat_max)
+    ax.set_ylim(bottom=sample.raw_min, top=sample.raw_max)
 #     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
 #     if not sample.show_yaxis:
 #         ax.set_yticklabels([])
