@@ -331,7 +331,7 @@ def main():
             stop = int(int(stop) / args.res)
         else:
             start = 0
-            stop = -1
+            stop = 0
         compute_sorting(samples, args.sort, args.sortmethod, (start, stop))
         if args.sort is None:
             gopts['savename_notes'].append("sort-bed")
@@ -374,7 +374,7 @@ def main():
                 start, stop = r.split(':')
                 ranges.append((int(int(start) / args.res), int(int(stop) / args.res)))
         else:
-            ranges.append((0, -1))
+            ranges.append((0, 0))
         write_summary_profiles(samples, ranges, args.summarymethod)
     sys.stderr.write('Done!')
 #end main()
