@@ -134,7 +134,7 @@ def main():
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument('--name', action='store', default='', help='Base name for the plot output.')
     output_group.add_argument('--format', action='store', default='pdf', choices=['pdf', 'png', 'svg'], help='Format to output the final figure.')
-    output_group.add_argument('--plot', action='append', choices=['avg','heat','kavg','bedscores','truebedscores'], required='true', help='Types of plots to produce. Supply multiple options to produce hybrid plots. avg will produce average profiles, heat will produce heatmaps, kavg will produce average profiles for each class determined by k-means clustering (only available when used with --plot heat AND --kmeans). bedscores will plot the score column for intervals simply, while truebedscores will plot the score column for intervals more accuratly (showing true genomic context of element; mutually exclusive with --plot bedscores).')
+    output_group.add_argument('--plot', action='append', choices=['avg', 'violin','heat','kavg','bedscores','truebedscores'], required='true', help='Types of plots to produce. Supply multiple options to produce hybrid plots. avg will produce average profiles, heat will produce heatmaps, kavg will produce average profiles for each class determined by k-means clustering (only available when used with --plot heat AND --kmeans). bedscores will plot the score column for intervals simply, while truebedscores will plot the score column for intervals more accuratly (showing true genomic context of element; mutually exclusive with --plot bedscores).')
     output_group.add_argument('--dpi', action='store', type=int, default=600, help='DPI resolution of the saved figure.')
     output_group.add_argument('--width', action='store', type=float, default=8, help='Width (in inches) of the figure.')
     output_group.add_argument('--height', action='store', type=float, default=6, help='Height (in inches) of the figure.')
@@ -281,10 +281,22 @@ def main():
     gopts['group_count'] = count_groups(args.scalegroups, samples)
     if args.rotate:
         gopts['fig_cols'] = len(args.bed) + 1#gopts['group_count']
-        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.sig)) + (args.avgplotrows if 'avg' in args.plot else 0)
+        gopts['fig_rows'] = 0
+        if 'heat' in args.plot:
+            gopts['fig_rows'] += (args.heatplotrows * len(args.sig))
+        if 'avg' in args.plot:
+            gopts['fig_rows'] += args.avgplotrows
+        if 'violin' in args.plot:
+            gopts['fig_rows'] += args.avgplotrows
     else:
         gopts['fig_cols'] = len(args.sig) + gopts['group_count']
-        gopts['fig_rows'] = ((args.heatplotrows if 'heat' in args.plot else 0) * len(args.bed)) + (args.avgplotrows if 'avg' in args.plot else 0)
+        gopts['fig_rows'] = 0
+        if 'heat' in args.plot:
+            gopts['fig_rows'] += (args.heatplotrows * len(args.bed))
+        if 'avg' in args.plot:
+            gopts['fig_rows'] += args.avgplotrows
+        if 'violin' in args.plot:
+            gopts['fig_rows'] += args.avgplotrows
     
     
     if 'bedscores' in args.plot or 'truebedscores' in args.plot:
@@ -603,6 +615,14 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             row = bed_id * gopts['args'].heatplotrows
     
     elif plot_type == 'avg':
+        if 'violin' in gopts['args'].plot:
+            rowspan = gopts['args'].avgplotrows
+            row = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
+        else:
+            rowspan = gopts['args'].avgplotrows
+            row = gopts['fig_rows'] - gopts['args'].avgplotrows
+        
+    elif plot_type == 'violin':
         rowspan = gopts['args'].avgplotrows
         row = gopts['fig_rows'] - gopts['args'].avgplotrows
     
@@ -646,6 +666,18 @@ def add_signal_to_figure(sample):
         #sys.stderr.write("    -> (%d, %d)\n" % (sample.bed_id*3, sample.sig_id))
         ax =  get_plot_axes('heat', sample.group, sample.bed_id, sample.sig_id)
         make_sig_heatmap(ax, sample)
+        
+    if 'violin' in gopts['args'].plot:
+        sys.stderr.write("    -> Generating violin plot...\n")
+        ax =  get_plot_axes('violin', sample.group, sample.bed_id, sample.sig_id)
+        
+        if gopts['args'].rotate:
+            color = gopts['color_cycle'][sample.sig_id % len(gopts['color_cycle'])]
+        else:
+            color = gopts['color_cycle'][sample.bed_id % len(gopts['color_cycle'])]
+        
+        make_violin_plot(ax, sample, color)
+        
     if 'avg' in gopts['args'].plot:
         ax =  get_plot_axes('avg', sample.group, sample.bed_id, sample.sig_id)
         if 'kavg' in gopts['args'].plot:
@@ -662,8 +694,7 @@ def add_signal_to_figure(sample):
         else:
             color = gopts['color_cycle'][sample.bed_id % len(gopts['color_cycle'])]
         
-        #make_average_sig_plot(ax, sample, color)
-        make_violin_plot(ax, sample, color)
+        make_average_sig_plot(ax, sample, color)
         
         if 'kavg' in gopts['args'].plot:
             leg = ax.legend(loc='best', bbox_to_anchor=(0.5, -0.1))
