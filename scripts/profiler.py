@@ -695,10 +695,10 @@ def make_violin_plot(ax, sample, color='k'):
     
     inds = [sample.sig_id]
     #ax.scatter(inds, medians, marker='_', color='white', s=1, zorder=3)
-    ax.vlines(inds, medians, medians, color='white', linestyle='-', lw=5)
+    
     ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
     ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1)
-    
+    ax.vlines(inds, medians, medians, color='white', linestyle='-', lw=5)
 #     if gopts['args'].showci:
 #         computed_error = ttstats.compute_error(sample, gopts['args'].ciwidth)
 #         ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
