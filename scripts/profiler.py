@@ -89,6 +89,7 @@ def main():
     input_group.add_argument('-b', '--bed', action='append', required='true', help='Bed files to profile against.')
     input_group.add_argument('-s', '--sig', action='append', required='true', help='Signal files to profile. BigWig, BAM, BED, BigBed files are supported, but all but bigwig will be treated by counting intervals.')
     input_group.add_argument('-i', '--inp', action='append', default=[], help='Input files to be used for normalization.')
+    input_group.add_argument('--ignoreinput', action='store_true', help='Do not use input data.')
     
     labeling_group = parser.add_argument_group('Labeling Options')
     labeling_group.add_argument('-sl', '--slabel', action='append', default=[], help='Signal labels for each plot. Specify in the same order as the signal files. If not supplied, file basename will be used.')
@@ -207,6 +208,10 @@ def main():
     
     gopts['output_base'] = "%s.%s" % (args.name, str(collection_opts))
     gopts['savename_notes'] = []
+    
+    
+    if args.ignoreinput:
+        gopts['args'].inp = args.inp = []
     
     
     
