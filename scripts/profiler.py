@@ -663,7 +663,7 @@ def make_violin_plot(ax, sample, color='k'):
     #print summary.shape
     #print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
-    vparts = ax.violinplot(summary, positions=[sample.sig_id], showmeans=False, showmedians=False, showextrema=False)
+    vparts = ax.violinplot(summary, positions=[sample.sig_id], points=len(summary), showmeans=False, showmedians=False, showextrema=False)
     
     #change the filled area of the violin
     for pc in vparts['bodies']:
@@ -676,7 +676,7 @@ def make_violin_plot(ax, sample, color='k'):
     whiskersMin, whiskersMax = whiskers[0], whiskers[1]
     
     inds = [sample.sig_id]
-    ax.scatter(inds, medians, marker='o', color='white', s=5, zorder=3)
+    ax.scatter(inds, medians, marker='o', color='white', zorder=3)
     ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
     ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1)
     
