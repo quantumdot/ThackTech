@@ -5,19 +5,39 @@ from scipy import stats
 
 
 def summarize_data(data, method='mean', srange=None, axis=1):
+    """
+    Retruns a summary of the supplied data along the axis requested
+    
+    Method must be one of [mean, median, max, min, sum]. A special value of method is 
+    the value "all", in which case this function will return a dict with keys representing
+    summary methods with their corresponding values.
+    
+    Parameters:
+        data: an n-d array of data to summarize
+        method: the summary statistic to compute
+        range: tuple with min/max index of the data subrange to summarize'
+        axis: axis to summarize data along.
+        
+    
+    """
     avail_methods = ['mean', 'median', 'max', 'min', 'sum']
-    if method not in avail_methods:
-        raise ValueError("Method must be one of "+", ".join(avail_methods))
-    
-    if srange is not None:
-        d = data[:,srange[0]:srange[1]]
+    if method == 'all':
+        results = {}
+        for m in avail_methods:
+            results[m] = summarize_data(data, m, srange, axis)
     else:
-        d = data
-    
-    if method == 'median' and isinstance(data, np.ma.MaskedArray):
-        return np.ma.median(d, axis=axis)
-    else:
-        return getattr(d, method)(axis=axis)
+        if method not in avail_methods:
+            raise ValueError("Method must be one of "+", ".join(avail_methods))
+        
+        if srange is not None:
+            d = data[:,srange[0]:srange[1]]
+        else:
+            d = data
+        
+        if method == 'median' and isinstance(data, np.ma.MaskedArray):
+            return np.ma.median(d, axis=axis)
+        else:
+            return getattr(d, method)(axis=axis)
 
 
 def is_outlier(points, thresh=3.5):
@@ -53,6 +73,10 @@ def is_outlier(points, thresh=3.5):
 
     return modified_z_score > thresh
 #end is_outlier()
+
+
+def max_exclude_outliers(data, threshold=3.5):
+    return data[(~is_outlier(data, threshold))].max()
 
 
 def compute_error(data, method, axis=0, ci=0.95):
@@ -100,7 +124,7 @@ def correct_invalid_data(data, method):
     elif method == "zero":
         data = data[np.isnan(data)] = 0
     return data
-#end correct_out_of_bounds_data()
+#end correct_invalid_data()
 
 
 def format_poly_equation(poly, variable="x", precision=3):
@@ -135,6 +159,48 @@ def format_poly_equation(poly, variable="x", precision=3):
 
     return ''.join(result) or '0'
 #end format_poly_equation()
+
+def make_random_shuffle(df, columns, n=1, axis=0):
+    """
+    Given a pandas dataframe, returns a new (copied) dataframe 
+    where the columns specificied are replaced with the origional
+    data that has been randomly shuffled.
+    
+    Parameters:
+        df: pandas dataframe to operate on
+        columns: iterable of column indicies to operate on
+        
+    Returns:
+        copy of df with `columns` shuffled
+    """
+    rand_df = df.copy()
+    for c in columns:
+        rand_df[:, c] = np.random.shuffle(rand_df.ix[:, c])
+    return rand_df
+#end make_random_shuffle()
+
+def make_random_gaussian(df, columns):
+    """
+    Given a pandas dataframe, returns a new (copied) dataframe 
+    where the columns specificied are replace with random
+    gaussian data with the same distribution of the origional
+    data (same mean, std dev, and count).
+    
+    Parameters:
+        df: pandas dataframe to operate on
+        columns: iterable of column indicies to operate on
+        
+    Returns:
+        copy of df with `columns` randomized
+    """
+    rand_df = df.copy()
+    for c in columns:
+        mu = df.ix[:, c].mean()
+        sigma = df.ix[:, c].std()
+        count = df.ix[:, c].count()
+        rand_df.ix[:, c] = np.random.normal(mu, sigma, count)
+    return rand_df
+#end make_random_gaussian()
 
 
 
