@@ -740,10 +740,12 @@ def make_violin_plot(ax, sample, color='k'):
     #ax.vlines(inds, medians, medians, color='white', linestyle='-', lw=5)
 
     ax.set_ylim(bottom=sample.raw_min, top=sample.raw_max)
+    ax.set_xticklabels([])
+    ax.set_xticks([])
 #     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
     if not sample.show_yaxis:
         ax.set_yticklabels([])
-        ax.set_xticklabels([])
+        
     return ax
 #end make_average_sig_plot()
 
