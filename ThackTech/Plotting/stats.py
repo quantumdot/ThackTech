@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from scipy import stats
 
@@ -202,6 +203,25 @@ def make_random_gaussian(df, columns):
     return rand_df
 #end make_random_gaussian()
 
+
+def get_sphere_radial_bins(radius, parts=3):
+    """Partition a sphere with radius `radius` into a number, `parts`, of shells with equal volumes
+    
+    Parameters:
+        radius: radius of the sphere to partition
+        parts: number of partitions to generate
+        
+    Returns:
+        list of radii representing the upper bin edges, including parameter `radius`
+    
+    """
+    total_volume = (4.0/3.0) * math.pi * math.pow(float(radius), 3.0)
+    part_volume = total_volume / float(parts)
+    bins = []
+    for i in range(1, parts+1):
+        bins.append(math.pow((part_volume * i)/((4.0/3.0) * math.pi), (1.0/3.0)))
+    return bins
+#end get_sphere_radial_bins()
 
 
 

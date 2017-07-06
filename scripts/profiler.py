@@ -96,7 +96,7 @@ def main():
     labeling_group.add_argument('-il', '--ilabel', action='append', default=[], help='Interval labels for each plot. Specify in the same order as the interval files. If not supplied, file basename will be used.')
     labeling_group.add_argument('--title', action='store', default='', help='Title for entire plot')
     labeling_group.add_argument('--bedscorelabel', action='store', default="Score", help='Label for plotting the score column of intervals.')
-    labeling_group.add_argument('--xnumticks', action='store', type=int, default=4, help='Number of tick marks to use in the x-axis.')
+    labeling_group.add_argument('--xnumticks', action='store', type=int, default=3, help='Number of tick marks to use in the x-axis.')
     labeling_group.add_argument('--ynumticks', action='store', type=int, default=4, help='Number of tick marks to use in the y-axis.')
     labeling_group.add_argument('--xlabelrot', action='store', type=int, default=0, help='Angle, in degrees, for x axis label rotation.')
     labeling_group.add_argument('--ylabelrot', action='store', type=int, default=90, help='Angle, in degrees, for y axis label rotation.')
@@ -156,6 +156,8 @@ def main():
     plot_group.add_argument('--showci', action='store_true', help='Plot confidence interval for average plot.')
     plot_group.add_argument('--ciwidth', action='store', default='sem', help='Confidence interval width for average plot. sem for Standard Error of the mean, std for Standard deviation, or float for percent CI (i.e. 0.95).')
     plot_group.add_argument('--genome', action='store', help='UCSC reference genome that intervals and signal are computed with (i.e. mm9, hg19, etc.). This is really only required when using --plot truebedscores.')
+    plot_group.add_argument('--colors', action='store', nargs='+', default=['r','g','b','c','m','y','k'], help="Colors to cycle through for individual samples on aggregate plots.")
+    plot_group.add_argument('--linewidth', action='store', type=float, default=0.5, help="Width of line used for aggregate plots (i.e. average profile).")
     
     resources_group = parser.add_argument_group('Resource Options')
     resources_group.add_argument('--cache', action='store_true', help='If set, profiles are dumped to disk.')
@@ -680,9 +682,9 @@ def add_signal_to_figure(sample):
         ax =  get_plot_axes('violin', sample.group, sample.bed_id, sample.sig_id)
         
         if gopts['args'].rotate:
-            color = gopts['color_cycle'][sample.sig_id % len(gopts['color_cycle'])]
+            color = gopts['args'].colors[sample.sig_id % len(gopts['args'].colors)]
         else:
-            color = gopts['color_cycle'][sample.bed_id % len(gopts['color_cycle'])]
+            color = gopts['args'].colors[sample.bed_id % len(gopts['args'].colors)]
         
         make_violin_plot(ax, sample, color)
         
@@ -698,9 +700,9 @@ def add_signal_to_figure(sample):
                 
         sys.stderr.write("    -> Generating average profile...\n")
         if gopts['args'].rotate:
-            color = gopts['color_cycle'][sample.sig_id % len(gopts['color_cycle'])]
+            color = gopts['args'].colors[sample.sig_id % len(gopts['args'].colors)]
         else:
-            color = gopts['color_cycle'][sample.bed_id % len(gopts['color_cycle'])]
+            color = gopts['args'].colors[sample.bed_id % len(gopts['args'].colors)]
         
         make_average_sig_plot(ax, sample, color)
         
@@ -769,7 +771,7 @@ def make_average_sig_plot(ax, sample, color='k'):
     #print summary.shape
     #print gopts['x_axis'].shape
     label = sample.sig_label if gopts['args'].rotate else sample.bed_label
-    ax.plot(gopts['x_axis'], summary, color=color, label=label, alpha=0.7)
+    ax.plot(gopts['x_axis'], summary, color=color, label=label, alpha=0.7, linewidth=gopts['args'].linewidth)
     
     
     if gopts['args'].showci:
