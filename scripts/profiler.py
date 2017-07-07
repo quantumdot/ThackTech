@@ -118,6 +118,7 @@ def main():
     scale_group.add_argument('--scalebedgroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
     scale_group.add_argument('--saturatemin', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemin> percent bottom values.')
     scale_group.add_argument('--saturatemax', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemax> percent top values.')
+    scale_group.add_argument('--coefficients', action='store', nargs='+', type=float, default=1.0, help='Coefficients to multiply signals by, one value for each signal submitted.')
     
     clustsort_group = parser.add_argument_group('Clustering/Sorting Options')
     clustsort_group.add_argument('--sort', action='store', default=None, type=int, help='sample index (0-based) to use for sorting. If not specified than the order of the bed file is used. Mutually exclusive with --kmeans.')
@@ -283,6 +284,12 @@ def main():
             ps.bedtool = bedtool
             samples.append(ps)
         gopts['savename_notes'].append("bed-score")
+    
+    for i in range(len(samples)):
+        if len(args.coefficients) > i:
+            samples[i].signal_array *= args.coefficients[i]
+        else:
+            samples[i].signal_array *= 1.0
     
     
     gopts['group_count'] = count_groups(args.scalegroups, samples)
