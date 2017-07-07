@@ -16,7 +16,6 @@ import itertools
 from multiprocessing import Pool
 
 mpl.rcParams['agg.path.chunksize'] = 10000
-ip.color_cycle = ['navy','blue','dodgerblue','firebrick','tomato','lightsalmon','k']
 
 
 def main():
@@ -25,7 +24,8 @@ def main():
     stat_choices = ['mean', 'median', 'count', 'sum', 'min', 'max']
     parent_parser.add_argument('--stat', default=stat_choices[0], choices=stat_choices, help="The statistic to compute.")
     parent_parser.add_argument('--out', '-o', action='store', help="Output basename") 
-    parent_parser.add_argument('--processors', '-p', type=int, default=1, action='store', help="Number of processors to utilize") 
+    parent_parser.add_argument('--processors', '-p', type=int, default=1, action='store', help="Number of processors to utilize")
+    parent_parser.add_argument('--colors', action='store', nargs='+', default=ip.color_cycle, help="Colors to cycle through for plots.")
     parser = argparse.ArgumentParser(add_help=False) 
     subparsers = parser.add_subparsers()
 
@@ -55,6 +55,7 @@ def main():
     compraw_parser.set_defaults(func=compare_raw_data)
     
     args = parser.parse_args()
+    ip.color_cycle = args.colors
     args.func(args)
     
 #end main()
