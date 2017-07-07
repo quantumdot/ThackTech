@@ -11,8 +11,8 @@ import argparse
 import pandas as pd
 from ThackTech.Plotting import stats as ttstats
 from ThackTech.Plotting import intensity_plots as ip
+from ThackTech import filetools
 import itertools
-from matplotlib.colors import LogNorm
 from multiprocessing import Pool
 
 mpl.rcParams['agg.path.chunksize'] = 10000
@@ -60,6 +60,7 @@ def main():
 #end main()
 
 def preprocess_files(args):
+    filetools.ensure_dir(args.dir)
     #worker pool preprocess each data file in parallel
     #Worker performs normalization (if requested) and plotting of raw data
     #worker returns a tuple of filename and dataframe with binned data
