@@ -63,7 +63,7 @@ def preprocess_files(args):
     #worker pool preprocess each data file in parallel
     #Worker performs normalization (if requested) and plotting of raw data
     #worker returns a tuple of filename and dataframe with binned data
-    worker_pool = Pool(processes=args.processes)
+    worker_pool = Pool(processes=args.processors)
     results = []
     wro = [worker_pool.apply_async(preprocess_worker, (f, args), callback=results.append) for f in args.files]
     worker_pool.close()
