@@ -286,10 +286,11 @@ def main():
         gopts['savename_notes'].append("bed-score")
     
     for i in range(len(samples)):
+        c = 1.0
         if len(args.coefficients) > i:
-            samples[i].signal_array *= args.coefficients[i]
-        else:
-            samples[i].signal_array *= 1.0
+            c = args.coefficients[i]
+        sys.stderr.write("Scaling sample {} by factor {}\n".format(samples[i].id, c))
+        samples[i].signal_array *= c
     
     
     gopts['group_count'] = count_groups(args.scalegroups, samples)
