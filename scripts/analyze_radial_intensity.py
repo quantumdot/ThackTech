@@ -103,7 +103,8 @@ def preprocess_worker(f, args):
         dest_base += '.norm'
         data = normalize_data(data, [data.columns[i] for i in range(1, len(data.columns))], args.rmoutliers)
         data.to_csv(dest_base+'.tsv', sep='\t', index=False)
-    plot_raw_data([data], dest_base)
+    fig = plot_raw_data([data])
+    save_figure(fig, dest_base, args.figformat)
         
     #save binned data
     binned_df = pd.DataFrame()
@@ -138,7 +139,7 @@ def compare_raw_data(args):
     dfs = fetch_raw_data(args)
     
     print "plotting radial and 2D intensity"
-    fig = plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
+    fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
     save_figure(fig, args.out, args.figformat)
 #end compare_raw_data()
 
@@ -150,11 +151,11 @@ def coloc_raw_data(args):
     save_figure(fig, args.out+'.coloc', args.figformat)
     
     print "plotting radial and 2D intensity"
-    fig = plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
+    fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
     save_figure(fig, args.out, args.figformat)
 #end coloc_raw_data()
 
-def plot_raw_data(dfs, dest_base, rbins=500, ibins=500):
+def plot_raw_data(dfs, rbins=500, ibins=500):
     fig = plt.figure(1, figsize=(12, (4 * len(dfs))), dpi=600)
     plt.subplots_adjust(hspace=0.6, wspace=0.5)
     df_cols = len(dfs[0].columns)
