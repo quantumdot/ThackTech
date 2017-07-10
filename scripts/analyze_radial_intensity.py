@@ -54,6 +54,13 @@ def main():
     compraw_parser.add_argument('--groupnames', nargs='+', help="Group Names")
     compraw_parser.set_defaults(func=compare_raw_data)
     
+    compraw_parser = subparsers.add_parser('coloc', help='Step #2: Compare raw data for colocalization.', parents=[parent_parser])
+    #stat_choices = ['mean', 'median', 'count', 'sum', 'min', 'max']
+    #preprocess_parser.add_argument('--stat', default=stat_choices[0], choices=stat_choices, help="The statistic to compute.")
+    compraw_parser.add_argument('--filegroup', nargs='+', action='append', help="Raw data files to process with column 1 as radial, columns 2 and 3 as intensity")
+    compraw_parser.add_argument('--groupnames', nargs='+', help="Group Names")
+    compraw_parser.set_defaults(func=coloc_raw_data)
+    
     args = parser.parse_args()
     ip.color_cycle = args.colors
     args.func(args)
@@ -109,10 +116,7 @@ def preprocess_worker(f, args):
 #end preprocess_worker()
 
 
-
-
-
-def compare_raw_data(args):
+def fetch_raw_data(args):
     dfs = []
     for i in range(len(args.groupnames)):
         gname = args.groupnames[i]
@@ -125,13 +129,25 @@ def compare_raw_data(args):
             df = pd.concat([pd.read_csv(f, sep='\t', comment='#', skip_blank_lines=True) for f in args.filegroup[i]])
             dfs.append(df)
             df.to_pickle(cache_name)
+    return dfs
+#end fetch_raw_data()
+
+
+def compare_raw_data(args):
+    dfs = fetch_raw_data(args)
+    
+    print "plotting radial and 2D intensity"
+    plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
+#end compare_raw_data()
+
+def coloc_raw_data(args):
+    dfs = fetch_raw_data(args)
     
     print "plotting colocalization results"
     plot_colocalization_results(dfs, args.out, dfs[0].columns[1], dfs[0].columns[2], t1=0, t2=0.4, labels=args.groupnames, ibins=1000)
     print "plotting radial and 2D intensity"
     plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
-#end compare_raw_data()
-
+#end coloc_raw_data()
 
 def plot_raw_data(dfs, dest_base, rbins=500, ibins=500):
     fig = plt.figure(1, figsize=(12, (4 * len(dfs))), dpi=600)
