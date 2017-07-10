@@ -24,6 +24,7 @@ def main():
     stat_choices = ['mean', 'median', 'count', 'sum', 'min', 'max']
     parent_parser.add_argument('--stat', default=stat_choices[0], choices=stat_choices, help="The statistic to compute.")
     parent_parser.add_argument('--out', '-o', action='store', help="Output basename") 
+    parent_parser.add_argument('--figformat', '-ff', action='store', choices=['pdf', 'png', 'svg', 'ps', 'eps'], default='pdf', help="Output figure format.") 
     parent_parser.add_argument('--processors', '-p', type=int, default=1, action='store', help="Number of processors to utilize")
     parent_parser.add_argument('--colors', action='store', nargs='+', default=ip.color_cycle, help="Colors to cycle through for plots.")
     parser = argparse.ArgumentParser(add_help=False) 
@@ -137,16 +138,20 @@ def compare_raw_data(args):
     dfs = fetch_raw_data(args)
     
     print "plotting radial and 2D intensity"
-    plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
+    fig = plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
+    save_figure(fig, args.out, args.figformat)
 #end compare_raw_data()
 
 def coloc_raw_data(args):
     dfs = fetch_raw_data(args)
     
     print "plotting colocalization results"
-    plot_colocalization_results(dfs, args.out, dfs[0].columns[1], dfs[0].columns[2], t1=0, t2=0.4, labels=args.groupnames, ibins=1000)
+    fig = plot_colocalization_results(dfs, args.out, dfs[0].columns[1], dfs[0].columns[2], t1=0, t2=0.4, labels=args.groupnames, ibins=1000)
+    save_figure(fig, args.out+'.coloc', args.figformat)
+    
     print "plotting radial and 2D intensity"
-    plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
+    fig = plot_raw_data(dfs, args.out, rbins=1000, ibins=1000)
+    save_figure(fig, args.out, args.figformat)
 #end coloc_raw_data()
 
 def plot_raw_data(dfs, dest_base, rbins=500, ibins=500):
@@ -166,8 +171,7 @@ def plot_raw_data(dfs, dest_base, rbins=500, ibins=500):
             ax = plt.subplot2grid(gridsize, (d,df_cols+j-1))
             ip.plot_2D_intensity(ax, df, combinations[j][0], combinations[j][1], bins=ibins)
         
-    plt.savefig(dest_base+'.png', dpi=600)
-    plt.close(fig)
+    return fig
 #end plot_raw_data()
 
 
@@ -191,8 +195,7 @@ def plot_colocalization_results(dfs, dest_base, c1, c2, t1, t2, labels, ibins=50
     ax_vio.set_title('{} Intensity in voxels with {} >= {}'.format(c1, c2, t1))
     ip.plot_violin_intensities(ax_vio, thold_dfs, c1)
     
-    plt.savefig(dest_base+'.coloc.png', dpi=600)
-    plt.close(fig)
+    return fig
 #end plot_colocalization_results
 
 
@@ -258,9 +261,7 @@ def compare_binned_data(args):
     #end violin plot
     
     #finally save the figure
-    plt.savefig(args.out+'.png', dpi=600)
-    plt.close(fig)
-
+    save_figure(fig, args.out, args.figformat)
 #end compare_data()
 
 
@@ -271,6 +272,14 @@ def compare_binned_data(args):
 #####################
 # UTILITY FUNCTIONS #
 #####################
+def save_figure(fig, basename, fig_format):
+    savename = "{}.{}".format(basename, fig_format)
+    sys.stderr.write('Saving Figure.....\n')
+    fig.savefig(savename, dpi=600)
+    plt.close(fig)
+    sys.stderr.write(' => See %s for results.\n' % (savename,))
+#end save_figure()
+
 def get_label_from_path(path):
     return os.path.splitext(os.path.basename(path))[0]
 #end et_label_from_path()
