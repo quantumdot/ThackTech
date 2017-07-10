@@ -120,7 +120,7 @@ def fetch_raw_data(args):
     dfs = []
     for i in range(len(args.groupnames)):
         gname = args.groupnames[i]
-        cache_name = args.out+'.'+gname+'.pkl.gz'
+        cache_name = args.out+'.'+filetools.make_str_filename_safe(gname)+'.pkl.gz'
         if os.path.exists(cache_name):
             print "Loading data for group {}".format(gname)
             dfs.append(pd.read_pickle(cache_name))
