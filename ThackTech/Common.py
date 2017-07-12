@@ -5,6 +5,18 @@ import subprocess
 import shlex
 import collections, itertools
 
+
+def make_safe_worker(func):
+	def safe_worker(*args, **kwargs):
+		try:
+			return func(*args, **kwargs)
+		except KeyboardInterrupt:
+			return 
+	return safe_worker
+#end make_safe_worker()
+
+
+
 def human_time_diff(start, end):
 	'''returns a human readable string describing the elapsed time between start and end using units familiar to humans (i.e. months, days, hours, minutes... etc.) '''
 	attrs = ['years', 'months', 'days', 'hours', 'minutes', 'seconds']

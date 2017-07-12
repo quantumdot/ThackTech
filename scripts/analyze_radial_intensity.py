@@ -12,6 +12,7 @@ import pandas as pd
 from ThackTech.Plotting import stats as ttstats
 from ThackTech.Plotting import intensity_plots as ip
 from ThackTech import filetools
+from ThackTech.Common import make_safe_worker
 import itertools
 from multiprocessing import Pool
 
@@ -64,7 +65,11 @@ def main():
     
     args = parser.parse_args()
     ip.color_cycle = args.colors
-    args.func(args)
+    try:
+        args.func(args)
+    except KeyboardInterrupt:
+        sys.stderr.write('Got Keyboard Interrupt.\nGoodbye.\n')
+        return
     
 #end main()
 
@@ -75,9 +80,14 @@ def preprocess_files(args):
     #worker returns a tuple of filename and dataframe with binned data
     worker_pool = Pool(processes=args.processors)
     results = []
-    wro = [worker_pool.apply_async(preprocess_worker, (f, args), callback=results.append) for f in args.files]
-    worker_pool.close()
-    worker_pool.join()
+    try:
+        for f in args.files:
+            worker_pool.apply_async(make_safe_worker(preprocess_worker), (f, args), callback=results.append)
+        worker_pool.close()
+        worker_pool.join()
+    except KeyboardInterrupt:
+        worker_pool.terminate()
+        raise
     
     #pool together all the results into a master data frame
     master_dfs = {} 
