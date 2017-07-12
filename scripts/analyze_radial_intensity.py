@@ -82,7 +82,7 @@ def preprocess_files(args):
     results = []
     try:
         for f in args.files:
-            worker_pool.apply_async(make_safe_worker(preprocess_worker), (f, args), callback=results.append)
+            worker_pool.apply_async(preprocess_worker, (f, args), callback=results.append)
         worker_pool.close()
         worker_pool.join()
     except KeyboardInterrupt:
