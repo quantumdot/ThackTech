@@ -149,13 +149,13 @@ def fetch_raw_data(args):
 def compare_raw_data(args):
     dfs = fetch_raw_data(args)
     
-    print "plotting radial and 2D intensity"
-    fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
-    save_figure(fig, args.out, args.figformat)
-    
     print "plotting cumulative sum"
     fig = plot_cum_sum(dfs, args.groupnames)
     save_figure(fig, args.out+'.cumsum', args.figformat)
+    
+    print "plotting radial and 2D intensity"
+    fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
+    save_figure(fig, args.out, args.figformat)
 #end compare_raw_data()
 
 def coloc_raw_data(args):
@@ -165,13 +165,13 @@ def coloc_raw_data(args):
     fig = plot_colocalization_results(dfs, args.out, dfs[0].columns[1], dfs[0].columns[2], t1=0, t2=0.4, labels=args.groupnames, ibins=1000)
     save_figure(fig, args.out+'.coloc', args.figformat)
     
-    print "plotting radial and 2D intensity"
-    fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
-    save_figure(fig, args.out, args.figformat)
-    
     print "plotting cumulative sum"
     fig = plot_cum_sum(dfs, args.groupnames)
     save_figure(fig, args.out+'.cumsum', args.figformat)
+    
+    print "plotting radial and 2D intensity"
+    fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
+    save_figure(fig, args.out, args.figformat)
 #end coloc_raw_data()
 
 def plot_cum_sum(dfs, labels):
