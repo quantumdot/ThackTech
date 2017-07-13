@@ -5,6 +5,7 @@ from scipy import stats
 import pandas as pd
 from ThackTech.Plotting import stats as ttstats
 from matplotlib.colors import LogNorm
+from xlrd.xlsx import cell_name_to_rowx_colx
 
 
 
@@ -118,6 +119,8 @@ def plot_line_intensities(ax, dfs, colx, coly, labels, summary_method, error_met
 #end plot_line_intensities()
 
 def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
+    print colx
+    print coly
     for i in range(len(dfs)):
         df = dfs[i]
         color = color_cycle[i % len(color_cycle)]

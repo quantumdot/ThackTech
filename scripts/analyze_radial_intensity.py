@@ -17,6 +17,7 @@ import itertools
 from multiprocessing import Pool
 
 mpl.rcParams['agg.path.chunksize'] = 10000
+mpl.rcParams['pdf.fonttype'] = 42 # use TrueType fonts
 
 
 def main():

@@ -325,6 +325,8 @@ def main():
     
     plt.rcParams['font.size'] = args.fontsize
     plt.rcParams['legend.fontsize'] = args.legendfontsize
+    plt.rcParams['pdf.fonttype'] = 42 # use TrueType fonts
+    plt.rcParams['ps.fonttype'] = 42
     fig = plt.figure(figsize=(args.width, args.height), dpi=args.dpi)
     
     
