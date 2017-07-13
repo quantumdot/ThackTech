@@ -151,6 +151,10 @@ def compare_raw_data(args):
     print "plotting radial and 2D intensity"
     fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
     save_figure(fig, args.out, args.figformat)
+    
+    print "plotting cumulative sum"
+    fig = plot_cum_sum(dfs, args.groupnames)
+    save_figure(fig, args.out+'.cumsum', args.figformat)
 #end compare_raw_data()
 
 def coloc_raw_data(args):
@@ -163,7 +167,21 @@ def coloc_raw_data(args):
     print "plotting radial and 2D intensity"
     fig = plot_raw_data(dfs, rbins=1000, ibins=1000)
     save_figure(fig, args.out, args.figformat)
+    
+    print "plotting cumulative sum"
+    fig = plot_cum_sum(dfs, args.groupnames)
+    save_figure(fig, args.out+'.cumsum', args.figformat)
 #end coloc_raw_data()
+
+def plot_cum_sum(dfs, labels):
+    fig = plt.figure(1, figsize=(12, (4 * len(dfs))), dpi=600)
+    plt.subplots_adjust(hspace=0.6, wspace=0.5)
+    gridsize = (1,1)
+    
+    ax = plt.subplot2grid(gridsize, (0,0))
+    ip.plot_radial_cumulative_sum(ax, dfs, dfs[0].columns[0], dfs[0].columns[1], labels=labels)
+    return fig
+#end plot_cum_sum()
 
 def plot_raw_data(dfs, rbins=500, ibins=500):
     fig = plt.figure(1, figsize=(12, (4 * len(dfs))), dpi=600)

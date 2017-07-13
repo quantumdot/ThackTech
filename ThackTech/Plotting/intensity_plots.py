@@ -117,5 +117,20 @@ def plot_line_intensities(ax, dfs, colx, coly, labels, summary_method, error_met
     legend = ax.legend(loc='best')
 #end plot_line_intensities()
 
+def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
+    for i in range(len(dfs)):
+        df = dfs[i]
+        color = color_cycle[i % len(color_cycle)]
+        df_s = df.sort_values(colx, axis=1)
+        df_s['cum_sum'] = df_s[coly].cumsum()
+        df_s['cum_perc'] = df_s['cum_sum']/df_s[coly].sum()
+        
+        ax.plot(df_s[colx], df_s['cum_perc'], label=labels[i], color=color)
+
+    ax.set_xlim(0, 1.0)
+    ax.set_ylim(0, 1.0)
+    legend = ax.legend(loc='best')
+#end plot_line_intensities()
+
 
 
