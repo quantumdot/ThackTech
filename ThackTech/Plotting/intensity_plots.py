@@ -123,6 +123,7 @@ def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
     print coly
     for i in range(len(dfs)):
         df = dfs[i]
+        print df
         color = color_cycle[i % len(color_cycle)]
         df_s = df.sort_values(colx, axis=1)
         df_s['cum_sum'] = df_s[coly].cumsum()
