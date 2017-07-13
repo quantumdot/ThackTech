@@ -285,6 +285,7 @@ def main():
             samples.append(ps)
         gopts['savename_notes'].append("bed-score")
     
+    print args.coefficients
     for s in samples:
         c = 1.0
         if len(args.coefficients) > s.sig_id:
