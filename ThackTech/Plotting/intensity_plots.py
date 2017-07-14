@@ -126,6 +126,9 @@ def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
         df_s['norm_x'] = df_s[coly] / df_s[coly].max()
         df_s['cum_sum'] = df_s[coly].cumsum()
         df_s['cum_perc'] = df_s['cum_sum']/df_s[coly].sum()
+        print df_s
+        print df_s[coly].sum()
+        
         
         ax.plot(df_s[colx], df_s['cum_perc'], label=labels[i], color=color)
 
