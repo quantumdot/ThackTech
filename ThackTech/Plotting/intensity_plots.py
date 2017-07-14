@@ -142,8 +142,8 @@ def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
         
         ax.plot(df_s['norm_x'], df_s['cum_perc'], label=labels[i], color=color)
 
-    #ax.set_xlim(0, 1.0)
-    #ax.set_ylim(0, 1.0)
+    ax.set_xlim(0, 1.0)
+    ax.set_ylim(0, 1.0)
     legend = ax.legend(loc='best')
 #end plot_line_intensities()
 
