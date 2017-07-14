@@ -131,17 +131,16 @@ def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
         
         print "radial\t%sig"
         for j in np.linspace(0.0, 1.0, 20, dtype=float):
-            print "{}\t{}".format(j, )
-            print df_s['cum_perc'][np.searchsorted(df_s['norm_x'], j)]
+            print "{}\t{}".format(j, df_s['cum_perc'][np.searchsorted(df_s['norm_x'], j)])
             
         print "%sig\tradial"
         for j in np.linspace(0.0, 1.0, 20, dtype=float):
-            print "{}\t{}".format(j, )
-            print df_s['norm_x'][np.searchsorted(df_s['cum_perc'], j)]
-        
+            print "{}\t{}".format(j, df_s['norm_x'][np.searchsorted(df_s['cum_perc'], j)])
         
         ax.plot(df_s['norm_x'], df_s['cum_perc'], label=labels[i], color=color)
 
+    ax.set_xlabel('Radial Position')
+    ax.set_ylabel('Cumulative Percent Sum Intensity')
     ax.set_xlim(0, 1.0)
     ax.set_ylim(0, 1.0)
     legend = ax.legend(loc='best')
