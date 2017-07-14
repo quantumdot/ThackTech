@@ -140,6 +140,7 @@ def fetch_raw_data(args):
         else:
             print "Reading data for group {}".format(gname)
             df = pd.concat([pd.read_csv(f, sep='\t', comment='#', skip_blank_lines=True) for f in args.filegroup[i]])
+            df.reset_index(inplace=True, drop=True)
             dfs.append(df)
             df.to_pickle(cache_name)
     return dfs
