@@ -119,25 +119,28 @@ def plot_line_intensities(ax, dfs, colx, coly, labels, summary_method, error_met
 #end plot_line_intensities()
 
 def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
+    
     for i in range(len(dfs)):
+        print "plotting cumulative radial sum for {}".format(labels[i]) 
         df = dfs[i]
         color = color_cycle[i % len(color_cycle)]
         df_s = df.sort_values(colx)
-        df_s['norm_x'] = df_s[colx] / df_s[colx].max()
+        df_s = df_s.where(df_s[colx] <= 1.0)
+        
         df_s['cum_sum'] = df_s[coly].cumsum()
         df_s['cum_perc'] = df_s['cum_sum']/df_s[coly].sum()
         #print df_s
         #print df_s[coly].sum()
         
         print "radial\t%sig"
-        for j in np.linspace(0.0, 0.95, 20, dtype=float):
-            print "{}\t{}".format(j, df_s.where(df_s['norm_x']>=j)['cum_perc'].min())
+        for j in np.arange(0.0, 1.0, 0.05, dtype=float):
+            print "{}\t{}".format(j, df_s.where(df_s[colx]>=j)['cum_perc'].min())
             
         print "%sig\tradial"
-        for j in np.linspace(0.0, 0.95, 20, dtype=float):
-            print "{}\t{}".format(j, df_s.where(df_s['cum_perc']>=j)['norm_x'].min())
+        for j in np.arange(0.0, 1.0, 0.05, dtype=float):
+            print "{}\t{}".format(j, df_s.where(df_s['cum_perc']>=j)[colx].min())
         
-        ax.plot(df_s['norm_x'], df_s['cum_perc'], label=labels[i], color=color)
+        ax.plot(df_s[colx], df_s['cum_perc'], label=labels[i], color=color)
 
     ax.set_xlabel('Radial Position')
     ax.set_ylabel('Cumulative Percent Sum Intensity')
