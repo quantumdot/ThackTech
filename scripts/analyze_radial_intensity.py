@@ -114,13 +114,13 @@ def preprocess_worker(f, args):
         sys.stderr.write('Processing file {}....\n'.format(f))
         dest_base = os.path.join(args.dir, get_label_from_path(f))
         data = pd.read_csv(f, sep='\t', comment='#', skip_blank_lines=True)
-        data.dropna(how='any')
+        data = data.dropna()
         if not args.skipnorm:
             dest_base += '.norm'
             data = normalize_data(data, [data.columns[i] for i in range(1, len(data.columns))], args.rmoutliers)
             data.to_csv(dest_base+'.tsv', sep='\t', index=False)
-        print data
-        print data.describe()
+        #print data
+        #print data.describe()
         fig = plot_raw_data([data], rbins=100, ibins=100)
         save_figure(fig, dest_base, args.figformat)
             
