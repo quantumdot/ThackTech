@@ -79,19 +79,19 @@ def preprocess_files(args):
     #worker pool preprocess each data file in parallel
     #Worker performs normalization (if requested) and plotting of raw data
     #worker returns a tuple of filename and dataframe with binned data
-#     worker_pool = Pool(processes=args.processors)
+    worker_pool = Pool(processes=args.processors)
     results = []
-#     try:
-#         for f in args.files:
-#             worker_pool.apply_async(preprocess_worker, (f, args), callback=results.append)
-#         worker_pool.close()
-#         worker_pool.join()
-#     except KeyboardInterrupt:
-#         worker_pool.terminate()
-#         raise
-    
-    for f in args.files:
-        results.append(preprocess_worker(f, args))
+    try:
+        for f in args.files:
+            worker_pool.apply_async(preprocess_worker, (f, args), callback=results.append)
+        worker_pool.close()
+        worker_pool.join()
+    except KeyboardInterrupt:
+        worker_pool.terminate()
+        raise
+   
+    #for f in args.files:
+    #    results.append(preprocess_worker(f, args))
     
     #pool together all the results into a master data frame
     master_dfs = {} 
@@ -121,7 +121,7 @@ def preprocess_worker(f, args):
             data.to_csv(dest_base+'.tsv', sep='\t', index=False)
         #print data
         #print data.describe()
-        fig = plot_raw_data([data], rbins=100, ibins=100)
+        fig = plot_raw_data([data])
         save_figure(fig, dest_base, args.figformat)
             
         #save binned data
