@@ -119,8 +119,8 @@ def preprocess_worker(f, args):
             dest_base += '.norm'
             data = normalize_data(data, [data.columns[i] for i in range(1, len(data.columns))], args.rmoutliers)
             data.to_csv(dest_base+'.tsv', sep='\t', index=False)
-        #print data
-        #print data.describe()
+        print data
+        print data.describe()
         fig = plot_raw_data([data], rbins=100, ibins=100)
         save_figure(fig, dest_base, args.figformat)
             
