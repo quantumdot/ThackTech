@@ -734,9 +734,9 @@ def make_violin_plot(ax, sample, color='k'):
     #print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
     if gopts['args'].rotate:
-        positions = [sample.bed_id]
-    else:
         positions = [sample.sig_id]
+    else:
+        positions = [sample.bed_id]
 
     vparts = ax.violinplot(summary, positions=positions, points=len(summary), showmeans=False, showmedians=False, showextrema=False)
     
@@ -750,12 +750,10 @@ def make_violin_plot(ax, sample, color='k'):
     whiskers = adjacent_values(sorted(summary), quartile1, quartile3)
     whiskersMin, whiskersMax = whiskers[0], whiskers[1]
     
-    inds = [sample.sig_id]
-    ax.scatter(inds, medians, marker='o', color=color, s=0.2, zorder=3)
-    
-    ax.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5, alpha=0.5)
-    ax.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1, alpha=0.5)
-    #ax.vlines(inds, medians, medians, color='white', linestyle='-', lw=5)
+    ax.scatter(positions, medians, marker='o', color=color, s=0.2, zorder=3)
+    ax.vlines(positions, quartile1, quartile3, color='k', linestyle='-', lw=5, alpha=0.5)
+    ax.vlines(positions, whiskersMin, whiskersMax, color='k', linestyle='-', lw=1, alpha=0.5)
+    #ax.vlines(positions, medians, medians, color='white', linestyle='-', lw=5)
 
     ax.set_ylim(bottom=sample.raw_min, top=sample.raw_max)
     ax.set_xticklabels([])
