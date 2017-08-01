@@ -319,7 +319,7 @@ def main():
         if args.rotate:
             gopts['fig_rows'] += args.heatplotrows
         else:
-            gopts['fig_cols'] += 2
+            gopts['fig_cols'] += 1 #allocation for cbar was made by count_groups
         
         
     
