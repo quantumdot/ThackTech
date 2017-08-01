@@ -343,7 +343,7 @@ def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collect
         cmd = [
             'cleanBedGraph.py',
             '--informat', 'bed', 
-            '--quiet', 
+            #'--quiet', 
             '--output', bw_name,
             '--outformat', 'bw', 
             '--genome', regions.genome.genome,
