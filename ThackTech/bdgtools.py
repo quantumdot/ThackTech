@@ -209,7 +209,7 @@ def parse_bed(input_str, sort=True):
 			chrom = parts.group(1)
 			start = int(parts.group(2))
 			stop = int(parts.group(3))
-			value = parts.group(4)
+			value = float(parts.group(4))
 			results.append(BedGraphInterval(chrom, start, stop, value))
 	if sort:
 		results.sort()
