@@ -733,7 +733,12 @@ def make_violin_plot(ax, sample, color='k'):
     #print summary.shape
     #print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
-    vparts = ax.violinplot(summary, positions=[sample.sig_id], points=len(summary), showmeans=False, showmedians=False, showextrema=False)
+    if gopts['args'].rotate:
+        positions = [sample.bed_id]
+    else:
+        positions = [sample.sig_id]
+
+    vparts = ax.violinplot(summary, positions=positions, points=len(summary), showmeans=False, showmedians=False, showextrema=False)
     
     #change the filled area of the violin
     for pc in vparts['bodies']:
