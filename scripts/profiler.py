@@ -660,6 +660,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             col = sig_id + group + 1
     
     elif plot_type == 'leg':
+        #we are tryign to return the bottom-right-most average plot
         rowspan = gopts['args'].avgplotrows
         
         if 'violin' in gopts['args'].plot and 'avg' in gopts['args'].plot:
@@ -670,7 +671,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             row = gopts['fig_rows'] #should probably not be able to get here....
             
         if 'heat' in gopts['args'].plot:
-            col = gopts['fig_cols'] - 1
+            col = gopts['fig_cols'] - 2
         else:
             col = gopts['fig_cols'] - 1
             
