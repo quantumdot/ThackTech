@@ -202,7 +202,7 @@ def parse_bed(input_str, sort=True):
 	results = []
 	for line in input_str:
 		line = line.strip()
-		if line.startswith('#') or line.startswith('browser') or line.startswith('track'):
+		if line == "" or line.startswith('#') or line.startswith('browser') or line.startswith('track'):
 			continue # we ignore these types of lines....
 		else:
 			parts = re.match(r"^(\w+)\s+(\d+)\s+(\d+)\s+(?:.+?)\s+(-?[\.\de-]+)", line)
