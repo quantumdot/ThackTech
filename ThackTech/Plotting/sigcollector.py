@@ -348,8 +348,8 @@ def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collect
             '--outformat', 'bw', 
             '--genome', regions.genome.genome,
             '--clipsize',
-            '--repairoverlaps', '--method', 'mean', 
-            '--missingregions', 'zero', 
+            '--repairoverlaps', 'mean', 
+            '--missingregions', '0', 
             regions.bed
         ]
         p = subprocess.Popen(cmd)
