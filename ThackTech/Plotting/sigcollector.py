@@ -341,11 +341,13 @@ def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collect
     
     if not os.path.exists(bw_name):
         cmd = [
-            'bedToBedGraph.py', 
+            'cleanBedGraph.py',
+            '--informat', 'bed', 
             '--quiet', 
-            '--output', bw_name, 
-            '--genome', regions.genome.genome, 
-            '--format', 'bw',
+            '--output', bw_name,
+            '--outformat', 'bw', 
+            '--genome', regions.genome.genome,
+            '--clipsize',
             '--repairoverlaps', '--method', 'mean', 
             '--missingregions', 'zero', 
             regions.bed
