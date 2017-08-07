@@ -129,7 +129,7 @@ def writeChart(json_data, filename):
     
     for ss in css:
         if ss.startswith('http'):
-            html += '<link href="'+css+'" rel="stylesheet" media="screen" />'
+            html += '<link href="'+ss+'" rel="stylesheet" media="screen" />'
         else:
             html += '<style type="text/css">'+ss+'</style>'
             
