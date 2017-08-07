@@ -74,7 +74,7 @@ def main():
             for c in compliment:
                 d -= beds[c]
             data[l] = d.count()
-            chartdata['data'][cl] = data[l]
+            chartdata['values'][cl] = data[l]
             
             #report Progress
             progresscounter += 1
