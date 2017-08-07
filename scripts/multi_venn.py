@@ -52,7 +52,7 @@ def main():
     #compute the matrix
     letters = ['A', 'B', 'C', 'D', 'E', 'F']
     data = {}
-    chartdata = { 'name': {}, 'data': {} }
+    chartdata = { 'name': {}, 'values': {} }
     for i in range(1, len(beds)+1):
         combos = itertools.combinations(range(len(beds)), i)
         for tup in combos:
