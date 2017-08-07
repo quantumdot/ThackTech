@@ -102,9 +102,9 @@ def main():
         writer.writerow([key, value])
 
 
-def getComplement(list, selected):
+def getComplement(items, selected):
     complement = []
-    for item in list:
+    for item in items:
         if item not in selected:
             complement.append(item)
     return complement
@@ -112,12 +112,33 @@ def getComplement(list, selected):
     
 
 def writeChart(json_data, filename):
-    copyright = '<p>Venn Diagram Rendering: Copyright &copy; 2014, INRA | Designed by <a href="http://bioinfo.genotoul.fr" target="_blank">GenoToul Bioinfo</a> and<a href="http://sigenae.org" target="_blank">Sigenae</a> teams.</p>'
-    copyright += '<p>Integration: Josh Thackray, 2015. <a href="mailto:thackray@rutgers.edu">thackray@rutgers.edu</a></p>'
-    html =  '<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="utf-8"><title>'+filename+' .::. jvenn</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css"><style type="text/css"> body { padding-top: 60px; padding-bottom: 40px; }</style><link href="http://bioinfo.genotoul.fr/jvenn/css/prettify.css" rel="stylesheet" media="screen"><link href="http://bioinfo.genotoul.fr/jvenn/css/bootstrap-responsive.css" rel="stylesheet" media="screen"><script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/js/bootstrap.min.js"></script><script type="text/javascript" src="http://jvenn.toulouse.inra.fr/app/js/jvenn.min.js"></script>'
+    js_src = [
+        'http://jvenn.toulouse.inra.fr/app/js/jquery.min.js',
+        'http://jvenn.toulouse.inra.fr/app/js/bootstrap-colorpicker.min.js',
+        'http://jvenn.toulouse.inra.fr/app/js/jvenn.min.js'
+    ]
+    css = [
+        'http://jvenn.toulouse.inra.fr/app/css/bootstrap.css',
+        'body { padding-top: 60px; padding-bottom: 40px; }',
+        'http://jvenn.toulouse.inra.fr/app/css/prettify.css',
+        'http://jvenn.toulouse.inra.fr/app/css/bootstrap-responsive.css'
+    ]
+    cpyright = '<p>Venn Diagram Rendering: Copyright &copy; 2014, INRA | Designed by <a href="http://bioinfo.genotoul.fr" target="_blank">GenoToul Bioinfo</a> and<a href="http://sigenae.org" target="_blank">Sigenae</a> teams.</p>'
+    cpyright += '<p>Integration: Josh Thackray, 2015. <a href="mailto:thackray@rutgers.edu">thackray@rutgers.edu</a></p>'
+    html =  '<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="utf-8"><title>'+filename+' .::. jvenn</title>'
+    
+    for ss in css:
+        if ss.startswith('http'):
+            html += '<link href="'+css+'" rel="stylesheet" media="screen" />'
+        else:
+            html += '<style type="text/css">'+ss+'</style>'
+            
+    for js in js_src:
+        html += '<script src="'+js+'"></script>'
+
     html += '<script language="Javascript">$(document).ready(function () { $("#jvenn-container").jvenn('+json.dumps(json_data)+'); });</script>'
     html += '</head><body><div class="container"><div class="row-fluid"><div class="span12"><div class="row-fluid"><div class="span7"><div class="row-fluid"><div id="jvenn-container"></div></div></div></div></div></div><hr><footer style="text-align: center; font-size:8px;">'
-    html += copyright+'</footer></div></body></html>'
+    html += cpyright+'</footer></div></body></html>'
 
     json_data = open(filename+'.html', "w")
     json_data.write(html)
