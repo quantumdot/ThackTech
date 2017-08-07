@@ -52,7 +52,7 @@ def main():
     #compute the matrix
     letters = ['A', 'B', 'C', 'D', 'E', 'F']
     data = {}
-    chartdata = { 'name': {}, 'values': {} }
+    chartdata = { 'name': {}, 'data': {} }
     for i in range(1, len(beds)+1):
         combos = itertools.combinations(range(len(beds)), i)
         for tup in combos:
@@ -74,7 +74,7 @@ def main():
             for c in compliment:
                 d -= beds[c]
             data[l] = d.count()
-            chartdata['values'][cl] = data[l]
+            chartdata['data'][cl] = data[l]
             
             #report Progress
             progresscounter += 1
