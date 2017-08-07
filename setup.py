@@ -33,6 +33,7 @@ setup(  name='ThackTech',
             "scripts/epic_peakcall_pipeline.py",
             "scripts/subsample_fastq.py",
             "scripts/keggTermToGeneBed.py",
-            "scripts/analyze_radial_intensity.py"
+            "scripts/analyze_radial_intensity.py",
+            "scripts/multi_venn.py"
         ],
         zip_safe=False)
