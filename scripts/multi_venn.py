@@ -115,6 +115,7 @@ def writeChart(json_data, filename):
     js_src = [
         'http://jvenn.toulouse.inra.fr/app/js/jquery.min.js',
         'http://jvenn.toulouse.inra.fr/app/js/bootstrap-colorpicker.min.js',
+        'http://jvenn.toulouse.inra.fr/app/js/canvas2svg.js',
         'http://jvenn.toulouse.inra.fr/app/js/jvenn.min.js'
     ]
     css = [
