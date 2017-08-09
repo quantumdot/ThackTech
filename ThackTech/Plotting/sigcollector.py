@@ -270,7 +270,25 @@ class CollectorOptions:
 
 
 
-def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_base="", collectionmethod="get_as_array", cpus=1):
+def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_base="", collectionmethod="get_as_array", norm_method='log2', norm_pseudocount=1.0, cpus=1):
+    """ Gets a numpy nd-array representing the signal in sig_file at regions
+    
+        Parameters:
+            regions: an IntervalProvider object representing the regions to profile
+            label: (string) Name for this signal set
+            sig_file: (string) path to a file accepted by metaseq.genomic_signal
+            input_file: (string)[optional] path to a input signal for normalization
+            cache_dir: (string) to enable cacheing of results, specify a directory for cache files to be placed
+            cache_base: (string) basename for cache files, label and collector options are automatically appended
+            collectionmethod: (string) signal collection method to use. see metaseq.genomic_signal.array
+            cpus: (int) number of parallel processes to use for signal collection
+            norm_method: Normalization method to use when input is included. default is log2, choices are {'ratio', 'log2', 'reciprocal_ratio', 'subtract', 'add', 'mean'}
+            norm_pseudocount: (float) small number to add to both operands to avoid division by zero errors
+            
+        Returns:
+            numpy nd-array of signal at regions
+    
+    """
     if cache_dir is not None:
         cache_dir = os.path.abspath(cache_dir)
         filetools.ensure_dir(cache_dir)
@@ -313,9 +331,23 @@ def get_signal(regions, label, sig_file, input_file=None, cache_dir=None, cache_
         if input_file is not None:
             input_array = arrays[label_input]
             
-    if input_file is not None:    
+    if input_file is not None and norm_method is not None:    
         sys.stderr.write("-> Normalizing signal to input....\n")
-        sig_array = sig_array - input_array    
+        if norm_method in ['ratio', 'log2', 'reciprocal_ratio']:
+            sig_array = (sig_array + norm_pseudocount) / (input_array + norm_pseudocount)
+            if norm_method == 'log2':
+                sig_array = np.log2(sig_array)
+            elif norm_method == 'reciprocal_ratio':
+                # the reciprocal ratio of a/b
+                # is a/b if a/b > 1 else -1* b/a
+                sig_array = np.divide(-1.0, sig_array, where=(sig_array < 1))
+        else:
+            if norm_method == 'subtract':
+                sig_array = sig_array - input_array
+            elif norm_method == 'add':
+                sig_array = sig_array + input_array
+            elif norm_method == 'mean':
+                sig_array = (sig_array + input_array) / 2.0      
     
     return sig_array
 #end get_signal()
@@ -331,7 +363,7 @@ def get_bed_score_signal(regions):
 
 
 
-def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collectionmethod="get_as_array", cpus=1):
+def get_bed_score_signal_complex(regions, cache_dir=None, cache_base="", collectionmethod="get_as_array", cpus=1, **kwargs):
     if cache_dir is not None:
         cache_dir = os.path.abspath(cache_dir)
         filetools.ensure_dir(cache_dir)

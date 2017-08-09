@@ -91,6 +91,7 @@ def main():
     input_group.add_argument('-i', '--inp', action='append', default=[], help='Input files to be used for normalization.')
     input_group.add_argument('--ignoreinput', action='store_true', help='Do not use input data.')
     
+    
     labeling_group = parser.add_argument_group('Labeling Options')
     labeling_group.add_argument('-sl', '--slabel', action='append', default=[], help='Signal labels for each plot. Specify in the same order as the signal files. If not supplied, file basename will be used.')
     labeling_group.add_argument('-il', '--ilabel', action='append', default=[], help='Interval labels for each plot. Specify in the same order as the interval files. If not supplied, file basename will be used.')
@@ -119,6 +120,7 @@ def main():
     scale_group.add_argument('--saturatemin', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemin> percent bottom values.')
     scale_group.add_argument('--saturatemax', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemax> percent top values.')
     scale_group.add_argument('--coefficients', action='store', nargs='*', type=float, help='Coefficients to multiply signals by, one value for each signal submitted.')
+    scale_group.add_argument('--normalizationmethod', action='store', default='log2', choices=['ratio', 'log2', 'reciprocal_ratio', 'subtract', 'add', 'mean'], help='Method to use for normalizing signal by input.')
     
     clustsort_group = parser.add_argument_group('Clustering/Sorting Options')
     clustsort_group.add_argument('--sort', action='store', default=None, type=int, help='sample index (0-based) to use for sorting. If not specified than the order of the bed file is used. Mutually exclusive with --kmeans.')
@@ -246,6 +248,14 @@ def main():
         
     
     samples = []
+    collection_args = {
+        'norm_method': args.normalizationmethod,
+        'norm_pseudocount': 1.0,
+        'cache_dir': (args.cachedir if args.cache else None), 
+        'cache_base': args.name, 
+        'collectionmethod': args.collectionmethod, 
+        'cpus': args.cpus 
+    }
     for s in xrange(len(args.sig)):
         for b in xrange(len(args.bed)):
             sys.stderr.write("Processing %s vs %s....\n" % (args.bed[b], args.sig[s]))
@@ -260,7 +270,7 @@ def main():
             if input_sig is not None and input_sig.lower() == 'none':
                 input_sig = None
             
-            signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input_sig, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
+            signal = sigcollector.get_signal(bedtool, s_label+b_label, args.sig[s], input_sig, **collection_args)
             
             ps = ProfileSample(len(samples), s, b, signal, s_label, b_label)
             ps.bedtool = bedtool
@@ -275,7 +285,7 @@ def main():
         for b in xrange(len(args.bed)):
             bedtool = sigcollector.IntervalProvider(args.bed[b], collection_opts, args.genome, gopts['chromsets'].use)
             if 'truebedscores' in args.plot:
-                signal = sigcollector.get_bed_score_signal_complex(bedtool, cache_dir=(args.cachedir if args.cache else None), cache_base=args.name, collectionmethod=args.collectionmethod, cpus=args.cpus)
+                signal = sigcollector.get_bed_score_signal_complex(bedtool, **collection_args)
             else:
                 signal = sigcollector.get_bed_score_signal(bedtool)
             #print signal
