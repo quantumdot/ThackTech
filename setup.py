@@ -34,6 +34,7 @@ setup(  name='ThackTech',
             "scripts/subsample_fastq.py",
             "scripts/keggTermToGeneBed.py",
             "scripts/analyze_radial_intensity.py",
-            "scripts/multi_venn.py"
+            "scripts/multi_venn.py",
+            "scripts/designCNVprobes.py"
         ],
         zip_safe=False)
