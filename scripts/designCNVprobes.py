@@ -94,7 +94,8 @@ def main(args):
         
         for j in range(len(region_results)):
             print " -> Validating result %d by in-silico PCR...." % (j+1,)
-            run_in_silico_pcr(region_results[j])
+			run_in_silico_pcr(region_results[j], genome_build)
+			run_in_silico_pcr(region_results[j], 'hg38')
         
         #output the potential primers 
         make_region_candidate_bed(sub_regions, region_results, "%s_%s:%d-%d.primer_results.unfiltered.bed" % (region.name, region.chrom, region.start, region.stop))
@@ -122,17 +123,21 @@ def filter_candidates(candidates):
     for pair in candidates:
         reasons = []
         
+		for assembly in pair.ispcr:
         #Test that in-silico PCR found the intended amplicon
-        if not pair.ispcr['found_proper_amplicon']:
-            reasons.append("       -> in-silico PCR could not find the intended amplicon.")
+			if not pair.ispcr[assembly]['found_proper_amplicon']:
+				reasons.append("       -> in-silico PCR could not find the intended amplicon in assembly %s." % (assembly,))
             #continue
         
         #Test that the off-target amplicon count is reasonable
         off_target_max = 0
-        if pair.ispcr['non_target_count'] > off_target_max:
-            reasons.append("       -> in-silico PCR found more than %d off-target amplicons (%d)." % (off_target_max, pair.ispcr['non_target_count']))
+			if pair.ispcr[assembly]['non_target_count'] > off_target_max:
+				reasons.append("       -> in-silico PCR found %d off-target amplicons in assembly %s, more than max of %d." % (pair.ispcr[assembly]['non_target_count'], assembly, off_target_max))
             #continue
         
+			if len(pair.ispcr[assembly]['messages']) > 0:
+				reasons.extend(pair.ispcr[assembly]['messages'])
+		
         #check to make sure that amplicon covers the intended region
         if not pybedtools.BedTool(pair.include_features['merged_intervals']).any_hits(pair.get_interval()):
             reasons.append("       -> Amplicon does not appear to overlap any exon features.")
@@ -223,25 +228,27 @@ def make_region_candidate_bed(regions, results, filename, include_headers=True):
 
 def dump_results_to_file(results, filename):
     
-    with open(filename, 'w+') as f:
-        f.write(("%s\t%s\t%s\t"
+	with open(filename, 'w+') as file:
+		file.write(("%s\t%s\t%s\t"
                  + "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"
-                 + "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"
-                 + "%s\t%s\t%s\t%s\t")
+				 + "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t")
                 % ("Pair_Name", "Product_Size", "Overall_Penalty",
                    "Forward_Name", "Forward_Sequence", "Forward_Start", "Forward_Stop", "Forward_Length", "Forward_Penalty", "Forward_Tm", "Forward_GC_Percent",
-                   "Reverse_Name", "Reverse_Sequence", "Reverse_Start", "Reverse_Stop", "Reverse_Length", "Reverse_Penalty", "Reverse_Tm", "Reverse_GC_Percent",
-                   "isPCR_amplicon_count", "isPCR_found_target", "isPCR_off_target_count", "Filtering_Results"
+				   "Reverse_Name", "Reverse_Sequence", "Reverse_Start", "Reverse_Stop", "Reverse_Length", "Reverse_Penalty", "Reverse_Tm", "Reverse_GC_Percent"
                    )
                 )
-        f.write("\n")
+		for assembly in results[0].ispcr:
+			file.write("%s\t%s\t%s\t" % ("isPCR["+assembly+"]_amplicon_count", "isPCR["+assembly+"]_found_target", "isPCR["+assembly+"]_off_target_count"))
+		file.write("%s\t" % ("Filtering_Results",))
+		file.write("\n")
         for pair in results:
-            f.write("%s\t%d\t%f\t" % (pair.name, pair.size, pair.penalty))
-            f.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.forward.name, pair.forward.sequence.upper(), pair.forward.start, pair.forward.stop, pair.forward.length, pair.forward.penalty, pair.forward.tm, pair.forward.gc))
-            f.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.reverse.name, pair.reverse.sequence.upper(), pair.reverse.start, pair.reverse.stop, pair.reverse.length, pair.reverse.penalty, pair.reverse.tm, pair.reverse.gc))
-            f.write('%d\t%s\t%d\t' % (pair.ispcr['count'], pair.ispcr['found_proper_amplicon'], pair.ispcr['non_target_count']))
-            f.write('%s\t' % ("; ".join(pair.filter_results),))
-            f.write('\n')
+			file.write("%s\t%d\t%f\t" % (pair.name, pair.size, pair.penalty))
+			file.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.forward.name, pair.forward.sequence.upper(), pair.forward.start, pair.forward.stop, pair.forward.length, pair.forward.penalty, pair.forward.tm, pair.forward.gc))
+			file.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.reverse.name, pair.reverse.sequence.upper(), pair.reverse.start, pair.reverse.stop, pair.reverse.length, pair.reverse.penalty, pair.reverse.tm, pair.reverse.gc))
+			for assembly in pair.ispcr:
+				file.write('%d\t%s\t%d\t' % (pair.ispcr[assembly]['count'], pair.ispcr[assembly]['found_proper_amplicon'], pair.ispcr[assembly]['non_target_count']))
+			file.write('%s\t' % ("; ".join(pair.filter_results),))
+			file.write('\n')
 #end dump_results_to_file()
             
 def fetch_sequence(region):
@@ -479,7 +486,8 @@ def parse_primer3_output(region, data):
     if num_results > 0:
         for i in range(num_results):
             
-            forward = Primer("LEFT", 
+			forward = Primer(genome_build,
+							 "LEFT", 
                              "%s_%d_%s" % (data_dict['SEQUENCE_ID'], i, "F"),
                              data_dict['PRIMER_LEFT_%d_SEQUENCE' % (i,)],
                              region.chrom,
@@ -491,7 +499,8 @@ def parse_primer3_output(region, data):
                              float(data_dict['PRIMER_LEFT_%d_GC_PERCENT' % (i,)]),
                              dict((key.replace('PRIMER_LEFT_%d' % (i,), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_LEFT_%d' % (i,)))
                             )
-            reverse = Primer("RIGHT", 
+			reverse = Primer(genome_build,
+							 "RIGHT", 
                              "%s_%d_%s" % (data_dict['SEQUENCE_ID'], i, "R"),
                              data_dict['PRIMER_RIGHT_%d_SEQUENCE' % (i,)],
                              region.chrom,
@@ -503,7 +512,8 @@ def parse_primer3_output(region, data):
                              float(data_dict['PRIMER_RIGHT_%d_GC_PERCENT' % (i,)]),
                              dict((key.replace('PRIMER_RIGHT_%d' % (i,), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_RIGHT_%d' % (i,)))
                             )
-            pair = PrimerResult("%s_%d" % (data_dict['SEQUENCE_ID'], i), 
+			pair = PrimerResult(genome_build,
+								"%s_%d" % (data_dict['SEQUENCE_ID'], i), 
                                 forward, 
                                 reverse, 
                                 int(data_dict['PRIMER_PAIR_%d_PRODUCT_SIZE' % (i,)]),
@@ -529,8 +539,16 @@ def read_gfServer_log(infile):
     return 0
 #end read_gfServer_log()
     
-def start_gfserver():
+def genome_assembly_to_isPCR_port(assembly):
+	if assembly in ['hg19', 'GRCh37']:
+		return (17779, '/mnt/ref/reference/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.2bit')
+	elif assembly in ['hg38', 'GRCh38']:
+		return (17778, '/mnt/ref/reference/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.2bit')
+#end genome_assembly_to_isPCR_port()
+	
+def start_gfserver(assembly):
     sys.stderr.write('Starting gfServer\n')
+	port, reference = genome_assembly_to_isPCR_port(assembly)
     if subprocess.call('{gfserver} status {gfhost} {gfport}'.format(gfserver=gargs.gfserve, gfhost=gargs.gfhost, gfport=gargs.gfport), shell=True) == 0:
         sys.stderr.write('gfServer appears to be running. Skipping gfServer startup...\n\n\n')
         return
@@ -539,7 +557,7 @@ def start_gfserver():
     log_dir = os.path.join(cwd, 'gfserv')
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    log_file = os.path.join(log_dir, 'gfserver.temp.log')
+	log_file = os.path.join(log_dir, 'gfserver.%s.temp.log' % (assembly,))
     if os.path.exists(log_file):
         os.remove(log_file)   
     os.chdir(os.path.dirname(gargs.genome2bit))
@@ -562,8 +580,9 @@ def start_gfserver():
         time.sleep(5)
     sys.stderr.write('gfServer ready\n\n\n')
 #end start_gfServer()
-    
-def stop_gfserver():
+
+def stop_gfserver(assembly):
+	port, reference = genome_assembly_to_isPCR_port(assembly)
     cmd = [
         gargs.gfserve,
         'stop', 
@@ -575,7 +594,8 @@ def stop_gfserver():
 #end stop_gfserver()
 
 
-def run_in_silico_pcr(primerpair):
+def run_in_silico_pcr(primerpair, assembly):
+	port, reference = genome_assembly_to_isPCR_port(assembly)
     cmd = [
         gargs.gfpcr, 
         gargs.gfhost,
@@ -597,19 +617,30 @@ def run_in_silico_pcr(primerpair):
     #print stderrdata
     
     hits =  pybedtools.BedTool(stdoutdata, from_string=True)
-    hits.saveas("ispcr/%s.ispcr.bed" % (primerpair.name,))
+	hits.saveas("ispcr/%s.ispcr.%s.bed" % (primerpair.name, assembly))
     
     count = len(hits)
-    found_proper_amplicon = hits.any_hits(primerpair.get_interval())
-    non_target_count = len(hits) - int(hits.any_hits(primerpair.get_interval()))
-    
-    print "   -> Found %d total amplicons, %sincluding targeted site, and %d off-target amplicons" % (count, ("" if found_proper_amplicon else "NOT "), non_target_count)
-    
-    primerpair.ispcr = {
+	pair_interval = primerpair.get_interval(assembly)
+	messages = []
+	if pair_interval is None:
+		print "Did not get an interval, so cannot assess specificity of isPCR results (will assume all off-target), but found %d total amplicons..." % (count,)
+		found_proper_amplicon = False
+		non_target_count = count
+		messages = 'Liftover of interval from assembly %s to assembly %s failed, so cannot assess specificity of isPCR results (will assume all off-target)' % (primerpair.assembly, assembly)
+	else:
+		found_proper_amplicon = hits.any_hits(pair_interval)
+		non_target_count = len(hits) - int(hits.any_hits(pair_interval))
+		print "   -> Found %d total amplicons, %sincluding targeted site, and %d off-target amplicons in assembly %s" % (count, ("" if found_proper_amplicon else "NOT "), non_target_count, assembly)
+		
+	if not hasattr(primerpair, 'ispcr'):
+		primerpair.ispcr = {}
+	primerpair.ispcr[assembly] = {
+		'assembly': assembly,
         'count': count,
         'found_proper_amplicon': found_proper_amplicon,
         'non_target_count': non_target_count,
-        'hits': hits
+		'hits': hits,
+		'messages': messages
     }
 
 #end run_in_silico_pcr()

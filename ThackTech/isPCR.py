@@ -1,0 +1,122 @@
+import os
+import sys
+import time
+import subprocess
+import pybedtools
+
+
+
+class gfServer(object):
+    
+    def __init__(self, name, executible, host, port, genome2bit):
+        self.name = name
+        self.exe = executible
+        self.host = host
+        self.port = port
+        self.genome = genome2bit
+        
+    def start(self):
+        """Starts the gfServer
+        
+        """
+        sys.stderr.write('Starting gfServer\n')
+        if subprocess.call('{gfserver} status {gfhost} {gfport}'.format(gfserver=self.exe, gfhost=self.host, gfport=self.port), shell=True) == 0:
+            sys.stderr.write('gfServer appears to be running. Skipping gfServer startup...\n\n\n')
+            return
+        
+        cwd = os.getcwd()
+        log_dir = os.path.join(cwd, 'gfserv')
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        log_file = os.path.join(log_dir, 'gfserver.{}.temp.log'.format(self.name))
+        if os.path.exists(log_file):
+            os.remove(log_file)   
+        os.chdir(os.path.dirname(self.genome))
+        try:
+            time.sleep(15)
+            cmd = '{gfserver} -canStop -tileSize=11 -stepSize=5 -log="'+log_file+'" start {gfhost} {gfport} {genome} &> /dev/null &'.format(gfserver=self.exe, gfhost=self.host, gfport=self.port, genome=os.path.basename(self.genome))
+            #print cmd
+            subprocess.check_call(cmd, shell=True)
+        except subprocess.CalledProcessError as e:
+            sys.stderr.write("Execution failed for gfServer:\n"+e)
+            sys.exit(1)
+        os.chdir(cwd)
+        time.sleep(5) # sleep 5 sec
+        gfready = 0
+        while not gfready:
+            gfready = self.read_gfServer_log(log_file)
+            if gfready == -1:
+                sys.stderr.write('gfServer start error! Check '+log_file+' file, exit.')
+                sys.exit(1)
+            time.sleep(5)
+        sys.stderr.write('gfServer ready\n\n\n')
+        
+        
+    def stop(self):
+        """Stops the gfServer
+        
+        """
+        cmd = [
+            self.exe,
+            'stop', 
+            self.host,
+            str(self.port)
+        ]
+        p = subprocess.Popen(cmd)
+        p.communicate()
+        
+    
+    def read_gfServer_log(self, infile):
+        with open(infile, 'r') as f:
+            for i in f:
+                if 'Server ready for queries!' in i:
+                    f.close()
+                    return 1
+                elif 'gfServer aborted' in i or ('error' in i and not 'getsockopt error' in i):
+                    f.close()
+                    return -1
+        return 0
+    
+    def isPCR(self, forward, reverse, out='bed', maxsize=4000, minPerfect=15, minGood=15):
+        """Performs a in-silico PCR search for amplicons resulting from primers `forward` and `reverse`
+        
+        Parameters:
+            forward: (string) Forward primer to use
+            reverse: (string) Reverse primer to use
+            out: (string) Output format for results
+            maxsize: (int) Maximum amplicon size allowed
+            minPerfect: (int) see isPCR documentation
+            minGood: (int) see isPCR documentation
+            
+        Returns:
+            if `out` == 'bed' then data is parsed into a pybedtools.BedTool instance
+            otherwise, the raw output data is returned
+        """
+        cmd = [
+            self.exe, 
+            self.host,
+            str(self.port),
+            os.path.dirname(self.genome), 
+            forward,
+            reverse,
+            'stdout',
+            '-out=bed',
+            '-maxSize={}'.format(maxsize),
+            '-minPerfect={}'.format(minPerfect),
+            '-minGood={}'.format(minGood),
+            #'-name=%s' % (primerpair.name,) #using this option seems to make gfPcr throw a (harmless?) error freeing memory, we dont really need the name anyway so do not provide.
+        ]
+        
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdoutdata, stderrdata) = p.communicate()
+        
+        if out == 'bed':
+            hits =  pybedtools.BedTool(stdoutdata, from_string=True)
+            return hits
+        else:
+            return stdoutdata
+        
+        
+        
+#end read_gfServer_log()
+#end stop_gfserver()
