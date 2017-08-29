@@ -10,6 +10,7 @@ import pybedtools.featurefuncs
 from pybedtools import Interval
 import xml.etree.ElementTree as ET
 from ThackTech.isPCR import gfServer
+from ThackTech.filetools import ensure_dir
 
 
 
@@ -67,6 +68,7 @@ def get_arguments():
 
 def main(args):
     gfservers = start_gfservers()
+    ensure_dir(args.cachedir)
     regions = pybedtools.BedTool(args.bed)
     all_results = []
     filtered_all_results = []
@@ -372,6 +374,7 @@ def fetch_snps(region):
 
 
 def get_primers_for_region(region, num_primers=5, override_settings={}):
+    ensure_dir('primer3')
     print "   -> Looking for primers in region %s:%d-%d" % (region.chrom, region.start, region.stop)
     settings = get_default_primer3_settings()
     settings['SEQUENCE_ID'] = "%s:%s:%d-%d" % (region.name, region.chrom, region.start, region.stop)
@@ -548,6 +551,7 @@ def start_gfservers():
 def run_in_silico_pcr(primerpair, server):
     
     hits = server.isPCR(primerpair.forward.sequence, primerpair.reverse.sequence, out='bed', maxsize=4000, minPerfect=15, minGood=15)
+    ensure_dir('ispcr')
     hits.saveas("ispcr/%s.ispcr.%s.bed" % (primerpair.name, server.name))
     
     count = len(hits)
