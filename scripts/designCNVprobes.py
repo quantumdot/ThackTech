@@ -76,41 +76,41 @@ def main(args):
     region_count = len(regions)
     for i in range(region_count):
         region = regions[i]
-        print "Working on region %d/%d (%s; %s:%d-%d)....." % (i+1, region_count, region.name, region.chrom, region.start, region.stop)
+        print "Working on region {}/{} ({}; {}:{}-{}).....".format(i+1, region_count, region.name, region.chrom, region.start, region.stop)
         approx_subregion_size = region.length / args.subregions
         region_results = []
         if approx_subregion_size > args.minsubregionsize:
-            print " -> splitting region into %d subregions of size %d...." % (args.subregions, approx_subregion_size)
-            sub_regions = ["%s\t%d\t%d\t%s\n" % (region.chrom, 
+            print " -> splitting region into {} subregions of size {}....".format(args.subregions, approx_subregion_size)
+            sub_regions = ["{}\t{}\t{}\t{}\n".format(region.chrom, 
                                                  region.start+(k*approx_subregion_size), 
                                                  region.start+((k+1)*approx_subregion_size), 
-                                                 "%s.sr%d" % (region.name, k)
+                                                 "{}.sr{}".format(region.name, k)
                                                 ) for k in range(args.subregions)]
             sub_regions = pybedtools.BedTool("".join(sub_regions), from_string=True)
             
         else:
-            print " -> region is too small (%d) for subregions. Processing entire region..." % (region.length,)
+            print " -> region is too small ({}) for subregions. Processing entire region...".format(region.length)
             sub_regions = pybedtools.BedTool([region])
         
         for j in range(len(sub_regions)):
             subregion = sub_regions[j]
             region_results.extend(get_primers_for_region(subregion, args.probespersubregion))
         
-        print " => Found %d total primer pairs for the entire region! <=" % (len(region_results),)
+        print " => Found {} total primer pairs for the entire region! <=".format(len(region_results))
         
         for j in range(len(region_results)):
-            print " -> Validating result %d by in-silico PCR...." % (j+1,)
+            print " -> Validating result {} by in-silico PCR....".format(j+1)
             for server in gfservers:
                 run_in_silico_pcr(region_results[j], server)
                 run_in_silico_pcr(region_results[j], server)
         
         #output the potential primers 
-        make_region_candidate_bed(sub_regions, region_results, "%s_%s:%d-%d.primer_results.unfiltered.bed" % (region.name, region.chrom, region.start, region.stop))
+        make_region_candidate_bed(sub_regions, region_results, "{}_{}:{}-{}.primer_results.unfiltered.bed".format(region.name, region.chrom, region.start, region.stop))
         all_results.extend(region_results)
         
         #filter and output a more stringent set of primers
         filtered_region_results, failed_region_results = filter_candidates(region_results)
-        make_region_candidate_bed(sub_regions, filtered_region_results, "%s_%s:%d-%d.primer_results.filtered.bed" % (region.name, region.chrom, region.start, region.stop))
+        make_region_candidate_bed(sub_regions, filtered_region_results, "{}_{}:{}-{}.primer_results.filtered.bed".format(region.name, region.chrom, region.start, region.stop))
         filtered_all_results.extend(filtered_region_results)
         failed_all_results.extend(failed_region_results)
         
@@ -133,13 +133,13 @@ def filter_candidates(candidates):
         for assembly in pair.ispcr:
             #Test that in-silico PCR found the intended amplicon
             if not pair.ispcr[assembly]['found_proper_amplicon']:
-                reasons.append("       -> in-silico PCR could not find the intended amplicon in assembly %s." % (assembly,))
+                reasons.append("       -> in-silico PCR could not find the intended amplicon in assembly {}.".format(assembly))
                 #continue
                 
             #Test that the off-target amplicon count is reasonable
             off_target_max = 0
             if pair.ispcr[assembly]['non_target_count'] > off_target_max:
-                reasons.append("       -> in-silico PCR found %d off-target amplicons in assembly %s, more than max of %d." % (pair.ispcr[assembly]['non_target_count'], assembly, off_target_max))
+                reasons.append("       -> in-silico PCR found {} off-target amplicons in assembly {}, more than max of {}.".format(pair.ispcr[assembly]['non_target_count'], assembly, off_target_max))
                 #continue
         
             if len(pair.ispcr[assembly]['messages']) > 0:
@@ -162,11 +162,11 @@ def filter_candidates(candidates):
         min_num_gc_in_3prime_end = 2
         forward_3p_gc_count = pair.forward.sequence.count('C', -5) + pair.forward.sequence.count('G', -5)
         if forward_3p_gc_count < min_num_gc_in_3prime_end:
-            reasons.append("       -> Forward primer contains too few (%d) G/C bases in the 3' end." % (forward_3p_gc_count,))
+            reasons.append("       -> Forward primer contains too few ({}) G/C bases in the 3' end.".format(forward_3p_gc_count))
             
         reverse_3p_gc_count = pair.reverse.sequence.count('C', -5) + pair.reverse.sequence.count('G', -5)
         if reverse_3p_gc_count < min_num_gc_in_3prime_end:
-            reasons.append("       -> Reverse primer contains too few (%d) G/C bases in the 3' end." % (reverse_3p_gc_count,))
+            reasons.append("       -> Reverse primer contains too few ({}) G/C bases in the 3' end.".format(reverse_3p_gc_count))
         
             
             
@@ -177,10 +177,10 @@ def filter_candidates(candidates):
         forward_snp_hits = region_snps.all_hits(pair.forward.get_interval())
         reverse_snp_hits = region_snps.all_hits(pair.reverse.get_interval())
         if len(forward_snp_hits) > max_snps_in_primer:
-            reasons.append("       -> Forward primer contains too many (%d) SNPs (%s)." % (len(forward_snp_hits), ";".join([hit.name for hit in forward_snp_hits])))
+            reasons.append("       -> Forward primer contains too many ({}) SNPs ({}).".format(len(forward_snp_hits), ";".join([hit.name for hit in forward_snp_hits])))
             
         if len(reverse_snp_hits) > max_snps_in_primer:
-            reasons.append("       -> Reverse primer contains too many (%d) SNPs (%s)." % (len(reverse_snp_hits), ";".join([hit.name for hit in reverse_snp_hits])))
+            reasons.append("       -> Reverse primer contains too many ({}) SNPs ({}).".format(len(reverse_snp_hits), ";".join([hit.name for hit in reverse_snp_hits])))
         
         
         #filter on any SNP presence in the 3' end of the primer
@@ -189,14 +189,14 @@ def filter_candidates(candidates):
         forward_3p_snp_hits = region_snps.all_hits(pybedtools.featurefuncs.three_prime(pair.forward.get_interval(), upstream=num_3p_bases_for_snp_check, downstream=0))
         reverse_3p_snp_hits = region_snps.all_hits(pybedtools.featurefuncs.three_prime(pair.reverse.get_interval(), upstream=num_3p_bases_for_snp_check, downstream=0))
         if len(forward_3p_snp_hits) > max_snps_in_3p_primer:
-            reasons.append("       -> Forward primer contains %d SNPs in 3' region (%s)." % (len(forward_3p_snp_hits), ";".join([hit.name for hit in forward_3p_snp_hits])))
+            reasons.append("       -> Forward primer contains {} SNPs in 3' region ({}).".format(len(forward_3p_snp_hits), ";".join([hit.name for hit in forward_3p_snp_hits])))
             
         if len(reverse_3p_snp_hits) > max_snps_in_3p_primer:
-            reasons.append("       -> Reverse primer contains %d SNPs in 3' region (%s)." % (len(reverse_3p_snp_hits), ";".join([hit.name for hit in reverse_3p_snp_hits])))
+            reasons.append("       -> Reverse primer contains {} SNPs in 3' region ({}).".format(len(reverse_3p_snp_hits), ";".join([hit.name for hit in reverse_3p_snp_hits])))
         
         pair.filter_results = reasons
         if len(reasons) > 0:
-            print "    -> Excluding pair %s for the following reasons:" % (pair.name,)
+            print "    -> Excluding pair {} for the following reasons:".format(pair.name)
             for reason in reasons:
                 print reason
             fail_results.append(pair)
@@ -204,7 +204,7 @@ def filter_candidates(candidates):
             #passed all filtering criteria
             pass_results.append(pair)
 
-    print "    => Filtering results: %d (pass); %d (fail); %d (total examined)" % (len(pass_results), len(fail_results), len(candidates))
+    print "    => Filtering results: {} (pass); {} (fail); {} (total examined)".format(len(pass_results), len(fail_results), len(candidates))
     return (pass_results, fail_results)
 #end filter_candidates()
 
@@ -220,10 +220,10 @@ def make_region_candidate_bed(regions, results, filename, include_headers=True):
             pos_max = r.stop
 
     with open(filename, 'w+') as bed_file:
-        bed_file.write('browser position %s:%d-%d\n' % (regions[0].chrom, pos_min, pos_max))
-        bed_file.write('track db="%s" name="%s" visibility=2\n' % (gargs.genome, "Region Canidate Primers"))
+        bed_file.write('browser position {}:{}-{}\n'.format(regions[0].chrom, pos_min, pos_max))
+        bed_file.write('track db="{}" name="{}" visibility=2\n'.format(gargs.genome, "Region Canidate Primers"))
         for region in regions:
-            bed_file.write("%s\t%d\t%d\t%s\t0\t.\t%d\t%d\t255,0,0\t1\t%d\t0\n" % (region.chrom, region.start, region.stop, region.name, region.start, region.stop, region.length))
+            bed_file.write("{}\t{}\t{}\t{}\t0\t.\t{}\t{}\t255,0,0\t1\t{}\t0\n".format(region.chrom, region.start, region.stop, region.name, region.start, region.stop, region.length))
         for result in results:
             bed_file.write(result.get_bed_line())
             bed_file.write("\n")
@@ -233,35 +233,35 @@ def make_region_candidate_bed(regions, results, filename, include_headers=True):
 def dump_results_to_file(results, filename):
     
     with open(filename, 'w+') as f:
-        f.write(("%s\t%s\t%s\t"
-                 + "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"
-				 + "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t")
-                % ("Pair_Name", "Product_Size", "Overall_Penalty",
+        f.write(("{}\t{}\t{}\t"
+                 + "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t"
+				 + "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t")
+               .format("Pair_Name", "Product_Size", "Overall_Penalty",
                    "Forward_Name", "Forward_Sequence", "Forward_Start", "Forward_Stop", "Forward_Length", "Forward_Penalty", "Forward_Tm", "Forward_GC_Percent",
 				   "Reverse_Name", "Reverse_Sequence", "Reverse_Start", "Reverse_Stop", "Reverse_Length", "Reverse_Penalty", "Reverse_Tm", "Reverse_GC_Percent"
                    )
                 )
         for assembly in results[0].ispcr:
-            f.write("%s\t%s\t%s\t" % ("isPCR["+assembly+"]_amplicon_count", "isPCR["+assembly+"]_found_target", "isPCR["+assembly+"]_off_target_count"))
+            f.write("{}\t{}\t{}\t".format("isPCR["+assembly+"]_amplicon_count", "isPCR["+assembly+"]_found_target", "isPCR["+assembly+"]_off_target_count"))
         
-        f.write("%s\t" % ("Filtering_Results",))
+        f.write("{}\t".format("Filtering_Results"))
         f.write("\n")
         for pair in results:
-            f.write("%s\t%d\t%f\t" % (pair.name, pair.size, pair.penalty))
-            f.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.forward.name, pair.forward.sequence.upper(), pair.forward.start, pair.forward.stop, pair.forward.length, pair.forward.penalty, pair.forward.tm, pair.forward.gc))
-            f.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.reverse.name, pair.reverse.sequence.upper(), pair.reverse.start, pair.reverse.stop, pair.reverse.length, pair.reverse.penalty, pair.reverse.tm, pair.reverse.gc))
+            f.write("{}\t{}\t{}\t".format(pair.name, pair.size, pair.penalty))
+            f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t".format(pair.forward.name, pair.forward.sequence.upper(), pair.forward.start, pair.forward.stop, pair.forward.length, pair.forward.penalty, pair.forward.tm, pair.forward.gc))
+            f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t".format(pair.reverse.name, pair.reverse.sequence.upper(), pair.reverse.start, pair.reverse.stop, pair.reverse.length, pair.reverse.penalty, pair.reverse.tm, pair.reverse.gc))
             for assembly in pair.ispcr:
-                f.write('%d\t%s\t%d\t' % (pair.ispcr[assembly]['count'], pair.ispcr[assembly]['found_proper_amplicon'], pair.ispcr[assembly]['non_target_count']))
+                f.write('{}\t{}\t{}\t'.format(pair.ispcr[assembly]['count'], pair.ispcr[assembly]['found_proper_amplicon'], pair.ispcr[assembly]['non_target_count']))
             
-            f.write('%s\t' % ("; ".join(pair.filter_results),))
+            f.write('{}\t'.format("; ".join(pair.filter_results)))
             f.write('\n')
 #end dump_results_to_file()
             
 def fetch_sequence(region):
-    cache_path = ".%s.sequence.segment=%s.%d-%d.fasta" % (gargs.genome, region.chrom, region.start, region.stop)
+    cache_path = ".{}.sequence.segment={}.{}-{}.fasta".format(gargs.genome, region.chrom, region.start, region.stop)
     cache_path = os.path.join(gargs.cachedir, cache_path)
     if not os.path.exists(cache_path):
-        f = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/%s/dna?segment=%s:%d,%d" % (gargs.genome, region.chrom, region.start, region.stop))
+        f = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/{}/dna?segment={}:{},{}".format(gargs.genome, region.chrom, region.start, region.stop))
         root = ET.fromstring(f.read())
         f.close()
         with open(cache_path, 'w+') as cf:
@@ -273,7 +273,7 @@ def fetch_sequence(region):
 #end fetch_sequence()
 
 def fetch_repeats(region):
-    cache_path = ".%s.repeats.%s.%d-%d.bed" % (gargs.genome, region.chrom, region.start, region.stop)
+    cache_path = ".{}.repeats.{}.{}-{}.bed".format(gargs.genome, region.chrom, region.start, region.stop)
     cache_path = os.path.join(gargs.cachedir, cache_path)
     if not os.path.exists(cache_path):
         cmd = [
@@ -281,7 +281,7 @@ def fetch_repeats(region):
             '--user', 'genome',
             '--host', 'genome-mysql.cse.ucsc.edu',
             '-N', '-AB', 
-            '-e', 'SELECT genoName, genoStart, genoEnd, concat(repClass, "_", repFamily, "_", repName) as name FROM %s.rmsk WHERE genoName = "%s" and (genoStart > %d or genoEnd < %d);' % (gargs.genome, region.chrom, region.start, region.stop),
+            '-e', 'SELECT genoName, genoStart, genoEnd, concat(repClass, "_", repFamily, "_", repName) as name FROM {}.rmsk WHERE genoName = "{}" and (genoStart > {} or genoEnd < {});'.format(gargs.genome, region.chrom, region.start, region.stop),
             gargs.genome
         ]
         #print " ".join(cmd)
@@ -299,10 +299,10 @@ def fetch_features(region):
     print "     -> Fetching gene features..."
     #server = "http://grch37.rest.ensembl.org" #provides GRCh37 data
     #server = "http://rest.ensembl.org" #only provides GRCh38 build data!!!!!
-    cache_path = ".%s.features.segment=%s.%d-%d.type=%s" % (gargs.genome, region.chrom, region.start, region.stop, "refGene")
+    cache_path = ".{}.features.segment={}.{}-{}.type={}".format(gargs.genome, region.chrom, region.start, region.stop, "refGene")
     cache_path = os.path.join(gargs.cachedir, cache_path)
     if not os.path.exists(cache_path):
-        f = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/%s/features?segment=%s:%d,%d;type=%s" % (gargs.genome, region.chrom, region.start, region.stop, "refGene")) #"ccdsGene"))
+        f = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/{}/features?segment={}:{},{};type={}".format(gargs.genome, region.chrom, region.start, region.stop, "refGene")) #"ccdsGene"))
         with open(cache_path, 'w+') as cf:
             cf.write(f.read())
         f.close()
@@ -316,7 +316,7 @@ def fetch_features(region):
     
     reportable_features = []
     for label in unique_labels:
-        group = root.findall("./GFF/SEGMENT/FEATURE[@label='%s']" % (label,))
+        group = root.findall("./GFF/SEGMENT/FEATURE[@label='{}']".format(label))
         record = {
             'id': label,
             'orientation': group[0].findtext('ORIENTATION'),
@@ -328,7 +328,7 @@ def fetch_features(region):
     
     if len(reportable_features) > 0:
         merged = pybedtools.BedTool([item for sublist in reportable_features for item in sublist['exons']]).sort().merge().intersect(pybedtools.BedTool([region]), u=True)
-        print "       -> Found %d gene features containg %d exonic regions" % (len(reportable_features), len(merged))
+        print "       -> Found {} gene features containg {} exonic regions".format(len(reportable_features), len(merged))
         if len(merged) > 0:
             complement = merged.complement(genome=gargs.genome).intersect(pybedtools.BedTool([region]), u=True).saveas()#.filter(lambda b: b.chrom == region.chrom and b.start > region.start and b.stop < region.stop).saveas()
         else:
@@ -348,7 +348,7 @@ def fetch_features(region):
 
 
 def fetch_snps(region):
-    cache_path = ".%s.snps.%s.%d-%d.bed" % (gargs.genome, region.chrom, region.start, region.stop)
+    cache_path = ".{}.snps.{}.{}-{}.bed".format(gargs.genome, region.chrom, region.start, region.stop)
     cache_path = os.path.join(gargs.cachedir, cache_path)
     if not os.path.exists(cache_path):
         cmd = [
@@ -357,8 +357,8 @@ def fetch_snps(region):
             '--host', 'genome-mysql.cse.ucsc.edu',
             '-N', '-AB', 
             '-e', 'SELECT chrom, chromStart, chromEnd, CONCAT(name, "[", class, "][", observed, "]")  '
-                + 'FROM %s.snp147Common '
-                + 'WHERE chrom = "%s" AND ((chromStart BETWEEN %d AND %d) OR (chromEnd BETWEEN %d AND %d)) AND molType = "genomic";' % (gargs.genome, region.chrom, region.start, region.stop, region.start, region.stop),
+                + 'FROM {}.snp147Common '
+                + 'WHERE chrom = "{}" AND ((chromStart BETWEEN {} AND {}) OR (chromEnd BETWEEN {} AND {})) AND molType = "genomic";'.format(gargs.genome, region.chrom, region.start, region.stop, region.start, region.stop),
             gargs.genome
         ]
         #print " ".join(cmd)
@@ -375,14 +375,14 @@ def fetch_snps(region):
 
 def get_primers_for_region(region, num_primers=5, override_settings={}):
     ensure_dir('primer3')
-    print "   -> Looking for primers in region %s:%d-%d" % (region.chrom, region.start, region.stop)
+    print "   -> Looking for primers in region {}:{}-{}".format(region.chrom, region.start, region.stop)
     settings = get_default_primer3_settings()
-    settings['SEQUENCE_ID'] = "%s_%s_%d-%d" % (region.name, region.chrom, region.start, region.stop)
+    settings['SEQUENCE_ID'] = "{}_{}_{}-{}".format(region.name, region.chrom, region.start, region.stop)
     settings['SEQUENCE_TEMPLATE'] = fetch_sequence(region)
     settings['PRIMER_NUM_RETURN'] = num_primers
     #settings['SEQUENCE_INCLUDED_REGION']
     #settings['SEQUENCE_TARGET'] 
-    settings['SEQUENCE_EXCLUDED_REGION'] = []#'1,%s' % (region.length-1,)
+    settings['SEQUENCE_EXCLUDED_REGION'] = []#'1,{}'.format(region.length-1,)
      
     include_features = fetch_features(region)
     for f in include_features['complement_intervals']:
@@ -394,7 +394,7 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
             s = 1
         if e >= region.length:
             e = region.length - 1
-        settings['SEQUENCE_EXCLUDED_REGION'].append("%d,%d" % (s, e-s))
+        settings['SEQUENCE_EXCLUDED_REGION'].append("{},{}".format(s, e-s))
     #settings['SEQUENCE_TARGET'] = ",".join(settings['SEQUENCE_TARGET'])
     
     settings.update(override_settings)
@@ -507,7 +507,7 @@ def parse_primer3_output(region, data):
                             )
             reverse = Primer(gargs.genome,
 							 "RIGHT", 
-                             "{}_{}_{}" % (data_dict['SEQUENCE_ID'], i, "R"),
+                             "{}_{}_{}".format(data_dict['SEQUENCE_ID'], i, "R"),
                              data_dict['PRIMER_RIGHT_{}_SEQUENCE'.format(i)],
                              region.chrom,
                              region.start + int(data_dict['PRIMER_RIGHT_{}'.format(i)].split(',')[0]) - int(data_dict['PRIMER_RIGHT_{}'.format(i)].split(',')[1]),
@@ -519,7 +519,7 @@ def parse_primer3_output(region, data):
                              dict((key.replace('PRIMER_RIGHT_{}'.format(i), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_RIGHT_{}'.format(i)))
                             )
             pair = PrimerResult(gargs.genome,
-								"{}_{}" % (data_dict['SEQUENCE_ID'], i), 
+								"{}_{}".format(data_dict['SEQUENCE_ID'], i), 
                                 forward, 
                                 reverse, 
                                 int(data_dict['PRIMER_PAIR_{}_PRODUCT_SIZE'.format(i)]),
@@ -599,7 +599,7 @@ class PrimerResult:
     #end __init__()
     
     def get_bed_line(self):
-        return "%s\t%d\t%d\t%s\t0\t+\t%d\t%d\t%s\t%d\t%s\t%s" % (self.forward.chrom, 
+        return "{}\t{}\t{}\t{}\t0\t+\t{}\t{}\t{}\t{}\t{}\t{}".format(self.forward.chrom, 
                                                                  self.forward.start, 
                                                                  self.reverse.stop, 
                                                                  self.name, 
@@ -655,7 +655,7 @@ def liftover(curr_assembly, interval, target_assembly, species='homo_sapiens'):
         target_assembly = ass_names[target_assembly]    
 
     server = "http://grch37.rest.ensembl.org"
-    ext = "/map/%s/%s/%s:%d..%d:%d/%s?" % (species, curr_assembly, interval.chrom.replace('chr', ''), interval.start, interval.stop, -1 if interval.strand == '-' else 1, target_assembly)
+    ext = "/map/{}/{}/{}:{}..{}:{}/{}?".format(species, curr_assembly, interval.chrom.replace('chr', ''), interval.start, interval.stop, -1 if interval.strand == '-' else 1, target_assembly)
     #print server+ext
     r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
      
@@ -672,7 +672,7 @@ def liftover(curr_assembly, interval, target_assembly, species='homo_sapiens'):
         liftedInterval.file_type = 'bed'
         return liftedInterval
     else:
-        print "Unable to convert interval %s:%d-%d from assembly %s to assembly %s" % (interval.chrom, interval.start, interval.stop, curr_assembly, target_assembly)
+        print "Unable to convert interval {}:{}-{} from assembly {} to assembly {}".format(interval.chrom, interval.start, interval.stop, curr_assembly, target_assembly)
         return None
 #end liftover()
 
