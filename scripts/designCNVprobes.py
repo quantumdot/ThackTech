@@ -104,12 +104,12 @@ def main(args):
                 run_in_silico_pcr(region_results[j], server)
         
         #output the potential primers 
-        make_region_candidate_bed(sub_regions, region_results, "{}_{}:{}-{}.primer_results.unfiltered.bed".format(region.name, region.chrom, region.start, region.stop))
+        make_region_candidate_bed(sub_regions, region_results, "{}_{}_{}-{}.primer_results.unfiltered.bed".format(region.name, region.chrom, region.start, region.stop))
         all_results.extend(region_results)
         
         #filter and output a more stringent set of primers
         filtered_region_results, failed_region_results = filter_candidates(region_results)
-        make_region_candidate_bed(sub_regions, filtered_region_results, "{}_{}:{}-{}.primer_results.filtered.bed".format(region.name, region.chrom, region.start, region.stop))
+        make_region_candidate_bed(sub_regions, filtered_region_results, "{}_{}_{}-{}.primer_results.filtered.bed".format(region.name, region.chrom, region.start, region.stop))
         filtered_all_results.extend(filtered_region_results)
         failed_all_results.extend(failed_region_results)
         
