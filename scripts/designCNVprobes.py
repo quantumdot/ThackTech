@@ -384,17 +384,18 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
     settings['SEQUENCE_EXCLUDED_REGION'] = []#'1,{}'.format(region.length-1,)
      
     include_features = fetch_features(region)
-    for f in include_features['complement_intervals']:
-        s = f.start - region.start
-        e = f.stop - region.start
-        #l = f.length
-        if s < 1:
-            #l += s
-            s = 1
-        if e >= region.length:
-            e = region.length - 1
-        settings['SEQUENCE_EXCLUDED_REGION'].append("{},{}".format(s, e-s))
-    #settings['SEQUENCE_TARGET'] = ",".join(settings['SEQUENCE_TARGET'])
+    if len(include_features['merged_intervals']) > 0:
+        for f in include_features['complement_intervals']:
+            s = f.start - region.start
+            e = f.stop - region.start
+            #l = f.length
+            if s < 1:
+                #l += s
+                s = 1
+            if e >= region.length:
+                e = region.length - 1
+            settings['SEQUENCE_EXCLUDED_REGION'].append("{},{}".format(s, e-s))
+        #settings['SEQUENCE_TARGET'] = ",".join(settings['SEQUENCE_TARGET'])
     
     settings.update(override_settings)
     
