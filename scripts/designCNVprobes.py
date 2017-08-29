@@ -589,7 +589,8 @@ def run_in_silico_pcr(primerpair, server):
 ###############################
 class PrimerResult:
 
-    def __init__(self, name, forward, reverse, size, penalty, props):
+    def __init__(self, assembly, name, forward, reverse, size, penalty, props):
+        self.assembly = assembly
         self.name = name
         self.forward = forward
         self.reverse = reverse
@@ -618,7 +619,8 @@ class PrimerResult:
 #end class PrimerResult
 
 class Primer:
-    def __init__(self, orientation, name, seq, chrom, start, length, strand, penalty, tm, gc, props):
+    def __init__(self, assembly, orientation, name, seq, chrom, start, length, strand, penalty, tm, gc, props):
+        self.assembly = assembly
         self.orientation = orientation
         self.name = name
         self.sequence = seq.upper()
