@@ -549,9 +549,8 @@ def start_gfservers():
 #end start_gfservers()
 
 def run_in_silico_pcr(primerpair, server):
-    
-    hits = server.isPCR(primerpair.forward.sequence, primerpair.reverse.sequence, out='bed', maxsize=4000, minPerfect=15, minGood=15)
     ensure_dir('ispcr')
+    hits = server.isPCR(primerpair.forward.sequence, primerpair.reverse.sequence, out='bed', maxsize=4000, minPerfect=15, minGood=15)
     hits.saveas("ispcr/%s.ispcr.%s.bed" % (primerpair.name, server.name))
     
     count = len(hits)
