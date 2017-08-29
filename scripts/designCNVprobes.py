@@ -53,7 +53,8 @@ def get_arguments():
     gfserver_group.add_argument('--gfhost', default="localhost", help="hostname of the gfserver")
     gfserver_group.add_argument('--gfport', type=int, default=17779, help="port for the gfserver to use")
     
-    gfserver_group.add_argument('--altgfserve', action='append', default='hg38|17778|/mnt/ref/reference/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.2bit', help="Additional genomes to run isPCR on. specify as 'genome|port|reg-genome-2bit'")
+    #'hg38|17778|/mnt/ref/reference/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.2bit'
+    gfserver_group.add_argument('--altgfserve', action='append', default=[], help="Additional genomes to run isPCR on. specify as 'genome|port|reg-genome-2bit'")
     
     
     perf_group = parser.add_argument_group('Performance Options')
