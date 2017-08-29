@@ -260,7 +260,7 @@ def fetch_sequence(region):
     cache_path = os.path.join(gargs.cachedir, cache_path)
     if not os.path.exists(cache_path):
         f = urllib2.urlopen("http://genome.ucsc.edu/cgi-bin/das/%s/dna?segment=%s:%d,%d" % (gargs.genome, region.chrom, region.start, region.stop))
-        root = ET.fromstring(file.read())
+        root = ET.fromstring(f.read())
         f.close()
         with open(cache_path, 'w+') as cf:
             cf.write(root.findtext("./SEQUENCE/DNA").replace('\n','').replace('\r',''))
