@@ -406,11 +406,11 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
         else:
             indata += "{}={}\n".format(key,val)
     indata += "=\n"
-    with open("primer3/primer3_params.{}_{}_{}-{}.txt".format(region.name, region.chrom, region.start, region.stop), 'w+') as cf:
+    with open("primer3/primer3.{}_{}_{}-{}.params.txt".format(region.name, region.chrom, region.start, region.stop), 'w+') as cf:
         cf.write(indata)
     #print indata
     (stdoutdata, stderrdata) = p.communicate(indata)
-    with open("primer3/primer3_output.{}_{}_{}-{}.txt".format(region.name, region.chrom, region.start, region.stop), 'w+') as cf:
+    with open("primer3/primer3.{}_{}_{}-{}.output.txt".format(region.name, region.chrom, region.start, region.stop), 'w+') as cf:
         cf.write(stdoutdata)
         cf.write(stderrdata)
     #print stdoutdata
