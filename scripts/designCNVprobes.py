@@ -397,7 +397,7 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
             settings['SEQUENCE_EXCLUDED_REGION'].append("{},{}".format(s, e-s))
         #settings['SEQUENCE_TARGET'] = ",".join(settings['SEQUENCE_TARGET'])
     else:
-        print "         -> At looks like there are no gene features in this region, so not including exon overlap constraint in primer picking."
+        print "         -> It looks like there are no gene features in this region, so not including exon overlap constraint in primer picking."
     
     settings.update(override_settings)
     
@@ -406,13 +406,15 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
     if len(results) == 0:  #implement relaxation of settings and retry
         if errors == "Too many elements for tag SEQUENCE_EXCLUDED_REGION":
             print "         -> Attempting to relax parameters for search:"
-            print "             -> Noticed that there are **MANY** exons in this region; removing exon overlap constraint"
-            results, errors, warnings = get_primers_for_region(region, num_primers, {'SEQUENCE_EXCLUDED_REGION': []})
+            print "             -> Noticed that there are **MANY** exons in this region; removing exon overlap constraint and resubmitting (see next entry --v)"
+            settings.update({'SEQUENCE_EXCLUDED_REGION': []})
+            results, errors, warnings = run_primer3(region, settings)
         
         elif len(include_features['merged_intervals']) < 3:
             print "         -> Attempting to relax parameters for search:"
-            print "             -> Noticed that there <3 exon(s) in this region; removing exon overlap constraint"
-            results, errors, warnings = get_primers_for_region(region, num_primers, {'SEQUENCE_EXCLUDED_REGION': []})
+            print "             -> Noticed that there <3 exon(s) in this region; removing exon overlap constraint and resubmitting (see next entry --v)"
+            settings.update({'SEQUENCE_EXCLUDED_REGION': []})
+            results, errors, warnings = run_primer3(region, settings)
         
     
     for r in results:
@@ -551,7 +553,7 @@ def parse_primer3_output(region, data):
         print "         -> Found {} primers for this region!".format(num_results)
     else:
         print "         => No primers found for this region! <="
-    return results, errors, warnings
+    return (results, errors, warnings)
 #end parse_primer3_output()
 
 
