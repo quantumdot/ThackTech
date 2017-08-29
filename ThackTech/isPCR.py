@@ -9,10 +9,25 @@ import pybedtools
 class gfServer(object):
     
     def __init__(self, name, executible, host, port, genome2bit):
+        """Initializes a new gfServer instance, but deos not start it.
+        
+        API:
+            start() - starts the server, if it is not already running
+            stop() - stops the server
+            isPCR() - query the server for isPCR hits
+        
+        Parameters:
+            name: (string) the name of this server, typically the genome assembly/build this server uses
+            executable: (string) path to the gfServer executable. It is also assumed that the gfPcr executable is in the same directory as gfServer
+            host: (string) Hostname to use in setting up the server
+            port: (int) port number to assign to this server
+            genome2bit: (string) path to a fasta file in 2bit format that you would like the server to index
+            
+        """
         self.name = name
         self.exe = executible
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.genome = genome2bit
         
     def start(self):
@@ -34,7 +49,7 @@ class gfServer(object):
         os.chdir(os.path.dirname(self.genome))
         try:
             time.sleep(15)
-            cmd = '{gfserver} -canStop -tileSize=11 -stepSize=5 -log="'+log_file+'" start {gfhost} {gfport} {genome} &> /dev/null &'.format(gfserver=self.exe, gfhost=self.host, gfport=self.port, genome=os.path.basename(self.genome))
+            cmd = '{gfserver} -canStop -tileSize=11 -stepSize=5 -log="{log}" start {gfhost} {gfport} {genome} &> /dev/null &'.format(gfserver=self.exe, gfhost=self.host, gfport=self.port, genome=os.path.basename(self.genome), log=log_file)
             #print cmd
             subprocess.check_call(cmd, shell=True)
         except subprocess.CalledProcessError as e:
@@ -44,13 +59,13 @@ class gfServer(object):
         time.sleep(5) # sleep 5 sec
         gfready = 0
         while not gfready:
-            gfready = self.read_gfServer_log(log_file)
+            gfready = self.__read_gfServer_log(log_file)
             if gfready == -1:
                 sys.stderr.write('gfServer start error! Check '+log_file+' file, exit.')
                 sys.exit(1)
             time.sleep(5)
         sys.stderr.write('gfServer ready\n\n\n')
-        
+    #end method start()   
         
     def stop(self):
         """Stops the gfServer
@@ -64,9 +79,10 @@ class gfServer(object):
         ]
         p = subprocess.Popen(cmd)
         p.communicate()
+    #end method stop()
         
     
-    def read_gfServer_log(self, infile):
+    def __read_gfServer_log(self, infile):
         with open(infile, 'r') as f:
             for i in f:
                 if 'Server ready for queries!' in i:
@@ -76,6 +92,7 @@ class gfServer(object):
                     f.close()
                     return -1
         return 0
+    #end method read_gfServer_log()
     
     def isPCR(self, forward, reverse, out='bed', maxsize=4000, minPerfect=15, minGood=15):
         """Performs a in-silico PCR search for amplicons resulting from primers `forward` and `reverse`
@@ -115,8 +132,6 @@ class gfServer(object):
             return hits
         else:
             return stdoutdata
-        
-        
-        
-#end read_gfServer_log()
-#end stop_gfserver()
+    #end method isPCR()   
+#end class gfServer   
+    
