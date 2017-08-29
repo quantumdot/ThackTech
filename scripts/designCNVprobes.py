@@ -145,9 +145,10 @@ def filter_candidates(candidates):
                 reasons.extend(pair.ispcr[assembly]['messages'])
 
         #check to make sure that amplicon covers the intended region
-        if len(pair.include_features['merged_intervals']) > 0 and not pybedtools.BedTool(pair.include_features['merged_intervals']).any_hits(pair.get_interval()):
-            reasons.append("       -> Amplicon does not appear to overlap any exon features.")
-            #continue
+        if 'exon_overlap' not in pair.filter_exceptions:
+            if len(pair.include_features['merged_intervals']) > 0 and not pybedtools.BedTool(pair.include_features['merged_intervals']).any_hits(pair.get_interval()):
+                reasons.append("       -> Amplicon does not appear to overlap any exon features.")
+                #continue
         
         #Test to make sure amplicon does not overlap known repetative regions from repeatmasker
         if fetch_repeats(pair.target_region).any_hits(pair.get_interval()):
@@ -382,6 +383,8 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
     #settings['SEQUENCE_INCLUDED_REGION']
     #settings['SEQUENCE_TARGET'] 
     settings['SEQUENCE_EXCLUDED_REGION'] = []#'1,{}'.format(region.length-1,)
+    
+    filter_exceptions = []
      
     include_features = fetch_features(region)
     if len(include_features['merged_intervals']) > 0:
@@ -397,16 +400,18 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
             settings['SEQUENCE_EXCLUDED_REGION'].append("{},{}".format(s, e-s))
         #settings['SEQUENCE_TARGET'] = ",".join(settings['SEQUENCE_TARGET'])
     else:
+        filter_exceptions.append('exon_overlap')
         print "         -> It looks like there are no gene features in this region, so not including exon overlap constraint in primer picking."
     
     settings.update(override_settings)
     
     results, errors, warnings = run_primer3(region, settings)
     
+    
     if len(results) == 0:  #implement relaxation of settings and retry
         if errors == "Too many elements for tag SEQUENCE_EXCLUDED_REGION":
             print "         -> Attempting to relax parameters for search:"
-            print "             -> Noticed that there are **MANY** exons in this region; removing exon overlap constraint and resubmitting (see next entry --v)"
+            print "             -> Noticed that there are **MANY** exons in this region; removing exon overlap constraint (will be checked during filtering) and resubmitting (see next entry --v)"
             settings.update({'SEQUENCE_EXCLUDED_REGION': []})
             results, errors, warnings = run_primer3(region, settings)
         
@@ -414,10 +419,12 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
             print "         -> Attempting to relax parameters for search:"
             print "             -> Noticed that there <3 exon(s) in this region; removing exon overlap constraint and resubmitting (see next entry --v)"
             settings.update({'SEQUENCE_EXCLUDED_REGION': []})
+            filter_exceptions.append('exon_overlap')
             results, errors, warnings = run_primer3(region, settings)
         
     
     for r in results:
+        r.filter_exceptions = filter_exceptions
         r.target_region = region
         r.include_features = include_features
     
@@ -505,7 +512,7 @@ def parse_primer3_output(region, data):
         errors = data_dict['PRIMER_ERROR']
         print "         => Primer3 ERROR: {} <=".format(data_dict['PRIMER_ERROR'])
         print "         => Returning no primers for this region! <="
-        return []
+        return [], errors, warnings
         
     if 'PRIMER_WARNING' in data_dict:
         warnings = data_dict['PRIMER_WARNING']
