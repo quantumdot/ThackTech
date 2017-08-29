@@ -396,9 +396,33 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
                 e = region.length - 1
             settings['SEQUENCE_EXCLUDED_REGION'].append("{},{}".format(s, e-s))
         #settings['SEQUENCE_TARGET'] = ",".join(settings['SEQUENCE_TARGET'])
+    else:
+        print "         -> At looks like there are no gene features in this region, so not including exon overlap constraint in primer picking."
     
     settings.update(override_settings)
     
+    results, errors, warnings = run_primer3(region, settings)
+    
+    if len(results) == 0:  #implement relaxation of settings and retry
+        if errors == "Too many elements for tag SEQUENCE_EXCLUDED_REGION":
+            print "         -> Attempting to relax parameters for search:"
+            print "             -> Noticed that there are **MANY** exons in this region; removing exon overlap constraint"
+            results, errors, warnings = get_primers_for_region(region, num_primers, {'SEQUENCE_EXCLUDED_REGION': []})
+        
+        elif len(include_features['merged_intervals']) < 3:
+            print "         -> Attempting to relax parameters for search:"
+            print "             -> Noticed that there <3 exon(s) in this region; removing exon overlap constraint"
+            results, errors, warnings = get_primers_for_region(region, num_primers, {'SEQUENCE_EXCLUDED_REGION': []})
+        
+    
+    for r in results:
+        r.target_region = region
+        r.include_features = include_features
+    
+    return results
+#end get_primers_for_region()
+
+def run_primer3(region, settings):
     p = subprocess.Popen(['primer3_core'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     indata = ""
     for (key,val) in settings.iteritems():
@@ -416,18 +440,11 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
         cf.write(stderrdata)
     #print stdoutdata
     #print stderrdata
-    results = parse_primer3_output(region, stdoutdata)
+    results, errors, warnings = parse_primer3_output(region, stdoutdata)
     
-    if len(results) == 0:
-        #implement relaxation of settings and retry
-        pass
+    return results, errors, warnings
+#end run_primer3()
     
-    for r in results:
-        r.target_region = region
-        r.include_features = include_features
-    
-    return results
-#end get_primers_for_region()
 
 def get_default_primer3_settings():
     return {
@@ -480,12 +497,16 @@ def get_default_primer3_settings():
 def parse_primer3_output(region, data):
     #print data
     data_dict = dict(line.split("=") for line in data.split("\n") if line  not in ["=", ""])
+    errors = None
+    warnings = None
     if 'PRIMER_ERROR' in data_dict:
+        errors = data_dict['PRIMER_ERROR']
         print "         => Primer3 ERROR: {} <=".format(data_dict['PRIMER_ERROR'])
         print "         => Returning no primers for this region! <="
         return []
         
     if 'PRIMER_WARNING' in data_dict:
+        warnings = data_dict['PRIMER_WARNING']
         print "         => Primer3 WARNING: {} <=".format(data_dict['PRIMER_WARNING'])
     
     num_results = int(data_dict['PRIMER_PAIR_NUM_RETURNED'])
@@ -530,7 +551,7 @@ def parse_primer3_output(region, data):
         print "         -> Found {} primers for this region!".format(num_results)
     else:
         print "         => No primers found for this region! <="
-    return results
+    return results, errors, warnings
 #end parse_primer3_output()
 
 
