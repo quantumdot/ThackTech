@@ -377,7 +377,7 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
     ensure_dir('primer3')
     print "   -> Looking for primers in region %s:%d-%d" % (region.chrom, region.start, region.stop)
     settings = get_default_primer3_settings()
-    settings['SEQUENCE_ID'] = "%s:%s:%d-%d" % (region.name, region.chrom, region.start, region.stop)
+    settings['SEQUENCE_ID'] = "%s_%s_%d-%d" % (region.name, region.chrom, region.start, region.stop)
     settings['SEQUENCE_TEMPLATE'] = fetch_sequence(region)
     settings['PRIMER_NUM_RETURN'] = num_primers
     #settings['SEQUENCE_INCLUDED_REGION']
@@ -403,15 +403,15 @@ def get_primers_for_region(region, num_primers=5, override_settings={}):
     indata = ""
     for (key,val) in settings.iteritems():
         if isinstance(val, list):
-            indata += "%s=%s\n" % (key, " ".join(val))
+            indata += "{}={}\n".format(key, " ".join(val))
         else:
-            indata += "%s=%s\n" % (key,val)
+            indata += "{}={}\n".format(key,val)
     indata += "=\n"
-    with open("primer3/primer3_params.%s_%s:%d-%d.txt" % (region.name, region.chrom, region.start, region.stop), 'w+') as cf:
+    with open("primer3/primer3_params.{}_{}_{}-{}.txt".format(region.name, region.chrom, region.start, region.stop), 'w+') as cf:
         cf.write(indata)
     #print indata
     (stdoutdata, stderrdata) = p.communicate(indata)
-    with open("primer3/primer3_output.%s_%s:%d-%d.txt" % (region.name, region.chrom, region.start, region.stop), 'w+') as cf:
+    with open("primer3/primer3_output.{}_{}_{}-{}.txt".format(region.name, region.chrom, region.start, region.stop), 'w+') as cf:
         cf.write(stdoutdata)
         cf.write(stderrdata)
     #print stdoutdata
@@ -481,12 +481,12 @@ def parse_primer3_output(region, data):
     #print data
     data_dict = dict(line.split("=") for line in data.split("\n") if line  not in ["=", ""])
     if 'PRIMER_ERROR' in data_dict:
-        print "         => Primer3 ERROR: %s <=" % (data_dict['PRIMER_ERROR'],)
+        print "         => Primer3 ERROR: {} <=".format(data_dict['PRIMER_ERROR'])
         print "         => Returning no primers for this region! <="
         return []
         
     if 'PRIMER_WARNING' in data_dict:
-        print "         => Primer3 WARNING: %s <=" % (data_dict['PRIMER_WARNING'],)
+        print "         => Primer3 WARNING: {} <=".format(data_dict['PRIMER_WARNING'])
     
     num_results = int(data_dict['PRIMER_PAIR_NUM_RETURNED'])
     results = []
@@ -494,40 +494,40 @@ def parse_primer3_output(region, data):
         for i in range(num_results):
             forward = Primer(gargs.genome,
 							 "LEFT", 
-                             "%s_%d_%s" % (data_dict['SEQUENCE_ID'], i, "F"),
-                             data_dict['PRIMER_LEFT_%d_SEQUENCE' % (i,)],
+                             "{}_{}_{}".format(data_dict['SEQUENCE_ID'], i, "F"),
+                             data_dict['PRIMER_LEFT_{}_SEQUENCE'.format(i)],
                              region.chrom,
-                             region.start + int(data_dict['PRIMER_LEFT_%d' % (i,)].split(',')[0]) - 1,
-                             int(data_dict['PRIMER_LEFT_%d' % (i,)].split(',')[1]),
+                             region.start + int(data_dict['PRIMER_LEFT_{}'.format(i)].split(',')[0]) - 1,
+                             int(data_dict['PRIMER_LEFT_{}'.format(i)].split(',')[1]),
                              '+', # "LEFT" primer is always 5' -> 3' on the same strand as the input sequence
-                             float(data_dict['PRIMER_LEFT_%d_PENALTY' % (i,)]),
-                             float(data_dict['PRIMER_LEFT_%d_TM' % (i,)]),
-                             float(data_dict['PRIMER_LEFT_%d_GC_PERCENT' % (i,)]),
-                             dict((key.replace('PRIMER_LEFT_%d' % (i,), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_LEFT_%d' % (i,)))
+                             float(data_dict['PRIMER_LEFT_{}_PENALTY'.format(i)]),
+                             float(data_dict['PRIMER_LEFT_{}_TM'.format(i)]),
+                             float(data_dict['PRIMER_LEFT_{}_GC_PERCENT'.format(i)]),
+                             dict((key.replace('PRIMER_LEFT_{}'.format(i), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_LEFT_{}'.format(i)))
                             )
             reverse = Primer(gargs.genome,
 							 "RIGHT", 
-                             "%s_%d_%s" % (data_dict['SEQUENCE_ID'], i, "R"),
-                             data_dict['PRIMER_RIGHT_%d_SEQUENCE' % (i,)],
+                             "{}_{}_{}" % (data_dict['SEQUENCE_ID'], i, "R"),
+                             data_dict['PRIMER_RIGHT_{}_SEQUENCE'.format(i)],
                              region.chrom,
-                             region.start + int(data_dict['PRIMER_RIGHT_%d' % (i,)].split(',')[0]) - int(data_dict['PRIMER_RIGHT_%d' % (i,)].split(',')[1]),
-                             int(data_dict['PRIMER_RIGHT_%d' % (i,)].split(',')[1]),
+                             region.start + int(data_dict['PRIMER_RIGHT_{}'.format(i)].split(',')[0]) - int(data_dict['PRIMER_RIGHT_{}'.format(i)].split(',')[1]),
+                             int(data_dict['PRIMER_RIGHT_{}'.format(i)].split(',')[1]),
                              '-', #  "RIGHT" primer is presented 5' -> 3' on the opposite strand from the input sequence
-                             float(data_dict['PRIMER_RIGHT_%d_PENALTY' % (i,)]),
-                             float(data_dict['PRIMER_RIGHT_%d_TM' % (i,)]),
-                             float(data_dict['PRIMER_RIGHT_%d_GC_PERCENT' % (i,)]),
-                             dict((key.replace('PRIMER_RIGHT_%d' % (i,), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_RIGHT_%d' % (i,)))
+                             float(data_dict['PRIMER_RIGHT_{}_PENALTY'.format(i)]),
+                             float(data_dict['PRIMER_RIGHT_{}_TM'.format(i)]),
+                             float(data_dict['PRIMER_RIGHT_{}_GC_PERCENT'.format(i)]),
+                             dict((key.replace('PRIMER_RIGHT_{}'.format(i), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_RIGHT_{}'.format(i)))
                             )
             pair = PrimerResult(gargs.genome,
-								"%s_%d" % (data_dict['SEQUENCE_ID'], i), 
+								"{}_{}" % (data_dict['SEQUENCE_ID'], i), 
                                 forward, 
                                 reverse, 
-                                int(data_dict['PRIMER_PAIR_%d_PRODUCT_SIZE' % (i,)]),
-                                float(data_dict['PRIMER_PAIR_%d_PENALTY' % (i,)]),
-                                dict((key.replace('PRIMER_PAIR_%d' % (i,), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_PAIR_%d' % (i,)))
+                                int(data_dict['PRIMER_PAIR_{}_PRODUCT_SIZE'.format(i)]),
+                                float(data_dict['PRIMER_PAIR_{}_PENALTY'.format(i)]),
+                                dict((key.replace('PRIMER_PAIR_{}'.format(i), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_PAIR_{}'.format(i)))
                                 )
             results.append(pair)
-        print "         -> Found %d primers for this region!" % (num_results,)
+        print "         -> Found {} primers for this region!".format(num_results)
     else:
         print "         => No primers found for this region! <="
     return results
@@ -551,20 +551,20 @@ def start_gfservers():
 def run_in_silico_pcr(primerpair, server):
     ensure_dir('ispcr')
     hits = server.isPCR(primerpair.forward.sequence, primerpair.reverse.sequence, out='bed', maxsize=4000, minPerfect=15, minGood=15)
-    hits.saveas("ispcr/%s.ispcr.%s.bed" % (primerpair.name, server.name))
+    hits.saveas("ispcr/{}.ispcr.{}.bed".format(primerpair.name, server.name))
     
     count = len(hits)
     pair_interval = primerpair.get_interval(server.name)
     messages = []
     if pair_interval is None:
-        print "Did not get an interval, so cannot assess specificity of isPCR results (will assume all off-target), but found %d total amplicons..." % (count,)
+        print "Did not get an interval, so cannot assess specificity of isPCR results (will assume all off-target), but found {} total amplicons...".format(count)
         found_proper_amplicon = False
         non_target_count = count
-        messages = 'Liftover of interval from assembly %s to assembly %s failed, so cannot assess specificity of isPCR results (will assume all off-target)' % (primerpair.assembly, server.name)
+        messages = 'Liftover of interval from assembly {} to assembly {} failed, so cannot assess specificity of isPCR results (will assume all off-target)'.format(primerpair.assembly, server.name)
     else:
         found_proper_amplicon = hits.any_hits(pair_interval)
         non_target_count = len(hits) - int(hits.any_hits(pair_interval))
-        print "   -> Found %d total amplicons, %sincluding targeted site, and %d off-target amplicons in assembly %s" % (count, ("" if found_proper_amplicon else "NOT "), non_target_count, server.name)
+        print "   -> Found {} total amplicons, {}including targeted site, and {} off-target amplicons in assembly {}".format(count, ("" if found_proper_amplicon else "NOT "), non_target_count, server.name)
 
     if not hasattr(primerpair, 'ispcr'):
         primerpair.ispcr = {}
@@ -634,7 +634,7 @@ class Primer:
         self.properties = dict(props)
 
     def get_bed_line(self):
-        return "%s\t%d\t%d\t%s\t0\t+" % (self.chrom, self.start, self.stop, self.name)
+        return "{}\t{}\t{}\t{}\t0\t+".format(self.chrom, self.start, self.stop, self.name)
     
     def get_interval(self, assembly=None):
         i = Interval(self.chrom, self.start, self.stop, self.name, strand=self.strand)
