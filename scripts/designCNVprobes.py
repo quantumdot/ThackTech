@@ -145,7 +145,7 @@ def filter_candidates(candidates):
                 reasons.extend(pair.ispcr[assembly]['messages'])
 
         #check to make sure that amplicon covers the intended region
-        if not pybedtools.BedTool(pair.include_features['merged_intervals']).any_hits(pair.get_interval()):
+        if len(pair.include_features['merged_intervals']) > 0 and not pybedtools.BedTool(pair.include_features['merged_intervals']).any_hits(pair.get_interval()):
             reasons.append("       -> Amplicon does not appear to overlap any exon features.")
             #continue
         
