@@ -590,7 +590,7 @@ def run_in_silico_pcr(primerpair, server):
         print "Did not get an interval, so cannot assess specificity of isPCR results (will assume all off-target), but found {} total amplicons...".format(count)
         found_proper_amplicon = False
         non_target_count = count
-        messages = 'Liftover of interval from assembly {} to assembly {} failed, so cannot assess specificity of isPCR results (will assume all off-target)'.format(primerpair.assembly, server.name)
+        messages.append('Liftover of interval from assembly {} to assembly {} failed, so cannot assess specificity of isPCR results (will assume all off-target)'.format(primerpair.assembly, server.name))
     else:
         found_proper_amplicon = hits.any_hits(pair_interval)
         non_target_count = len(hits) - int(hits.any_hits(pair_interval))
