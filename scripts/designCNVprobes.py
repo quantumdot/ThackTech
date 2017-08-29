@@ -102,7 +102,6 @@ def main(args):
             print " -> Validating result {} by in-silico PCR....".format(j+1)
             for server in gfservers:
                 run_in_silico_pcr(region_results[j], server)
-                run_in_silico_pcr(region_results[j], server)
         
         #output the potential primers 
         make_region_candidate_bed(sub_regions, region_results, "{}_{}:{}-{}.primer_results.unfiltered.bed".format(region.name, region.chrom, region.start, region.stop))
