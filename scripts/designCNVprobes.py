@@ -214,14 +214,15 @@ def make_region_candidate_bed(regions, results, filename, include_headers=True):
     pos_min = sys.maxint
     pos_max = 0
     for r in regions:
-        if r.start < min:
+        if r.start < pos_min:
             pos_min = r.start
-        if r.stop > max:
+        if r.stop > pos_max:
             pos_max = r.stop
 
     with open(filename, 'w+') as bed_file:
         bed_file.write('browser position {}:{}-{}\n'.format(regions[0].chrom, pos_min, pos_max))
         bed_file.write('track db="{}" name="{}" visibility=2\n'.format(gargs.genome, "Region Canidate Primers"))
+        bed_file.write("{}\t{}\t{}\t{}\t0\t.\t{}\t{}\t255,0,0\t1\t{}\t0\n".format(regions[0].chrom, pos_min, pos_max, regions[0].name.replace('.sr0', ""), pos_min, pos_max, pos_max - pos_min))
         for region in regions:
             bed_file.write("{}\t{}\t{}\t{}\t0\t.\t{}\t{}\t255,0,0\t1\t{}\t0\n".format(region.chrom, region.start, region.stop, region.name, region.start, region.stop, region.length))
         for result in results:
