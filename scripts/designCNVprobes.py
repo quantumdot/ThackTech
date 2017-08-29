@@ -3,11 +3,13 @@ import sys
 import time
 import urllib2
 import argparse
+import requests
 import subprocess
 import pybedtools
 import pybedtools.featurefuncs
 from pybedtools import Interval
 import xml.etree.ElementTree as ET
+from ThackTech.isPCR import gfServer
 
 
 
@@ -48,9 +50,10 @@ def get_arguments():
     
     gfserver_group = parser.add_argument_group('isPCR server options')
     gfserver_group.add_argument('--gfserve', default="/home/josh/scripts/isPCR/gfServer", help="location of gfserver executable")
-    gfserver_group.add_argument('--gfpcr', default="/home/josh/scripts/isPCR/gfPcr", help="location of gfpcr executable")
     gfserver_group.add_argument('--gfhost', default="localhost", help="hostname of the gfserver")
-    gfserver_group.add_argument('--gfport', default="17779", help="port for the gfserver to use")
+    gfserver_group.add_argument('--gfport', type=int, default=17779, help="port for the gfserver to use")
+    
+    gfserver_group.add_argument('--altgfserve', action='append', default='hg38|17778|/mnt/ref/reference/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.2bit', help="Additional genomes to run isPCR on. specify as 'genome|port|reg-genome-2bit'")
     
     
     perf_group = parser.add_argument_group('Performance Options')
@@ -62,7 +65,7 @@ def get_arguments():
 #end get_arguments()
 
 def main(args):
-    start_gfserver()
+    gfservers = start_gfservers()
     regions = pybedtools.BedTool(args.bed)
     all_results = []
     filtered_all_results = []
@@ -94,8 +97,9 @@ def main(args):
         
         for j in range(len(region_results)):
             print " -> Validating result %d by in-silico PCR...." % (j+1,)
-			run_in_silico_pcr(region_results[j], genome_build)
-			run_in_silico_pcr(region_results[j], 'hg38')
+            for server in gfservers:
+                run_in_silico_pcr(region_results[j], server)
+                run_in_silico_pcr(region_results[j], server)
         
         #output the potential primers 
         make_region_candidate_bed(sub_regions, region_results, "%s_%s:%d-%d.primer_results.unfiltered.bed" % (region.name, region.chrom, region.start, region.stop))
@@ -123,21 +127,21 @@ def filter_candidates(candidates):
     for pair in candidates:
         reasons = []
         
-		for assembly in pair.ispcr:
-        #Test that in-silico PCR found the intended amplicon
-			if not pair.ispcr[assembly]['found_proper_amplicon']:
-				reasons.append("       -> in-silico PCR could not find the intended amplicon in assembly %s." % (assembly,))
-            #continue
+        for assembly in pair.ispcr:
+            #Test that in-silico PCR found the intended amplicon
+            if not pair.ispcr[assembly]['found_proper_amplicon']:
+                reasons.append("       -> in-silico PCR could not find the intended amplicon in assembly %s." % (assembly,))
+                #continue
+                
+            #Test that the off-target amplicon count is reasonable
+            off_target_max = 0
+            if pair.ispcr[assembly]['non_target_count'] > off_target_max:
+                reasons.append("       -> in-silico PCR found %d off-target amplicons in assembly %s, more than max of %d." % (pair.ispcr[assembly]['non_target_count'], assembly, off_target_max))
+                #continue
         
-        #Test that the off-target amplicon count is reasonable
-        off_target_max = 0
-			if pair.ispcr[assembly]['non_target_count'] > off_target_max:
-				reasons.append("       -> in-silico PCR found %d off-target amplicons in assembly %s, more than max of %d." % (pair.ispcr[assembly]['non_target_count'], assembly, off_target_max))
-            #continue
-        
-			if len(pair.ispcr[assembly]['messages']) > 0:
-				reasons.extend(pair.ispcr[assembly]['messages'])
-		
+            if len(pair.ispcr[assembly]['messages']) > 0:
+                reasons.extend(pair.ispcr[assembly]['messages'])
+
         #check to make sure that amplicon covers the intended region
         if not pybedtools.BedTool(pair.include_features['merged_intervals']).any_hits(pair.get_interval()):
             reasons.append("       -> Amplicon does not appear to overlap any exon features.")
@@ -187,9 +191,6 @@ def filter_candidates(candidates):
         if len(reverse_3p_snp_hits) > max_snps_in_3p_primer:
             reasons.append("       -> Reverse primer contains %d SNPs in 3' region (%s)." % (len(reverse_3p_snp_hits), ";".join([hit.name for hit in reverse_3p_snp_hits])))
         
-        
-        
-        
         pair.filter_results = reasons
         if len(reasons) > 0:
             print "    -> Excluding pair %s for the following reasons:" % (pair.name,)
@@ -228,8 +229,8 @@ def make_region_candidate_bed(regions, results, filename, include_headers=True):
 
 def dump_results_to_file(results, filename):
     
-	with open(filename, 'w+') as file:
-		file.write(("%s\t%s\t%s\t"
+    with open(filename, 'w+') as f:
+        f.write(("%s\t%s\t%s\t"
                  + "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"
 				 + "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t")
                 % ("Pair_Name", "Product_Size", "Overall_Penalty",
@@ -237,18 +238,20 @@ def dump_results_to_file(results, filename):
 				   "Reverse_Name", "Reverse_Sequence", "Reverse_Start", "Reverse_Stop", "Reverse_Length", "Reverse_Penalty", "Reverse_Tm", "Reverse_GC_Percent"
                    )
                 )
-		for assembly in results[0].ispcr:
-			file.write("%s\t%s\t%s\t" % ("isPCR["+assembly+"]_amplicon_count", "isPCR["+assembly+"]_found_target", "isPCR["+assembly+"]_off_target_count"))
-		file.write("%s\t" % ("Filtering_Results",))
-		file.write("\n")
+        for assembly in results[0].ispcr:
+            f.write("%s\t%s\t%s\t" % ("isPCR["+assembly+"]_amplicon_count", "isPCR["+assembly+"]_found_target", "isPCR["+assembly+"]_off_target_count"))
+        
+        f.write("%s\t" % ("Filtering_Results",))
+        f.write("\n")
         for pair in results:
-			file.write("%s\t%d\t%f\t" % (pair.name, pair.size, pair.penalty))
-			file.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.forward.name, pair.forward.sequence.upper(), pair.forward.start, pair.forward.stop, pair.forward.length, pair.forward.penalty, pair.forward.tm, pair.forward.gc))
-			file.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.reverse.name, pair.reverse.sequence.upper(), pair.reverse.start, pair.reverse.stop, pair.reverse.length, pair.reverse.penalty, pair.reverse.tm, pair.reverse.gc))
-			for assembly in pair.ispcr:
-				file.write('%d\t%s\t%d\t' % (pair.ispcr[assembly]['count'], pair.ispcr[assembly]['found_proper_amplicon'], pair.ispcr[assembly]['non_target_count']))
-			file.write('%s\t' % ("; ".join(pair.filter_results),))
-			file.write('\n')
+            f.write("%s\t%d\t%f\t" % (pair.name, pair.size, pair.penalty))
+            f.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.forward.name, pair.forward.sequence.upper(), pair.forward.start, pair.forward.stop, pair.forward.length, pair.forward.penalty, pair.forward.tm, pair.forward.gc))
+            f.write("%s\t%s\t%d\t%d\t%d\t%f\t%f\t%f\t" % (pair.reverse.name, pair.reverse.sequence.upper(), pair.reverse.start, pair.reverse.stop, pair.reverse.length, pair.reverse.penalty, pair.reverse.tm, pair.reverse.gc))
+            for assembly in pair.ispcr:
+                f.write('%d\t%s\t%d\t' % (pair.ispcr[assembly]['count'], pair.ispcr[assembly]['found_proper_amplicon'], pair.ispcr[assembly]['non_target_count']))
+            
+            f.write('%s\t' % ("; ".join(pair.filter_results),))
+            f.write('\n')
 #end dump_results_to_file()
             
 def fetch_sequence(region):
@@ -485,8 +488,7 @@ def parse_primer3_output(region, data):
     results = []
     if num_results > 0:
         for i in range(num_results):
-            
-			forward = Primer(genome_build,
+            forward = Primer(gargs.genome,
 							 "LEFT", 
                              "%s_%d_%s" % (data_dict['SEQUENCE_ID'], i, "F"),
                              data_dict['PRIMER_LEFT_%d_SEQUENCE' % (i,)],
@@ -499,7 +501,7 @@ def parse_primer3_output(region, data):
                              float(data_dict['PRIMER_LEFT_%d_GC_PERCENT' % (i,)]),
                              dict((key.replace('PRIMER_LEFT_%d' % (i,), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_LEFT_%d' % (i,)))
                             )
-			reverse = Primer(genome_build,
+            reverse = Primer(gargs.genome,
 							 "RIGHT", 
                              "%s_%d_%s" % (data_dict['SEQUENCE_ID'], i, "R"),
                              data_dict['PRIMER_RIGHT_%d_SEQUENCE' % (i,)],
@@ -512,7 +514,7 @@ def parse_primer3_output(region, data):
                              float(data_dict['PRIMER_RIGHT_%d_GC_PERCENT' % (i,)]),
                              dict((key.replace('PRIMER_RIGHT_%d' % (i,), ''),val) for (key,val) in data_dict.iteritems() if key.startswith('PRIMER_RIGHT_%d' % (i,)))
                             )
-			pair = PrimerResult(genome_build,
+            pair = PrimerResult(gargs.genome,
 								"%s_%d" % (data_dict['SEQUENCE_ID'], i), 
                                 forward, 
                                 reverse, 
@@ -527,115 +529,44 @@ def parse_primer3_output(region, data):
     return results
 #end parse_primer3_output()
 
-def read_gfServer_log(infile):
-    with open(infile, 'r') as f:
-        for i in f:
-            if 'Server ready for queries!' in i:
-                f.close()
-                return 1
-            elif 'gfServer aborted' in i or ('error' in i and not 'getsockopt error' in i):
-                f.close()
-                return -1
-    return 0
-#end read_gfServer_log()
-    
-def genome_assembly_to_isPCR_port(assembly):
-	if assembly in ['hg19', 'GRCh37']:
-		return (17779, '/mnt/ref/reference/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.2bit')
-	elif assembly in ['hg38', 'GRCh38']:
-		return (17778, '/mnt/ref/reference/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.2bit')
-#end genome_assembly_to_isPCR_port()
-	
-def start_gfserver(assembly):
-    sys.stderr.write('Starting gfServer\n')
-	port, reference = genome_assembly_to_isPCR_port(assembly)
-    if subprocess.call('{gfserver} status {gfhost} {gfport}'.format(gfserver=gargs.gfserve, gfhost=gargs.gfhost, gfport=gargs.gfport), shell=True) == 0:
-        sys.stderr.write('gfServer appears to be running. Skipping gfServer startup...\n\n\n')
-        return
-    
-    cwd = os.getcwd()
-    log_dir = os.path.join(cwd, 'gfserv')
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-	log_file = os.path.join(log_dir, 'gfserver.%s.temp.log' % (assembly,))
-    if os.path.exists(log_file):
-        os.remove(log_file)   
-    os.chdir(os.path.dirname(gargs.genome2bit))
-    try:
-        time.sleep(15)
-        cmd = '{gfserver} -canStop -tileSize=11 -stepSize=5 -log="'+log_file+'" start {gfhost} {gfport} {genome} &> /dev/null &'.format(gfserver=gargs.gfserve, gfhost=gargs.gfhost, gfport=gargs.gfport, genome=os.path.basename(gargs.genome2bit))
-        #print cmd
-        subprocess.check_call(cmd, shell=True)
-    except subprocess.CalledProcessError as e:
-        print >> sys.stderr, "Execution failed for gfServer:", e
-        sys.exit(1)
-    os.chdir(cwd)
-    time.sleep(5) # sleep 5 sec
-    gfready = 0
-    while not gfready:
-        gfready = read_gfServer_log(log_file)
-        if gfready == -1:
-            print 'gfServer start error! Check '+log_file+' file, exit.'
-            sys.exit(1)
-        time.sleep(5)
-    sys.stderr.write('gfServer ready\n\n\n')
-#end start_gfServer()
 
-def stop_gfserver(assembly):
-	port, reference = genome_assembly_to_isPCR_port(assembly)
-    cmd = [
-        gargs.gfserve,
-        'stop', 
-        gargs.gfhost,
-        str(gargs.gfport)
-    ]
-    p = subprocess.Popen(cmd)
-    p.communicate()
-#end stop_gfserver()
-
-
-def run_in_silico_pcr(primerpair, assembly):
-	port, reference = genome_assembly_to_isPCR_port(assembly)
-    cmd = [
-        gargs.gfpcr, 
-        gargs.gfhost,
-        str(gargs.gfport),
-        os.path.dirname(gargs.genome2bit), 
-        primerpair.forward.sequence,
-        primerpair.reverse.sequence,
-        'stdout',
-        '-out=bed',
-        '-maxSize=4000',
-        '-minPerfect=15',
-        '-minGood=15',
-        #'-name=%s' % (primerpair.name,) #using this option seems to make gfPcr throw a (harmless?) error freeing memory, we dont really need the name anyway so do not provide.
-    ]
-    #devnull = open(os.devnull, 'wb')
-    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (stdoutdata, stderrdata) = p.communicate()
-    #print stdoutdata
-    #print stderrdata
+def start_gfservers():
+    servers = []
+    servers.append(gfServer(gargs.genome, gargs.gfserve, gargs.gfhost, gargs.gfport, gargs.genome2bit))
     
-    hits =  pybedtools.BedTool(stdoutdata, from_string=True)
-	hits.saveas("ispcr/%s.ispcr.%s.bed" % (primerpair.name, assembly))
+    for i in range(len(gargs.altgfserve)):
+        parts = gargs.altgfserve[i].split('|')
+        servers.append(gfServer(parts[0], gargs.gfserve, gargs.gfhost, int(parts[1]), parts[2]))
+    
+    for server in servers:
+        server.start()
+        
+    return servers
+#end start_gfservers()
+
+def run_in_silico_pcr(primerpair, server):
+    
+    hits = server.isPCR(primerpair.forward.sequence, primerpair.reverse.sequence, out='bed', maxsize=4000, minPerfect=15, minGood=15)
+    hits.saveas("ispcr/%s.ispcr.%s.bed" % (primerpair.name, server.name))
     
     count = len(hits)
-	pair_interval = primerpair.get_interval(assembly)
-	messages = []
-	if pair_interval is None:
-		print "Did not get an interval, so cannot assess specificity of isPCR results (will assume all off-target), but found %d total amplicons..." % (count,)
-		found_proper_amplicon = False
-		non_target_count = count
-		messages = 'Liftover of interval from assembly %s to assembly %s failed, so cannot assess specificity of isPCR results (will assume all off-target)' % (primerpair.assembly, assembly)
-	else:
-		found_proper_amplicon = hits.any_hits(pair_interval)
-		non_target_count = len(hits) - int(hits.any_hits(pair_interval))
-		print "   -> Found %d total amplicons, %sincluding targeted site, and %d off-target amplicons in assembly %s" % (count, ("" if found_proper_amplicon else "NOT "), non_target_count, assembly)
-		
-	if not hasattr(primerpair, 'ispcr'):
-		primerpair.ispcr = {}
-	primerpair.ispcr[assembly] = {
-		'assembly': assembly,
+    pair_interval = primerpair.get_interval(server.name)
+    messages = []
+    if pair_interval is None:
+        print "Did not get an interval, so cannot assess specificity of isPCR results (will assume all off-target), but found %d total amplicons..." % (count,)
+        found_proper_amplicon = False
+        non_target_count = count
+        messages = 'Liftover of interval from assembly %s to assembly %s failed, so cannot assess specificity of isPCR results (will assume all off-target)' % (primerpair.assembly, server.name)
+    else:
+        found_proper_amplicon = hits.any_hits(pair_interval)
+        non_target_count = len(hits) - int(hits.any_hits(pair_interval))
+        print "   -> Found %d total amplicons, %sincluding targeted site, and %d off-target amplicons in assembly %s" % (count, ("" if found_proper_amplicon else "NOT "), non_target_count, server.name)
+
+    if not hasattr(primerpair, 'ispcr'):
+        primerpair.ispcr = {}
+        
+    primerpair.ispcr[server.name] = {
+		'assembly': server.name,
         'count': count,
         'found_proper_amplicon': found_proper_amplicon,
         'non_target_count': non_target_count,
@@ -673,9 +604,11 @@ class PrimerResult:
                                                                  2, 
                                                                  ",".join([str(self.forward.length), str(self.reverse.length)]), 
                                                                  ",".join([str(self.forward.start - self.forward.start), str(self.reverse.start - self.forward.start)]))
-    def get_interval(self):
+    def get_interval(self, assembly=None):
         i = Interval(self.forward.chrom, min(self.forward.start, self.reverse.start), max(self.forward.stop, self.reverse.stop), self.name, strand='+')
         i.file_type = 'bed'
+        if assembly is not None and assembly != self.assembly:
+            i = liftover(self.assembly, i, assembly)
         return i
 #end class PrimerResult
 
@@ -697,11 +630,45 @@ class Primer:
     def get_bed_line(self):
         return "%s\t%d\t%d\t%s\t0\t+" % (self.chrom, self.start, self.stop, self.name)
     
-    def get_interval(self):
+    def get_interval(self, assembly=None):
         i = Interval(self.chrom, self.start, self.stop, self.name, strand=self.strand)
         i.file_type = 'bed'
+        if assembly is not None and assembly != self.assembly:
+            i = liftover(self.assembly, i, assembly)
         return i
 #end class Primer
+
+def liftover(curr_assembly, interval, target_assembly, species='homo_sapiens'):
+    ass_names = {
+        'hg19': 'GRCh37',
+        'hg38': 'GRCh38'
+    }
+    if curr_assembly in ass_names:
+        curr_assembly = ass_names[curr_assembly]
+    if target_assembly in ass_names:
+        target_assembly = ass_names[target_assembly]    
+
+    server = "http://grch37.rest.ensembl.org"
+    ext = "/map/%s/%s/%s:%d..%d:%d/%s?" % (species, curr_assembly, interval.chrom.replace('chr', ''), interval.start, interval.stop, -1 if interval.strand == '-' else 1, target_assembly)
+    #print server+ext
+    r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+     
+    if not r.ok:
+        r.raise_for_status()
+        sys.exit()
+     
+    decoded = r.json()
+    #print repr(decoded)
+    if len(decoded['mappings']) > 0:
+        lifted = decoded['mappings'][0]['mapped']
+        #print lifted
+        liftedInterval = Interval('chr'+lifted['seq_region_name'], lifted['start'], lifted['end'], interval.name+'_'+target_assembly, strand=('-' if lifted['strand'] == -1 else '+'))
+        liftedInterval.file_type = 'bed'
+        return liftedInterval
+    else:
+        print "Unable to convert interval %s:%d-%d from assembly %s to assembly %s" % (interval.chrom, interval.start, interval.stop, curr_assembly, target_assembly)
+        return None
+#end liftover()
 
 ###################################
 #                                 #
@@ -722,7 +689,12 @@ if __name__ == "__main__":
 
 
 
-
+#########################################
+#
+# This is the entire list of parameters  
+# that Primer3 accepts
+#
+#########################################
 # SEQUENCE_EXCLUDED_REGION
 # SEQUENCE_INCLUDED_REGION
 # SEQUENCE_PRIMER_REVCOMP
@@ -887,4 +859,3 @@ if __name__ == "__main__":
 # PRIMER_WT_TM_LT
 # PRIMER_LOWERCASE_MASKING
 # PRIMER_PAIR_WT_PRODUCT_SIZE_GT
- 

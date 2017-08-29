@@ -93,7 +93,7 @@ class gfServer(object):
             otherwise, the raw output data is returned
         """
         cmd = [
-            self.exe, 
+            os.path.join(os.path.dirname(self.exe), 'gfPcr'), 
             self.host,
             str(self.port),
             os.path.dirname(self.genome), 
