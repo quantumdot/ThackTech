@@ -23,39 +23,90 @@ def get_color(i):
 #end get_color()
 
 
-def plot_radial_intensity(ax, df, col_rad, col_int, radial_bins=1000, intensity_bins=1000):
-    #plot the 2D-histogram with colorbar
-    ax_H = ax.hist2d(df[col_rad], df[col_int], bins=[radial_bins, intensity_bins], norm=LogNorm())
-    plt.colorbar(ax_H[3], ax=ax, label="Frequency")
-    #make the linear regression
-    ax_m, ax_b = np.polyfit(df[col_rad], df[col_int], 1)
-    ax.plot(df[col_rad], ax_m * df[col_rad] + ax_b, '-', c='k')
-    #plot the mean of y along the x
-    data_stats, bin_edges, binnumber = stats.binned_statistic(df[col_rad], df[col_int], statistic='mean', bins=radial_bins, range=[(0, 1)])
-    ax.plot(bin_edges[1:], data_stats, ':', color='k')
-    #make it pretty and informative
-    ax.set_title(col_int)
-    ax.set_xlabel('Radial Position')
-    ax.set_ylabel('Relative Intensity')
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.set_aspect('equal')
+def plot_radial_intensity(ax, df, col_rad, col_int, radial_bins=1000, intensity_bins=1000, **kwargs):
+    ''' Wrapper method for plot_2D_intensity() that sets a bunch of 
+        useful defaults for plotting radial position (x) vs intensity (y).
+        
+        radial_bins and intensity_bins are proxies for xbins and ybins, respectively.
+        Other arguments to plot_2D_intensity() can be overridden via **kwargs
+    '''
+    args = {
+        'xbins': radial_bins, 
+        'ybins': intensity_bins,
+        'xrange': (0,1),
+        'yrange': (0,1),
+        'title': col_int,
+        'xlabel': 'Radial Position',
+        'ylabel': 'Relative Intensity',
+        'linreg': True,
+        'avg': True
+    }
+    args.update(kwargs)
+    return plot_2D_intensity(ax, df, col_rad, col_int, **args)
 #end plot_radial_intensity()
     
-def plot_2D_intensity(ax, df, colx, coly, bins=1000):
+def plot_2D_intensity(ax, df, xcol, ycol, xbins=1000, ybins=1000, xrange=(0,1), yrange=(0,1), title=None, xlabel=None, ylabel=None, linreg=True, avg=True, **kwargs):
+    '''Plots a 2D histogram on the supplied axis
+    
+    Parameters:
+        ax: axis to plot 2D histogram on
+        df: dataframe containing data to plot
+        xcol: column in dataframe that represents x-axis data
+        ycol: column in dataframe that represents y-axis data
+        xbins: number of bins to use on the x-axis data
+        ybins: number of bins to use on the y-axis data
+        xrange: left and right-most edges of bins in the x-axis
+        yrange: left and right-most edges of bins in the y-axis
+        title: title for the plot. If None, constructed from x and y column labels
+        xlabel: label for the x-axis of the plot. If None, constructed from the x column label
+        ylabel: label for the y-axis of the plot. If None, constructed from the y column label
+        linreg: if True, plot a linear regression of the data
+        avg: if True, plot a binned mean across the x-axis
+        **kwargs: additional arguments to pass to hist2D method
+        
+    Returns:
+        Dict of the following items:
+            hist2d: Tuple contianing the following items:
+                - counts: 2D array of histogram counts
+                - xedges: 1D array of x edges
+                - yedges: 1D array of y edges
+                - Image: 2D array of image data
+            linreg: Present if linreg is True. Tuple containing the following items:
+                - m: slope of the linear regression
+                - b: y-intercept of the linear regression
+            avg: Present if avg is True. Tuple containing the following items:
+                - statistic: values of the mean statistic for each bin
+                - bin_edges: bin edges
+                - binnumber: an integer for each observation that represents the bin in which this observation falls. Array has the same length as values.
+        
+    '''
+    return_values = {}
     #plot the 2D-histogram with colorbar
-    ax_H = ax.hist2d(df[colx], df[coly], bins=bins, norm=LogNorm(), range=[[0,1],[0,1]])#, alpha=0.1, s=10, linewidths=0)
+    ax_H = ax.hist2d(df[colx], df[coly], bins=[xbins, ybins], norm=LogNorm(), range=[xrange,yrange], **kwargs)#, alpha=0.1, s=10, linewidths=0)
     plt.colorbar(ax_H[3], ax=ax, label="Frequency")
-    #make the linear regression
-    m, b = np.polyfit(df[colx], df[coly], 1)
-    ax.plot(df[colx], m * df[colx] + b, '-', c='k')
+    return_values['hist2d'] = ax_H
+    
+    if linreg:
+        #make the linear regression
+        m, b = np.polyfit(df[colx], df[coly], 1)
+        ax.plot(df[colx], m * df[colx] + b, '-', c='k')
+        return_values['linreg'] = (m, b)
+    
+    if avg:
+        #plot the mean of y along the x
+        data_stats, bin_edges, binnumber = stats.binned_statistic(df[colx], df[coly], statistic='mean', bins=xbins, range=xrange)
+        ax.plot(bin_edges[1:], data_stats, ':', color='k')
+        return_values['avg'] = (data_stats, bin_edges, binnumber)
+    
     #make it pretty and informative
-    ax.set_title(colx + ' vs. ' + coly)
-    ax.set_xlabel(colx + ' Intensity')
-    ax.set_ylabel(coly + ' Intensity')
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
+    ax.set_title(colx + ' vs. ' + coly) if (title is None) else ax.set_title(title)
+    ax.set_xlabel(colx + ' Intensity') if xlabel is None else ax.set_xlabel(xlabel)
+    ax.set_ylabel(coly + ' Intensity') if ylabel is None else ax.set_ylabel(ylabel)
+    ax.set_xlim(xrange)
+    ax.set_ylim(yrange)
     ax.set_aspect('equal')
+    
+    return return_values
 #end plot_2D_intensity()
 
 def plot_violin_intensities(ax, dfs, col):
@@ -148,6 +199,5 @@ def plot_radial_cumulative_sum(ax, dfs, colx, coly, labels):
     ax.set_ylim(0, 1.0)
     legend = ax.legend(loc='best')
 #end plot_line_intensities()
-
 
 
