@@ -230,7 +230,7 @@ def write_2D_hist_data(hist_data, filename, genotype, expid):
 	
 	template = '{geno}\t{expid}\t{rad}\t{inten}\t{cnt}\n'
 	
-	with open('output_filename', 'w+') as of:
+	with open(filename, 'w+') as of:
 		of.write('Geno\tExp\tRad\tInten\tCount\n')
 		for i in range(len(ybins)-1):
 			for j in range(len(xbins)-1):
