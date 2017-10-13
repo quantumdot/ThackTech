@@ -214,7 +214,7 @@ def plot_raw_data(dfs, labels, hdatabasefn, rbins=500, ibins=500):
 		for i in range(1, df_cols):
 			ax = plt.subplot2grid(gridsize, (d,i-1))
 			hist_data = ip.plot_radial_intensity(ax, df, df.columns[0], df.columns[i], radial_bins=rbins, intensity_bins=ibins)
-			write_2D_hist_data(hist_data, '{}.{}.tsv'.format(hdatabasefn, labels[d]), labels[d], 1)
+			write_2D_hist_data(hist_data['hist2d'], '{}.{}.tsv'.format(hdatabasefn, labels[d]), labels[d], 1)
 			
 		for j in range(len(combinations)):
 			ax = plt.subplot2grid(gridsize, (d,df_cols+j-1))
