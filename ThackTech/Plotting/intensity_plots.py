@@ -82,26 +82,26 @@ def plot_2D_intensity(ax, df, xcol, ycol, xbins=1000, ybins=1000, xrange=(0,1), 
     '''
     return_values = {}
     #plot the 2D-histogram with colorbar
-    ax_H = ax.hist2d(df[colx], df[coly], bins=[xbins, ybins], norm=LogNorm(), range=[xrange,yrange], **kwargs)#, alpha=0.1, s=10, linewidths=0)
+    ax_H = ax.hist2d(df[xcol], df[ycol], bins=[xbins, ybins], norm=LogNorm(), range=[xrange,yrange], **kwargs)#, alpha=0.1, s=10, linewidths=0)
     plt.colorbar(ax_H[3], ax=ax, label="Frequency")
     return_values['hist2d'] = ax_H
     
     if linreg:
         #make the linear regression
-        m, b = np.polyfit(df[colx], df[coly], 1)
-        ax.plot(df[colx], m * df[colx] + b, '-', c='k')
+        m, b = np.polyfit(df[xcol], df[ycol], 1)
+        ax.plot(df[xcol], m * df[xcol] + b, '-', c='k')
         return_values['linreg'] = (m, b)
     
     if avg:
         #plot the mean of y along the x
-        data_stats, bin_edges, binnumber = stats.binned_statistic(df[colx], df[coly], statistic='mean', bins=xbins, range=xrange)
+        data_stats, bin_edges, binnumber = stats.binned_statistic(df[xcol], df[ycol], statistic='mean', bins=xbins, range=xrange)
         ax.plot(bin_edges[1:], data_stats, ':', color='k')
         return_values['avg'] = (data_stats, bin_edges, binnumber)
     
     #make it pretty and informative
-    ax.set_title(colx + ' vs. ' + coly) if (title is None) else ax.set_title(title)
-    ax.set_xlabel(colx + ' Intensity') if xlabel is None else ax.set_xlabel(xlabel)
-    ax.set_ylabel(coly + ' Intensity') if ylabel is None else ax.set_ylabel(ylabel)
+    ax.set_title(xcol + ' vs. ' + coly) if (title is None) else ax.set_title(title)
+    ax.set_xlabel(xcol + ' Intensity') if xlabel is None else ax.set_xlabel(xlabel)
+    ax.set_ylabel(xcol + ' Intensity') if ylabel is None else ax.set_ylabel(ylabel)
     ax.set_xlim(xrange)
     ax.set_ylim(yrange)
     ax.set_aspect('equal')
