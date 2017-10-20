@@ -115,6 +115,7 @@ def preprocess_files(args):
 def preprocess_worker(f, args):
 	try:
 		sys.stderr.write('Processing file {}....\n'.format(f))
+		label = get_label_from_path(f)
 		dest_base = os.path.join(args.dir, get_label_from_path(f))
 		data = pd.read_csv(f, sep='\t', comment='#', skip_blank_lines=True)
 		data = data.dropna()
@@ -124,7 +125,7 @@ def preprocess_worker(f, args):
 			data.to_csv(dest_base+'.tsv', sep='\t', index=False)
 		#print data
 		#print data.describe()
-		fig = plot_raw_data([data])
+		fig = plot_raw_data([data], [label], [dest_base])
 		save_figure(fig, dest_base, args.figformat)
 			
 		#save binned data
