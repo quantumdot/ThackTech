@@ -125,7 +125,7 @@ def preprocess_worker(f, args):
 			data.to_csv(dest_base+'.tsv', sep='\t', index=False)
 		#print data
 		#print data.describe()
-		fig = plot_raw_data([data], [label], [dest_base])
+		fig = plot_raw_data([data], [label], os.path.join(args.dir, 'hist2d'))
 		save_figure(fig, dest_base, args.figformat)
 			
 		#save binned data
