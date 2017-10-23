@@ -3,6 +3,7 @@ import sys
 import gzip
 import errno
 import subprocess
+from docutils.nodes import line
 
 
 
@@ -159,3 +160,11 @@ def prepend_file(filename, data):
     with open(filename, 'w') as modified:
         modified.write(data + origional_data)
 #end prepend_file()
+
+
+def get_first_line(filename):
+	'''Gets the first line of the given file '''
+	with open(filename, 'r') as f:
+		line = f.readline()
+	return line.strip()
+#end get_first_line()
