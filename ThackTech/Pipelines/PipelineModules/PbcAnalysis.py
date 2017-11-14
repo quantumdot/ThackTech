@@ -70,7 +70,9 @@ class PbcAnalysis(PipelineModule):
 		if paired_end is None:
 			raise Exception('paired_end is required!')
 	
-		
+		#filter_exclude = 1548 #read unmapped, mate unmapped, read fails platform/vendor quality checksm, read is PCR or optical duplicate
+		filter_exclude = 1804 #read unmapped, mate unmapped, read fails platform/vendor quality checksm, read is PCR or optical duplicate, not primary alignment
+
 	
 		# The following line(s) download your file inputs to the local file system
 		# using variable names for the filenames.
@@ -97,7 +99,7 @@ class PbcAnalysis(PipelineModule):
 				#filter:  -F 1804 FlAG bits to exclude; -f 2 FLAG bits to reqire; -q 30 exclude MAPQ < 30; -u uncompressed output
 				#exclude FLAG 1804: unmapped, next segment unmapped, secondary alignments, not passing platform q, PCR or optical duplicates
 				#require FLAG 2: properly aligned
-				"samtools view -F 1804 -f 2 %s -u %s" % (samtools_params, raw_bam_filename),
+				"samtools view -F %d -f 2 %s -u %s" % (filter_exclude, samtools_params, raw_bam_filename),
 				#sort:  -n sort by name; - take input from stdin; out to specified filename
 				"samtools sort -n - %s" % (tmp_filt_bam_prefix)], stderr=cxt.log)  # Will produce name sorted BAM
 			if err:
@@ -111,9 +113,9 @@ class PbcAnalysis(PipelineModule):
 				#fill in mate coordinates, ISIZE and mate-related flags
 				#fixmate requires name-sorted alignment; -r removes secondary and unmapped (redundant here because already done above?)
 				#- send output to stdout
-				"samtools fixmate -r %s -" %(tmp_filt_bam_filename),
+				"samtools fixmate %s -" %(tmp_filt_bam_filename),
 				#repeat filtering after mate repair
-				"samtools view -F 1804 -f 2 -u -",
+				"samtools view -F %d -f 2 -u -" % (filter_exclude,),
 				#produce the coordinate-sorted BAM
 				"samtools sort - %s" %(filt_bam_prefix)], stderr=cxt.log)
 			#print subprocess.check_output('ls -l', shell=True)
@@ -125,7 +127,7 @@ class PbcAnalysis(PipelineModule):
 			# Obtain name sorted BAM file
 			# ==================  
 			with open(filt_bam_filename, 'w') as fh:
-				subprocess.check_call(['samtools', 'view', '-F', '1804', samtools_params, '-b', raw_bam_filename], stdout=fh, stderr=cxt.log)
+				subprocess.check_call(['samtools', 'view', '-F', str(filter_exclude), samtools_params, '-b', raw_bam_filename], stdout=fh, stderr=cxt.log)
 				
 		subprocess.check_call(['samtools', 'index', filt_bam_filename, filt_bam_prefix+'.bai'], stderr=cxt.log)
 		
@@ -152,7 +154,7 @@ class PbcAnalysis(PipelineModule):
 			# Create final name sorted BAM
 			# ============================
 			with open(final_bam_filename, 'w') as fh:
-				subprocess.check_call(['samtools', 'view', '-F', '1804', '-f2', '-b', filt_bam_filename], stdout=fh, stderr=cxt.log)
+				subprocess.check_call(['samtools', 'view', '-F', str(filter_exclude), '-f2', '-b', filt_bam_filename], stdout=fh, stderr=cxt.log)
 			#namesorting is needed for bam->bedPE, so moved to xcor
 			#final_nmsrt_bam_prefix = raw_bam_basename + ".filt.nmsrt.nodup"
 			#final_nmsrt_bam_filename = final_nmsrt_bam_prefix + ".bam"
@@ -163,7 +165,7 @@ class PbcAnalysis(PipelineModule):
 			# Index final position sorted BAM
 			# ============================
 			with open(final_bam_filename, 'w') as fh:
-				subprocess.check_call(['samtools', 'view', '-F', '1804', '-b', filt_bam_filename], stdout=fh, stderr=cxt.log)
+				subprocess.check_call(['samtools', 'view', '-F', str(filter_exclude), '-b', filt_bam_filename], stdout=fh, stderr=cxt.log)
 		# Index final bam file
 		subprocess.check_call(['samtools', 'index', final_bam_filename, final_bam_index_filename], stderr=cxt.log)
 		# Generate mapping statistics
@@ -182,13 +184,13 @@ class PbcAnalysis(PipelineModule):
 		# TotalReadPairs [tab] DistinctReadPairs [tab] OneReadPair [tab] TwoReadPairs [tab] NRF=Distinct/Total [tab] PBC1=OnePair/Distinct [tab] PBC2=OnePair/TwoPair
 		if paired_end:
 			steps = [
-				"samtools sort -no %s -" %(filt_bam_filename),
+				"samtools sort -no %s %s" % (filt_bam_filename, 'tmp_name_srt.'+filt_bam_filename),
 				"bamToBed -bedpe -i stdin",
 				r"""awk 'BEGIN{OFS="\t"}{print $1,$2,$4,$6,$9,$10}'"""
 			]
 		else:
 			steps = [
-				"bamToBed -i %s" %(filt_bam_filename), #for some reason 'bedtools bamtobed' does not work but bamToBed does
+				"bamToBed -i %s" % (filt_bam_filename), #for some reason 'bedtools bamtobed' does not work but bamToBed does
 				r"""awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$6}'"""
 			]
 		# these st
