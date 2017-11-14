@@ -3,7 +3,6 @@ import sys
 import gzip
 import errno
 import subprocess
-from docutils.nodes import line
 
 
 
