@@ -209,7 +209,7 @@ def make_read_alignment_pipeline(args, additional_args):
         if 'pbc' in args.qc:
             from ThackTech.Pipelines.PipelineModules import PbcAnalysis
             x = PbcAnalysis.PbcAnalysis(processors=args.threads)
-            x.set_resolver('bam', qc_bt_bam_resolver[0])
+            x.set_resolver('bam', qc_bt_bam_resolver)
             pipeline.append_module(x)
             
         
