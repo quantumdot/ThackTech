@@ -112,6 +112,10 @@ class PipelineSample(object):
 		self.files.append(fileinfo)
 	#end add_file()
 	
+	def clear_files(self):
+		while len(self.files) > 0:
+			self.files.pop()
+	
 	def remove_file(self, fileinfo):
 		self.files.remove(fileinfo)
 	

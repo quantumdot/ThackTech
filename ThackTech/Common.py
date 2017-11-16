@@ -48,9 +48,32 @@ def which(name, all_results=False):
 	return results
 #end which()
 
+def run_pipe2(steps):
+	if isinstance(steps, basestring):
+		command_list = steps.split('|')
+	else:
+		command_list = list(steps)
+		
+	process_list = list()
+	previous_process = None
+	for command in command_list:
+		args = shlex.split(command)
+		if previous_process is None:
+			process = subprocess.Popen(args, stdout=subprocess.PIPE)
+		else:
+			process = subprocess.Popen(args,
+                                       stdin=previous_process.stdout,
+                                       stdout=subprocess.PIPE)
+		process_list.append(process)
+		previous_process = process
+	last_process = process_list[-1]
+	output, errors = last_process.communicate()
+	status = last_process.returncode
+	result = (0 == status)
+	return result
+#end run_pipe2()
+
 def run_pipe(steps, outfile=None, stderr=None):
-	#break this out into a recursive function
-	#TODO:  capture stderr
 	p = None
 	p_next = None
 	first_step_n = 1

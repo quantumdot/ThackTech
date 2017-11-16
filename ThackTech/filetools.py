@@ -160,6 +160,12 @@ def prepend_file(filename, data):
         modified.write(data + origional_data)
 #end prepend_file()
 
+def touch(fname, times=None):
+	'''Update file timestamp '''
+	with open(fname, 'a'):
+		os.utime(fname, times)
+#end touch()
+
 
 def get_first_line(filename):
 	'''Gets the first line of the given file '''

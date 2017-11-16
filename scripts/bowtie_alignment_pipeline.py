@@ -109,7 +109,12 @@ def main():
 #end main()
 
 def make_read_alignment_pipeline(args, additional_args):
-    pipeline = AnalysisPipeline('Read Alignment')
+    if not args.skipalign:
+        pipeline_name = 'Read Alignment'
+    else:
+        pipeline_name = 'Read Alignment QC'
+
+    pipeline = AnalysisPipeline(pipeline_name)
     if args.shm:
         from ThackTech.Pipelines.PipelineModules import TransferToShm
         x = TransferToShm.TransferToShm()
@@ -197,18 +202,21 @@ def make_read_alignment_pipeline(args, additional_args):
         
             
     if (args.qc is not None) and (len(args.qc) > 0):
+        
+        def qc_bt_bam_resolver(cxt):
+            return cxt.sample.find_files(lambda f: f.basename == '{}.bam'.format(cxt.sample.name))[0]
+        
         if 'pbc' in args.qc:
             from ThackTech.Pipelines.PipelineModules import PbcAnalysis
             x = PbcAnalysis.PbcAnalysis(processors=args.threads)
-            x.set_resolver('bam', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.bam')[0])
+            x.set_resolver('bam', qc_bt_bam_resolver[0])
             pipeline.append_module(x)
             
         
         def qc_pbc_bam_resolver(cxt):
-            return cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_deduplicated_bam')[0]
+            return cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_bam')[0]
         
-        def qc_bt_bam_resolver(cxt):
-            return cxt.sample.find_files(lambda f: f.basename == '{}.bam'.format(cxt.sample.name))[0]
+        
         
         
         #if 'spp' in args.qc:

@@ -48,6 +48,7 @@ class ReadOutputManifest(PipelineModule):
 						man_files[parts[1]].companions.append(f)
 
 					count += 1
+		cxt.sample.clear_files()
 		for f in man_files.values():
 			cxt.sample.add_file(f)
 		cxt.log.write("-> Read %d items from output manifest....\n" % (count,))

@@ -182,7 +182,7 @@ class FileInfo(object):
 		
 		example:
 		>>> f = FileInfo('/path/to/some/file.txt.gz')
-		>>> f.fullpath
+		>>> f.filename_strip_all_ext
 		>>> 'file'
 		"""
 		return filetools.basename_noext(self.fullpath, complete=True)
@@ -194,7 +194,7 @@ class FileInfo(object):
 		
 		example:
 		>>> f = FileInfo('/path/to/some/file.txt.gz')
-		>>> f.fullpath
+		>>> f.ext
 		>>> '.gz'
 		"""
 		return os.path.splitext(self.basename)[1]
@@ -229,7 +229,7 @@ class FileInfo(object):
 		>>> f.basename_with_ext('bz2')
 		>>> 'file.txt.bz2'
 		"""
-		return "{}.{}".format(self.filename, new_extension)
+		return "{}.{}".format(self.filename, new_extension.lstrip('.'))
 	
 	def move(self, destfolder):
 		shutil.move(self.fullpath, destfolder)
