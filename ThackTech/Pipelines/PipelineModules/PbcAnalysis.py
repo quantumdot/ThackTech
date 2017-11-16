@@ -433,7 +433,7 @@ class PbcAnalysis(PipelineModule):
 
 
 
-def dup_parse(self, fname):
+def dup_parse(fname):
 	with open(fname, 'r') as dup_file:
 		if not dup_file:
 			return None
@@ -455,7 +455,7 @@ def dup_parse(self, fname):
 	return dup_qc
 #end dup_parse()
 
-def pbc_parse(self, fname):
+def pbc_parse(fname):
 	with open(fname, 'r') as pbc_file:
 		if not pbc_file:
 			return None
@@ -484,7 +484,7 @@ def pbc_parse(self, fname):
 	return pbc_qc
 #end pbc_parse()
 
-def flagstat_parse(self, fname):
+def flagstat_parse(fname):
 	with open(fname, 'r') as flagstat_file:
 		if not flagstat_file:
 			return None
