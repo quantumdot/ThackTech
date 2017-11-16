@@ -224,7 +224,7 @@ def make_region_candidate_bed(regions, results, filename, include_headers=True):
         bed_file.write('track db="{}" name="{}" visibility=2\n'.format(gargs.genome, "Region Canidate Primers"))
         bed_file.write("{}\t{}\t{}\t{}\t0\t.\t{}\t{}\t255,0,0\t1\t{}\t0\n".format(regions[0].chrom, pos_min, pos_max, regions[0].name.replace('.sr0', ""), pos_min, pos_max, pos_max - pos_min))
         for region in regions:
-            bed_file.write("{}\t{}\t{}\t{}\t0\t.\t{}\t{}\t255,0,0\t1\t{}\t0\n".format(region.chrom, region.start, region.stop, region.name, region.start, region.stop, region.length))
+            bed_file.write("{}\t{}\t{}\t{}\t0\t.\t{}\t{}\t0,255,0\t1\t{}\t0\n".format(region.chrom, region.start, region.stop, region.name, region.start, region.stop, region.length))
         for result in results:
             bed_file.write(result.get_bed_line())
             bed_file.write("\n")
@@ -629,14 +629,14 @@ class PrimerResult:
         self.properties = props
     #end __init__()
     
-    def get_bed_line(self):
+    def get_bed_line(self, color=(0,0,255)):
         return "{}\t{}\t{}\t{}\t0\t+\t{}\t{}\t{}\t{}\t{}\t{}".format(self.forward.chrom, 
                                                                  self.forward.start, 
                                                                  self.reverse.stop, 
                                                                  self.name, 
                                                                  self.forward.start, 
                                                                  self.reverse.stop, 
-                                                                 "255,255,255", 
+                                                                 ",".join(color), 
                                                                  2, 
                                                                  ",".join([str(self.forward.length), str(self.reverse.length)]), 
                                                                  ",".join([str(self.forward.start - self.forward.start), str(self.reverse.start - self.forward.start)]))
