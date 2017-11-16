@@ -636,7 +636,7 @@ class PrimerResult:
                                                                  self.name, 
                                                                  self.forward.start, 
                                                                  self.reverse.stop, 
-                                                                 "{0},{1},{2}".format(*color), 
+                                                                 "{0},{1},{2}".format(*color),
                                                                  2, 
                                                                  ",".join([str(self.forward.length), str(self.reverse.length)]), 
                                                                  ",".join([str(self.forward.start - self.forward.start), str(self.reverse.start - self.forward.start)]))
