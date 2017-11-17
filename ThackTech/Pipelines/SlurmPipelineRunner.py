@@ -5,7 +5,7 @@ import traceback
 #from multiprocessing import Pool, Manager 
 #from multiprocessing import Manager
 import dill	#use dill for pickling, actually supports serializing useful things! (i.e. lambdas, objects)
-import multiprocess as mp	#use this ls alternative multiprocessing from pathos, used in combination with dill
+import multiprocess as mp	#use this alternative multiprocessing from pathos, used in combination with dill
 import subprocess
 import uuid
 from ThackTech import filetools
@@ -19,7 +19,7 @@ class SlurmPipelineRunner(PipelineRunner):
 	This PipelineRunner uses the multiprocess worker pool to parallelize running
 	of pipelines on multiple samples.
 	"""
-	def __init__(self, pipeline, partition="main", nodes=1, threads=CPU_COUNT, time_limit="1:00:00", mem='4G'):
+	def __init__(self, pipeline, partition="main", nodes=1, threads=CPU_COUNT, time_limit="1:00:00", mem='4G', slurm_cmd='srun'):
 		"""
 		
 		Parameters:
@@ -28,8 +28,10 @@ class SlurmPipelineRunner(PipelineRunner):
 			nodes:		(int) 				Number of nodes to request per sample
 			threads:	(int)				Number of CPUs to request per sample
 			time_limit:	(time-string)		Approximate time limit for this SLURM job to run.
+			slurm_cmd:	(string)			Slurm command to use when spawning jobs, one of [srun, sbatch]
 		"""
 		PipelineRunner.__init__(self, pipeline)
+		self.slurm_cmd = slurm_cmd
 		self.partition = partition
 		self.nodes = nodes
 		self.threads_per_node = threads
@@ -65,26 +67,48 @@ class SlurmPipelineRunner(PipelineRunner):
 					self.tasks_statuses[samples[i].name] = MultiStatusProgressItem(samples[i].name, 'Queued...', order=i)
 					dill.dump(self.tasks_statuses[samples[i].name], ssf)
 			try:
-				
 				for i in range(len(samples)):
-					srun_cmd = [
-						'srun',
-						'--job-name', '{}_{}_{}'.format(self.pipeline.safe_name, samples[i].name, curr_time),
-						'--partition', str(self.partition),
-						'-n', str(self.nodes),
-						'--cpus-per-task', str(self.threads_per_node),
-						'--time', str(self.time_limit),
-						'--mem', self.mem,
-						#'--export', 'ALL',
-						'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
-						pipeline_pickles,
-						sample_pickles[i],
-						status_pickles[i]
-					]
-					logout.write("Running srun command:\n")
-					logout.write(" ".join(srun_cmd))
-					logout.write("\n\n")
-					logout.flush()
+					if self.slurm_cmd == 'srun':
+						job_name = '{}_{}_{}'.format(self.pipeline.safe_name, samples[i].name, curr_time)
+						srun_cmd = [
+							'srun',
+							'--job-name', job_name,
+							'--partition', str(self.partition),
+							'-n', str(self.nodes),
+							'--cpus-per-task', str(self.threads_per_node),
+							'--time', str(self.time_limit),
+							'--mem', self.mem,
+							#'--export', 'ALL',
+							'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
+							pipeline_pickles,
+							sample_pickles[i],
+							status_pickles[i]
+						]
+						logout.write("Running srun command:\n")
+						logout.write(" ".join(srun_cmd))
+						logout.write("\n\n")
+						logout.flush()
+					else:
+						srun_cmd = [
+							'sbatch',
+							'--job-name', job_name,
+							'--partition', str(self.partition),
+							'-n', str(self.nodes),
+							'--cpus-per-task', str(self.threads_per_node),
+							'--time', str(self.time_limit),
+							'--mem', self.mem,
+							#'--export', 'ALL',
+							'--output', os.path.join(samples[i].dest, job_name+'.out'),
+							'--error', os.path.join(samples[i].dest, job_name+'.err'),
+							'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
+							pipeline_pickles,
+							sample_pickles[i],
+							status_pickles[i]
+						]
+						logout.write("Running sbatch command:\n")
+						logout.write(" ".join(srun_cmd))
+						logout.write("\n\n")
+						logout.flush()
 					subprocess.Popen(srun_cmd, stderr=subprocess.STDOUT, stdout=logout)
 				
 				progress = MultiStatusProgressBar(sample_count, "Total Progress", barlength=50, handle=sys.stderr).start()

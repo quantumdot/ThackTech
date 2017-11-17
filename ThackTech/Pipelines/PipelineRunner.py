@@ -52,7 +52,8 @@ def add_runner_args(argparser):
 			'nodes': 1,
 			'threads': CPU_COUNT,
 			'time_limit': "1:00:00",
-			'mem': '4G'
+			'mem': '4G',
+			'cmd': 'srun'
 		},
 		'parallel_runner': {
 			'threads': CPU_COUNT
@@ -83,6 +84,7 @@ def add_runner_args(argparser):
 	performance_group.add_argument('--slurm-partition', action='store', default=default_args['slurm_runner']['partition'], help="For slurm runner, the partition to run jobs on.")
 	performance_group.add_argument('--slurm-time', action='store', default=default_args['slurm_runner']['time_limit'], help="For slurm runner, time limit for jobs.")
 	performance_group.add_argument('--slurm-mem', action='store', default=default_args['slurm_runner']['mem'], help="For slurm runner, memory for jobs.")
+	performance_group.add_argument('--slurm-cmd', action='store', default=default_args['slurm_runner']['cmd'], help="For slurm runner, style of job invocation. One of [srun, sbatch].")
 	
 	
 	performance_group.add_argument('--module-config', action='append', default=[], help="Specify additional pipeline module config files.")
@@ -96,15 +98,16 @@ def get_configured_runner(args, pipeline, **kwargs):
 	
 	if args.runner == 'slurm':
 		from ThackTech.Pipelines import SlurmPipelineRunner
-		runner = SlurmPipelineRunner(pipeline, partition=args.slurm_partition, nodes=1, threads=args.threads, time_limit=args.slurm_time, mem=args.slurm_mem, **kwargs)
-	elif args.runner == 'parallel':
+		runner = SlurmPipelineRunner(pipeline, partition=args.slurm_partition, nodes=1, threads=args.threads, time_limit=args.slurm_time, mem=args.slurm_mem, slurm_cmd=args.slurm_cmd **kwargs)
+	else:
 		do_slurm_safety_check()
-		from ThackTech.Pipelines import ParallelPipelineRunner
-		runner = ParallelPipelineRunner(pipeline, args.threads)
-	else: #serial runner
-		do_slurm_safety_check()
-		from ThackTech.Pipelines import SerialPipelineRunner
-		runner = SerialPipelineRunner(pipeline)
+		
+		if args.runner == 'parallel':
+			from ThackTech.Pipelines import ParallelPipelineRunner
+			runner = ParallelPipelineRunner(pipeline, args.threads)
+		else: #serial runner
+			from ThackTech.Pipelines import SerialPipelineRunner
+			runner = SerialPipelineRunner(pipeline)
 	
 	return runner
 #end get_configured_runner()
