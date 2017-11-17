@@ -78,8 +78,7 @@ class MultiStatusProgressBar(ProgressBar):
 		#text += posttext
 		#text += self.formatTaskStatus()
 		self.lastheight = (len(self.lastmultistatus)+4)
-		self.handle.write(text)
-		self.handle.flush()
+		self.writeProgress(text)
 	
 	def formatTaskStatus(self):
 		statuses = []

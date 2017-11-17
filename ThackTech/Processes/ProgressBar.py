@@ -65,6 +65,15 @@ class ProgressBar(object):
 			self.isfirstprint = False
 		else:
 			pretext = "\033[2K\033[1G"
-		self.handle.write(pretext+self.makeProgressBar())
-		self.handle.flush()
+		self.writeProgress(pretext+self.makeProgressBar())
+		
+	def writeProgress(self, text):
+		#only write if we are not a background process
+		try:
+			if os.getpgrp() == os.tcgetpgrp(sys.stdout.fileno()):
+				self.handle.write(text)
+				self.handle.flush()
+		except:
+			pass
+	
 #end class ProgressBar(object)
