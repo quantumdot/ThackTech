@@ -159,7 +159,7 @@ def main():
     plot_group.add_argument('--showci', action='store_true', help='Plot confidence interval for average plot.')
     plot_group.add_argument('--ciwidth', action='store', default='sem', help='Confidence interval width for average plot. sem for Standard Error of the mean, std for Standard deviation, or float for percent CI (i.e. 0.95).')
     plot_group.add_argument('--genome', action='store', help='UCSC reference genome that intervals and signal are computed with (i.e. mm9, hg19, etc.). This is really only required when using --plot truebedscores.')
-    plot_group.add_argument('--colors', action='store', nargs='+', default=['r','g','b','c','m','y','k'], help="Colors to cycle through for individual samples on aggregate plots.")
+    plot_group.add_argument('--colors', action='store', nargs='+', default=['r','g','b','c','m','y','k','firebrick','darkolivegreen','navy','palevioletred'], help="Colors to cycle through for individual samples on aggregate plots.")
     plot_group.add_argument('--linewidth', action='store', type=float, default=0.5, help="Width of line used for aggregate plots (i.e. average profile).")
     
     resources_group = parser.add_argument_group('Resource Options')
