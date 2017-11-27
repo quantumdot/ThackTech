@@ -912,7 +912,10 @@ def format_tick_marks(ax):
             elif m == gopts['co'].scaleregionsize:
                 labels.append('E')
             else:
-                labels.append('{}'.format(m / gopts['co'].units[0]))
+                if m > 0:
+                    labels.append('{:+g}'.format((m - gopts['co'].scaleregionsize) / gopts['co'].units[0]))
+                else:
+                    labels.append('{:+g}'.format(m / gopts['co'].units[0]))
         ax.set_xticks(majors)
         ax.set_xticklabels(labels)
     else:
