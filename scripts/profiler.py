@@ -904,8 +904,17 @@ def make_colormap_strip(fig, samples):
 
 def format_tick_marks(ax):
     if gopts['co'].align == 'scale':
-        ax.set_xticks([-gopts['co'].upstream, 0, gopts['co'].scaleregionsize, gopts['co'].scaleregionsize + gopts['co'].downstream])
-        ax.set_xticklabels([str(-gopts['co'].upstream), 'S', 'E', '+{}'.format(gopts['co'].downstream)])
+        majors = [-gopts['co'].upstream, 0, gopts['co'].scaleregionsize, gopts['co'].scaleregionsize + gopts['co'].downstream]
+        labels = []
+        for m in majors:
+            if m == 0:
+                labels.append('S')
+            elif m == gopts['co'].scaleregionsize:
+                labels.append('E')
+            else:
+                labels.append('{}'.format(m / gopts['co'].units[0]))
+        ax.set_xticks(majors)
+        ax.set_xticklabels(labels)
     else:
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x / gopts['co'].units[0]))) # display with the proper units
 #end format_tick_marks()
