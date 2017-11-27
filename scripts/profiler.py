@@ -743,10 +743,6 @@ def add_signal_to_figure(sample):
 
 
 def make_violin_plot(ax, sample, color='k'):
-#     if gopts['args'].vline:
-#         ax.axvline(0, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
-#         if gopts['args'].align == 'scale':
-#             ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
     
     summary = ttstats.summarize_data(sample.signal_array, method=gopts['args'].summarymethod, axis=1)
     #print summary.shape
@@ -777,7 +773,6 @@ def make_violin_plot(ax, sample, color='k'):
     ax.set_ylim(bottom=sample.raw_min, top=sample.raw_max)
     ax.set_xticklabels([])
     ax.set_xticks([])
-#     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
     if not sample.show_yaxis:
         ax.set_yticklabels([])
         
@@ -814,10 +809,10 @@ def make_average_sig_plot(ax, sample, color='k'):
         
     ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
     ax.set_ylim(bottom=sample.avg_min, top=sample.avg_max)
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: ('%i')%(x / gopts['co'].units[0]))) # display with the proper units
+    format_tick_marks(ax)
+        
     if not sample.show_yaxis:
         ax.set_yticklabels([])
-        #ax.set_xticklabels([])
     return ax
 #end make_average_sig_plot()
 
@@ -832,8 +827,7 @@ def add_masked_group_to_avg_plot(ax, sample, mask, label, color='k'):
             real_mask[maskrow,] = True
         else:
             counts[0] = counts[0] + 1
-    #print real_mask
-    #print counts
+
     if gopts['args'].showci:
         metaseq.plotutils.ci_plot(gopts['x_axis'], np.ma.array(sample.signal_array, mask=real_mask), gopts['args'].ciwidth, ax, line_kwargs=dict(color=color, label=label), fill_kwargs=dict(color=color, alpha=0.3))
     else:
@@ -907,6 +901,15 @@ def make_colormap_strip(fig, samples):
     cb = mpl.colorbar.ColorbarBase(cbar_axis, cmap=cmap, norm=norm)
     cb.outline.set_linewidth(0.1)
 #end make_colormap_strip()
+
+def format_tick_marks(ax):
+    if gopts['co'].align == 'scale':
+        majors = [-gopts['co'].upstream, 0, gopts['co'].scaleregionsize, gopts['co'].scaleregionsize + gopts['co'].downstream]
+        labels = [str(-gopts['co'].upstream), 'S', 'E', '+{}'.format(gopts['co'].downstream)]
+        ax.xtics(majors, labels)
+    else:
+        ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x / gopts['co'].units[0]))) # display with the proper units
+#end format_tick_marks()
 
 
 def save_figure(fig, notes):
