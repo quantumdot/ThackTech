@@ -11,6 +11,9 @@ setup(  name='ThackTech',
         install_requires=[
             'numpy',
             'scipy',
+            'pandas',
+            'matplotlib',
+            'metaseq',
             'intervaltree',
             'pysam',
             'pybedtools',
@@ -35,6 +38,7 @@ setup(  name='ThackTech',
             "scripts/keggTermToGeneBed.py",
             "scripts/analyze_radial_intensity.py",
             "scripts/multi_venn.py",
-            "scripts/designCNVprobes.py"
+            "scripts/designCNVprobes.py",
+            "scripts/subsample_fastq.py"
         ],
         zip_safe=False)
