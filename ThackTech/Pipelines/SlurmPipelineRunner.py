@@ -100,10 +100,12 @@ class SlurmPipelineRunner(PipelineRunner):
 							#'--export', 'ALL',
 							'--output', os.path.join(samples[i].dest, job_name+'.out'),
 							'--error', os.path.join(samples[i].dest, job_name+'.err'),
-							'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
-							pipeline_pickles,
-							sample_pickles[i],
-							status_pickles[i]
+							'--wrap', ' '.join([
+								'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
+								pipeline_pickles,
+								sample_pickles[i],
+								status_pickles[i]
+							])
 						]
 						logout.write("Running sbatch command:\n")
 						logout.write(" ".join(srun_cmd))
