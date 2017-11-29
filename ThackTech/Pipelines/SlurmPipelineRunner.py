@@ -68,8 +68,8 @@ class SlurmPipelineRunner(PipelineRunner):
 					dill.dump(self.tasks_statuses[samples[i].name], ssf)
 			try:
 				for i in range(len(samples)):
+					job_name = '{}_{}_{}'.format(self.pipeline.safe_name, samples[i].name, curr_time)
 					if self.slurm_cmd == 'srun':
-						job_name = '{}_{}_{}'.format(self.pipeline.safe_name, samples[i].name, curr_time)
 						srun_cmd = [
 							'srun',
 							'--job-name', job_name,
