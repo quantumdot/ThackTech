@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest
 from ThackTech.Pipelines.FileInfo import FileInfo
@@ -21,7 +22,7 @@ class TestFileInfo(unittest.TestCase):
         finfo = FileInfo('/path/to/some/file.ext1.ext2')
         self.assertEqual(finfo.basename, 'file.ext1.ext2')
         self.assertEqual(finfo.basename_with_ext('ext3'), 'file.ext1.ext3')
-        self.assertEqual(finfo.dirname, '/path/to/some')
+        self.assertEqual(finfo.dirname, os.path.abspath('/path/to/some'))
         self.assertEqual(finfo.ext, '.ext2')
         self.assertEqual(finfo.filename, 'file.ext1')
         self.assertEqual(finfo.filename_strip_all_ext, 'file')
