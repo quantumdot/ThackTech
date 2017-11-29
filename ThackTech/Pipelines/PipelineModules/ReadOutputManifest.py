@@ -21,7 +21,7 @@ class ReadOutputManifest(PipelineModule):
 	#end __declare_resolvers()
 	
 	def run(self, cxt):
-		cxt.log.write("-> Reading cxt.sample output manifest....\n")
+		cxt.log.write("-> Reading output manifest for sample {}....\n".format(cxt.sample.name))
 		cxt.log.flush()
 		count = 0
 		man_files = {}
