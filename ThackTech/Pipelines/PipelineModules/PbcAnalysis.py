@@ -76,7 +76,8 @@ class PbcAnalysis(PipelineModule):
 		with open(raw_bam_file_mapstats_filename, 'w') as fh:
 			flagstat_command = "samtools flagstat {}".format(input_bam.fullpath)
 			cxt.log.write(flagstat_command+"\n")
-			subprocess.check_call(shlex.split(flagstat_command), stdout=fh)
+			cxt.log.flush()
+			subprocess.check_call(shlex.split(flagstat_command), stdout=fh, stderr=cxt.log)
 
 		filt_bam_prefix = input_bam.basename_with_ext("filt.srt")
 		filt_bam_filename = filt_bam_prefix + ".bam"
@@ -101,9 +102,10 @@ class PbcAnalysis(PipelineModule):
 				# sort:  -n sort by name; - take input from stdin;
 				# out to specified filename
 				# Will produce name sorted BAM
-				"samtools sort -n - {}".format(tmp_filt_bam_prefix)])
+				"samtools sort -n - {}".format(tmp_filt_bam_prefix)], stderr=cxt.log)
 			if err:
 				cxt.log.write("samtools error: {}\n".format(err))
+				cxt.log.flush()
 				
 				
 			# Remove orphan reads (pair was removed)and read pairs mapping to different chromosomes
@@ -118,7 +120,7 @@ class PbcAnalysis(PipelineModule):
 				"samtools view -F 1804 -f 2 -u -",
 				
 				# produce the coordinate-sorted BAM
-				"samtools sort - {}".format(filt_bam_prefix)])
+				"samtools sort - {}".format(filt_bam_prefix)], stderr=cxt.log)
 			
 		else:  # single-end data
 			# =============================
@@ -130,7 +132,8 @@ class PbcAnalysis(PipelineModule):
 			with open(filt_bam_filename, 'w') as fh:
 				samtools_filter_command = "samtools view -F 1804 {stparams} -b {bam}".format(stparams=samtools_params, bam=input_bam.fullpath)
 				cxt.log.write(samtools_filter_command+"\n")
-				subprocess.check_call(shlex.split(samtools_filter_command), stdout=fh)
+				cxt.log.flush()
+				subprocess.check_call(shlex.split(samtools_filter_command), stdout=fh, stderr=cxt.log)
 
 		# ========================
 		# Mark duplicates
@@ -147,13 +150,14 @@ class PbcAnalysis(PipelineModule):
 			"REMOVE_DUPLICATES=false"
 			])
 		cxt.log.write(picard_string+"\n")
-		subprocess.check_output(shlex.split(picard_string))
+		cxt.log.flush()
+		subprocess.check_output(shlex.split(picard_string), stderr=cxt.log)
 		os.rename(tmp_filt_bam_filename, filt_bam_filename)
 
 		if paired_end:
 			final_bam_prefix = input_bam.basename_with_ext("filt.srt.nodup")
 		else:
-			final_bam_prefix = input_bam.basename_with_ext(".filt.nodup.srt")
+			final_bam_prefix = input_bam.basename_with_ext("filt.nodup.srt")
 			
 		final_bam_filename = final_bam_prefix + ".bam"  # To be stored
 		final_bam_index_filename = final_bam_filename + ".bai"  # To be stored
@@ -171,18 +175,21 @@ class PbcAnalysis(PipelineModule):
 		# ============================
 		with open(final_bam_filename, 'w') as fh:
 			cxt.log.write(samtools_dedupe_command+"\n")
-			subprocess.check_call(shlex.split(samtools_dedupe_command), stdout=fh)
+			cxt.log.flush()
+			subprocess.check_call(shlex.split(samtools_dedupe_command), stdout=fh, stderr=cxt.log)
 			
 		# Index final bam file
 		samtools_index_command = "samtools index {} {}".format(final_bam_filename, final_bam_index_filename)
 		cxt.log.write(samtools_index_command+"\n")
-		subprocess.check_output(shlex.split(samtools_index_command))
+		cxt.log.flush()
+		subprocess.check_output(shlex.split(samtools_index_command), stderr=cxt.log)
 
 		# Generate mapping statistics
 		with open(final_bam_file_mapstats_filename, 'w') as fh:
 			flagstat_command = "samtools flagstat {}".format(final_bam_filename)
 			cxt.log.write(flagstat_command+"\n")
-			subprocess.check_call(shlex.split(flagstat_command), stdout=fh)
+			cxt.log.flush()
+			subprocess.check_call(shlex.split(flagstat_command), stdout=fh, stderr=cxt.log)
 
 		# =============================
 		# Compute library complexity
@@ -216,9 +223,10 @@ class PbcAnalysis(PipelineModule):
 			"uniq -c",
 			r"""awk 'BEGIN{mt=0;m0=0;m1=0;m2=0} ($1==1){m1=m1+1} ($1==2){m2=m2+1} {m0=m0+1} {mt=mt+$1} END{printf "%d\t%d\t%d\t%d\t%f\t%f\t%f\n",mt,m0,m1,m2,m0/mt,m1/m0,m1/m2}'"""
 			])
-		out, err = Common.run_pipe(steps, pbc_file_qc_filename)
+		out, err = Common.run_pipe(steps, pbc_file_qc_filename, stderr=cxt.log)
 		if err:
 			cxt.log.write("PBC file error: {}\n".format(err))
+			cxt.log.flush()
 
 		
 		cxt.log.write("Calculating QC metrics\n")
@@ -236,6 +244,7 @@ class PbcAnalysis(PipelineModule):
 		cxt.log.write("final_mapstats_qc: {}\n".format(final_mapstats_qc)),
 		cxt.log.write("dup_qc: {}\n".format(dup_qc))
 		cxt.log.write("pbc_qc: {}\n".format(pbc_qc))
+		cxt.log.flush()
 
 		# Return links to the output files and values.
 		out_files = []
@@ -260,6 +269,7 @@ class PbcAnalysis(PipelineModule):
 			"duplicate_fraction": str(dup_qc.get('percent_duplication'))
 		}
 		cxt.log.write("Exiting with output:\n{}\n\n".format(pformat(data)))
+		cxt.log.flush()
 		
 		return out_files
 	#end run_filter_qc2()

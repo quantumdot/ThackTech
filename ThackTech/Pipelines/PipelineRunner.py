@@ -53,7 +53,7 @@ def add_runner_args(argparser):
 			'threads': CPU_COUNT,
 			'time_limit': "1:00:00",
 			'mem': '4G',
-			'cmd': 'srun'
+			'cmd': 'sbatch'
 		},
 		'parallel_runner': {
 			'threads': CPU_COUNT
