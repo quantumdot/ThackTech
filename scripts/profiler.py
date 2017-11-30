@@ -650,8 +650,10 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
         
         if 'violin' in gopts['args'].plot and 'avg' in gopts['args'].plot:
             row = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
+            
         elif 'violin' in gopts['args'].plot or 'avg' in gopts['args'].plot:
             row = gopts['fig_rows'] - gopts['args'].avgplotrows
+            
         else:
             row = gopts['fig_rows'] #should probably not be able to get here....
             
@@ -820,6 +822,7 @@ def make_sig_heatmap(ax, sample):
             percentile=False,
             sort_by=sample.sort_order
     )
+    format_tick_marks(ax)
     
     #side label options
     if gopts['args'].ylabelrot != 90:
