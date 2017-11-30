@@ -20,11 +20,11 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	
 	if not os.path.exists(args.pipeline):
-		raise ValueError("Path %s not found!" % (args.pipeline,))
+		raise ValueError("Path %s not found for pipeline!" % (args.pipeline,))
 	if not os.path.exists(args.sample):
-		raise ValueError("Path %s not found!" % (args.sample,))
+		raise ValueError("Path %s not found for sample!" % (args.sample,))
 	if not os.path.exists(args.status):
-		raise ValueError("Path %s not found!" % (args.status,))
+		raise ValueError("Path %s not found for status!" % (args.status,))
 	
 	try:
 		with open(args.pipeline, 'rb') as pf:
