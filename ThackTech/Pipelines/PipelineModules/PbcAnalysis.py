@@ -200,13 +200,15 @@ class PbcAnalysis(PipelineModule):
 		# Obtain unique count statistics
 		pbc_file_qc_filename = final_bam_prefix + ".pbc.qc"
 		# PBC File output
-		# TotalReadPairs [tab]
-		# DistinctReadPairs [tab]
-		# OneReadPair [tab]
-		# TwoReadPairs [tab]
-		# NRF=Distinct/Total [tab]
-		# PBC1=OnePair/Distinct [tab]
-		# PBC2=OnePair/TwoPair
+		pbc_file_headers = [
+			'TotalReadPairs',
+			'DistinctReadPairs',
+			'OneReadPair',
+			'TwoReadPairs',
+			'NRF=Distinct/Total',
+			'PBC1=OnePair/Distinct',
+			'PBC2=OnePair/TwoPair'
+		]
 		if paired_end:
 			steps = [
 				"samtools sort -no {} -".format(filt_bam_filename),
@@ -227,13 +229,17 @@ class PbcAnalysis(PipelineModule):
 		if err:
 			cxt.log.write("PBC file error: {}\n".format(err))
 			cxt.log.flush()
-
+		
 		
 		cxt.log.write("Calculating QC metrics\n")
-		dup_qc = dup_parse(dup_file_qc_filename)
-		pbc_qc = pbc_parse(pbc_file_qc_filename)
 		initial_mapstats_qc = flagstat_parse(raw_bam_file_mapstats_filename)
 		final_mapstats_qc = flagstat_parse(final_bam_file_mapstats_filename)
+		dup_qc = dup_parse(dup_file_qc_filename)
+		pbc_qc = pbc_parse(pbc_file_qc_filename)
+		
+		#prepend headers to the pbc statistic file, but after parsing as the parser doesn't know about headers
+		filetools.prepend_file(pbc_file_qc_filename, '\t'.join(pbc_file_headers)+"\n")
+		
 		
 		if paired_end:
 			useable_fragments = final_mapstats_qc.get('in_total')[0]/2
