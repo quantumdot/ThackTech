@@ -42,16 +42,18 @@ class SlurmPipelineRunner(PipelineRunner):
 		curr_time = int(time.time())
 		uid = uuid.uuid4()
 		
-		filetools.ensure_dir(os.path.abspath(".pj/"))
-		prefix = os.path.abspath(".pj/{pipename}_{uid}".format(pipename=self.pipeline.safe_name, uid=uid))
-		with open("{prefix}.log".format(prefix=prefix), 'w', 0) as logout:
+		run_dir = os.path.abspath(".pj/")
+		filetools.ensure_dir(run_dir)
+		prefix = "{pipename}_{uid}".format(pipename=self.pipeline.safe_name, uid=curr_time)
+
+		with open(os.path.join(run_dir, "{prefix}.log".format(prefix=prefix)), 'w', 0) as logout:
 			sample_count = len(samples)
 			if sample_count < 1:
 				logout.write("No samples to run!")
 				logout.flush()
 				return #No samples to run!
 
-			pipeline_pickles = "{prefix}.dill".format(prefix=prefix)
+			pipeline_pickles = os.path.join(run_dir, "{prefix}.dill".format(prefix=prefix))
 			with open(pipeline_pickles, 'wb') as f:
 				dill.dump(self.pipeline, f)
 			
@@ -59,8 +61,10 @@ class SlurmPipelineRunner(PipelineRunner):
 			status_pickles = []
 			self.tasks_statuses = GLOBAL_MANAGER.dict()
 			for i in range(len(samples)):
-				sample_pickles.append("{prefix}_s{index}.dill".format(prefix=prefix, index=i))
-				status_pickles.append("{prefix}_s{index}_status.dill".format(prefix=prefix, index=i))
+				sample_prefix = "{prefix}_s{index}_{sname}".format(prefix=prefix, index=i, sname=samples[i].name)
+				
+				sample_pickles.append(os.path.join(run_dir, sample_prefix+".dill"))
+				status_pickles.append(os.path.join(run_dir, sample_prefix+"_status.dill"))
 				with open(sample_pickles[i], 'wb') as sf:
 					dill.dump(samples[i], sf)
 				with open(status_pickles[i], 'wb') as ssf:
@@ -68,11 +72,10 @@ class SlurmPipelineRunner(PipelineRunner):
 					dill.dump(self.tasks_statuses[samples[i].name], ssf)
 			try:
 				for i in range(len(samples)):
-					job_name = '{}_{}_{}'.format(self.pipeline.safe_name, samples[i].name, curr_time)
 					if self.slurm_cmd == 'srun':
 						srun_cmd = [
 							'srun',
-							'--job-name', job_name,
+							'--job-name', sample_prefix,
 							'--partition', str(self.partition),
 							'-n', str(self.nodes),
 							'--cpus-per-task', str(self.threads_per_node),
@@ -91,15 +94,15 @@ class SlurmPipelineRunner(PipelineRunner):
 					else:
 						srun_cmd = [
 							'sbatch',
-							'--job-name', job_name,
+							'--job-name', sample_prefix,
 							'--partition', str(self.partition),
 							'-n', str(self.nodes),
 							'--cpus-per-task', str(self.threads_per_node),
 							'--time', str(self.time_limit),
 							'--mem', self.mem,
 							#'--export', 'ALL',
-							'--output', os.path.join(samples[i].dest, job_name+'.out'),
-							'--error', os.path.join(samples[i].dest, job_name+'.err'),
+							'--output', os.path.join(run_dir, sample_prefix+".out"),
+							'--error', os.path.join(run_dir, sample_prefix+".err"),
 							'--wrap', ' '.join([
 								'python', os.path.join(os.path.dirname(os.path.abspath(__file__)), "PipelineEntry.py"),
 								pipeline_pickles,
