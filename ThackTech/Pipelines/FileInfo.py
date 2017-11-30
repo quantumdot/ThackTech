@@ -258,10 +258,24 @@ class FileInfo(object):
 			
 		This method will move the file that this instance represents, including any
 		companion files that are known. This instance will be updated to reflect the 
-		new directory location of any file(s) moved.
+		new directory location of any file(s) moved. If a file with the same name 
+		exists in the `destfolder`, that file is first removed in order to allow
+		the move operation to proceed
 		"""
+		dest_file = os.path.join(destfolder, self.basename)
+		
+		#make sure the destination directory exists
+		filetools.ensure_dir(destfolder)
+		
+		#check if the dest file already exists, if so remove it
+		if os.path.exists(dest_file):
+			os.remove(dest_file)
+		
+		#move the file
 		shutil.move(self.fullpath, destfolder)
-		self.__fullpath = os.path.join(destfolder, self.basename)
+		self.__fullpath = dest_file
+		
+		#move any companions
 		for companion in self.companions:
 			companion.move(destfolder)
 	
