@@ -22,7 +22,15 @@ class BaseModuleContext(object):
         return self.__module
     
     def __str__(self):
-        return "%s_%s_%s" % (self.pipeline, self.step, self.module)
+        return "{}_{}_{}".format(self.pipeline, self.step, self.module)
+       
+    def __eq__(self, other):
+        if not isinstance(self, other.__class__):
+            return False
+        return str(self) == str(other)
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
 #end class ModuleContext
 
 

@@ -1,11 +1,12 @@
 import os
+import copy
 import shutil
 import filecmp
 from ThackTech.Pipelines.Context import BaseModuleContext
 from ThackTech import filetools
 
 class FileContext(BaseModuleContext):
-	"""Represents the context of a file within the pipelineing system
+	"""Represents the context of a file within the pipeline system
     
     """
 
@@ -52,18 +53,20 @@ class FileContext(BaseModuleContext):
 	
 	def __str__(self):
 		return "%s_%s" % (super(FileContext, self).__str__(), self.role)
+	
+	
 
 #end class FileContext
 
 class FileInfo(object):
 	"""Represents a file within the pipeline framework
 	
-	Provides convience methods for working with files, as well as providing support
+	Provides convenience methods for working with files, as well as providing support
 	for tracing the generator of files. Also files can be associated with others
-	through the use of companion files (i.e. a BAM file ususally has a BAM index 
+	through the use of companion files (i.e. a BAM file usually has a BAM index 
 	file associated with it.
 	
-	FileInfo objects track the source of file through the use of three arrtibutes:
+	FileInfo objects track the source of file through the use of three attributes:
 	- generator: name of the module that produced the file
 	- role: role of the file within the output (i.e. logfile, stats, etc.)
 	- context: context that this file was generated under....... (NEED TO DEFINE THIS BETTER!!!)
@@ -79,12 +82,12 @@ class FileInfo(object):
 	def __init__(self, filepath, context=None, **attributes):
 		"""Initializes a FileInfo object
 		
-		Args:
+		Parameters:
 			filepath (str): Path of the file this object represents
 		"""	
 		#support for companion files
 		from ThackTech.Pipelines import GLOBAL_MANAGER
-		self.__companions = GLOBAL_MANAGER.list()
+		self.__companions = []
 		
 		#random extra data as needed.
 		self.__context = context
@@ -117,14 +120,24 @@ class FileInfo(object):
 		return self.__context
 	@property
 	def cxt(self):
+		""" Shorthand for self.context
+		"""
 		return self.context
 	
 	@property
 	def isfile(self):
+		"""Tests if this is an existing regular file.
+		
+		see os.path.isfile() for more info
+		"""
 		return os.path.isfile(self.__fullpath)
 	
 	@property
 	def exists(self):
+		""" Tests if this file exists.
+		
+		see os.path.exists() for more info
+		"""
 		return os.path.exists(self.__fullpath)
 	
 	@property
@@ -141,7 +154,7 @@ class FileInfo(object):
 	@property
 	def dirname(self):
 		"""Gets the directory where this file is located
-		Equivelent to os.path.dirname()
+		Equivalent to os.path.dirname()
 		
 		example:
 		>>> f = FileInfo('/path/to/some/file.txt.gz')
@@ -153,7 +166,7 @@ class FileInfo(object):
 	@property
 	def basename(self):
 		"""Gets the name of this file, including the file extension
-		Equivelent to os.path.basename()
+		Equivalent to os.path.basename()
 		
 		example:
 		>>> f = FileInfo('/path/to/some/file.txt.gz')
@@ -165,7 +178,7 @@ class FileInfo(object):
 	@property
 	def filename(self):
 		"""Gets the name of this file, without the terminal file extension
-		Equivelent to os.path.splitext(os.path.basename())[0]
+		Equivalent to os.path.splitext(os.path.basename())[0]
 		
 		example:
 		>>> f = FileInfo('/path/to/some/file.txt.gz')
@@ -177,7 +190,7 @@ class FileInfo(object):
 	@property
 	def filename_strip_all_ext(self):
 		"""Gets the name of this file, without ANY file extensions
-		Equivelent to looping os.path.splitext(os.path.basename())[0]
+		Equivalent to looping os.path.splitext(os.path.basename())[0]
 		until no extensions are remaining
 		
 		example:
@@ -190,7 +203,7 @@ class FileInfo(object):
 	@property
 	def ext(self):
 		"""Gets the extension of this file
-		Equivelent to os.path.splitext()[1]
+		Equivalent to os.path.splitext()[1]
 		
 		example:
 		>>> f = FileInfo('/path/to/some/file.txt.gz')
@@ -204,6 +217,12 @@ class FileInfo(object):
 		"""Gets a list of companion files associated with this file
 		"""
 		return self.__companions
+	
+	@property
+	def has_companions(self):
+		"""Returns True if this instance has companions, otherwise False
+		"""
+		return len(self.__companions) > 0
 	
 	def fullpath_with_ext(self, new_extension):
 		"""Returns the fullpath of this file with the terminal file extension replaced by new_extension
@@ -232,15 +251,38 @@ class FileInfo(object):
 		return "{}.{}".format(self.filename, new_extension.lstrip('.'))
 	
 	def move(self, destfolder):
+		""" Move the file that this instance represents, along with any companions
+		
+		Parameters:
+			destfolder: string destination directory
+			
+		This method will move the file that this instance represents, including any
+		companion files that are known. This instance will be updated to reflect the 
+		new directory location of any file(s) moved.
+		"""
 		shutil.move(self.fullpath, destfolder)
 		self.__fullpath = os.path.join(destfolder, self.basename)
 		for companion in self.companions:
 			companion.move(destfolder)
 	
 	def copy(self, destfolder):
+		""" Copy the file that this instance represents, along with any companions
+		
+		Parameters:
+			destfolder: string destination directory
+			
+		Returns:
+			New FileInfo object representing the file copy.
+			
+		This method will copy the file that this instance represents, including any
+		companion files that are known. A new FileInfo instance will be created and 
+		returned to represent the new copy.
+		"""
 		shutil.copy2(self.fullpath, destfolder)
+		fi = FileInfo(os.path.join(destfolder, self.basename), copy.deepcopy(self.context), **copy.deepcopy(self.attributes))
 		for companion in self.companions:
-			companion.move(destfolder)
+			fi.companions.append(companion.copy(destfolder))
+		return fi
 		
 	def __str__(self):
 		return self.fullpath
@@ -249,7 +291,43 @@ class FileInfo(object):
 	def __repr__(self):
 		return "FileInfo('%s')" % (self.fullpath,)
 	#end __repr__()
+	
+	def __eq__(self, other):
+		#lets see if other is (derived from) FileInfo 
+		if not isinstance(self, other.__class__):
+			return False
 		
+		#check if context is the same, if not consider it different
+		if self.context != other.context:
+			return False
+		
+		#check if both objs point to the same path
+		if self.fullpath != other.fullpath:
+			return False
+		
+		#check if attributes are the same
+		if self.attributes != other.attributes:
+			return False
+		
+		#check companion files
+		if self.has_companions == other.has_companions: #both agree whether they have companions or not...
+			
+			if not self.has_companions: #both must not have companions
+				return True
+			else: #compare companions
+				for c in self.companions:
+					if c not in other.companions:
+						return False #missing a companion
+		else:
+			return False #instance disagree on companions, so must be different	
+		
+		#with the above conditions satisfied, should only get here if everything is the same
+		return True
+	#end __eq__()
+
+	def __ne__(self, other):
+		return not self.__eq__(other)
+
 #end class FileInfo
 
 

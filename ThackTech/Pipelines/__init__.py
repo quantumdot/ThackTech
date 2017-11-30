@@ -20,7 +20,7 @@ from ThackTech.Pipelines.Context import ModuleRunContext, BaseModuleContext
 from ThackTech.Pipelines.PipelineSample import PipelineSample
 from ThackTech.Pipelines.ModuleParameter import ModuleParameter
 from ThackTech.Pipelines.PipelineModule import PipelineModule
-from ThackTech.Pipelines.AnalysisPipeline import AnalysisPipeline
+from ThackTech.Pipelines.AnalysisPipeline import AnalysisPipeline, AnalysisPipelineCheckpoint
 from ThackTech.Pipelines.PipelineRunner import PipelineRunner
 from ThackTech.Pipelines.SerialPipelineRunner import SerialPipelineRunner
 from ThackTech.Pipelines.ParallelPipelineRunner import ParallelPipelineRunner
@@ -33,6 +33,7 @@ from ThackTech.Pipelines import PipelineModules
 
 #from ThackTech.Pipelines import 
 __all__ = [	'AnalysisPipeline',
+			'AnalysisPipelineCheckpoint',
 			'GenomeInfo',
 			'FileInfo',
 			'FileContext',

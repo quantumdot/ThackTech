@@ -1,5 +1,7 @@
 import os
-from ThackTech.Pipelines import GenomeInfo, FileInfo, GLOBAL_MANAGER
+import ast
+from collections import OrderedDict
+from ThackTech.Pipelines import GenomeInfo, FileInfo, FileContext, GLOBAL_MANAGER
 
 
 
@@ -101,14 +103,18 @@ class PipelineSample(object):
 	
 	
 	
-	def add_file(self, fileinfo):
+	def add_file(self, fileinfo, allow_duplicates=False):
 		"""Adds a file to this sample
 		
 		Parameters:
-			fileinfo:	String path to the file, or a FileInfo object
+			fileinfo:	String path to the file, or (preferably) a FileInfo object
 		"""
 		if not isinstance(fileinfo, FileInfo):
 			fileinfo = FileInfo(fileinfo)
+			
+		if not allow_duplicates and fileinfo in self.files:
+			return #duplicates not allowed
+		
 		self.files.append(fileinfo)
 	#end add_file()
 	
@@ -135,6 +141,65 @@ class PipelineSample(object):
 		"""
 		return list(filter(predicate, self.files))
 	#end find_files()
+	
+	def write_file_manifest(self, path):
+		
+		def write_manifest_line(index, parent, f, out):
+			tpl = "{id}\t{parent}\t{pipeline}\t{step}\t{module}\t{role}\t{path}\t{attributes}\n"
+			out.write(tpl.format(id=index, parent=parent, pipeline=f.cxt.pipeline, step=f.cxt.step,
+								 module=f.cxt.module, role=f.cxt.role, path=f.fullpath,
+								 attributes=';'.join("%s=%r" % (key,val) for (key,val) in f.attributes.iteritems())))
+		#end inner write_manifest_line()
+		
+		with open(path, 'w') as output_manifest:
+			output_manifest.write('id\tparent\tpipeline\tstep\tmodule\trole\tpath\tattributes\n')
+			
+			i = 0
+			for f in self.files:
+				write_manifest_line(i, "None", f, output_manifest)
+				
+				if len(f.companions) > 0:
+					j=1
+					for fc in f.companions:
+						write_manifest_line(i+j, i, fc, output_manifest)
+						j += 1
+					i += j
+				
+				i += 1
+	#end write_file_manifest()
+	
+	def read_file_manifest(self, path):
+		count = 0
+		man_files = OrderedDict()
+		with open(path, 'r') as output_manifest:
+			for line in output_manifest:
+				line = line.strip()
+				if line == '':
+					continue
+				if line.startswith('id'):
+					continue #header line
+				parts = line.split('\t')
+				if len(parts) > 0:
+					c = FileContext(parts[2], int(parts[3]), parts[4], parts[5])
+					f = FileInfo(parts[6], c)
+					if len(parts) > 7 and parts[7].strip() != '':
+						tuples = [item.split("=") for item in parts[7].split(";")]
+						for t in tuples:
+							f.attributes[t[0]] = ast.literal_eval(t[1])
+					
+					if parts[1] == 'None':
+						#this is a primary file
+						man_files[parts[0]] = f
+					else:
+						#this is a companion file
+						man_files[parts[1]].companions.append(f)
+
+					count += 1
+		
+		self.clear_files() #clear so we don't get duplicates
+		for f in man_files.values():
+			self.add_file(f)
+	#end read_file_manifest()
 	
 	#===========================================================================
 	# DEPRECATED

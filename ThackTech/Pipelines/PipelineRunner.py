@@ -151,11 +151,14 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 		sys.stdout = sys.stderr = logfile
 		try:
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
+			output_manifest_location = os.path.join(sample.dest, sample.name+'_output_manifest.tsv')
 			logfile.write(pipeline.documentation())
 			
 			pipeline_size = len(pipeline)
+			pipeline_steps = pipeline.itersteps()
 			status_counts = {
 				'total': 	pipeline_size,
+				'skipped':  0,
 				'attempted':0,
 				'warn':		0,
 				'critical':	0
@@ -164,13 +167,19 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(0, 'Preparing...')
 			logfile.write('Processing sample "{}"....\n'.format(sample.name))
 			logfile.write('-> Pipeline: {} ({} steps)\n'.format(pipeline.name, pipeline_size))
+			
+			if pipeline.offset is not None:
+				status_counts['skipped'] = pipeline_steps[0].index
+				logfile.write('-> Resuming from step: {}\n'.format(pipeline_steps[0].index+1))
+				sample.read_file_manifest(output_manifest_location)
+			
 			logfile.write('-> Running on: {}\n'.format(' '.join(platform.uname())))
 			logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
 			logfile.write("--------------------------------------------\n\n")
 			
+				
 			
-			for step in pipeline.itersteps():
-				#step = pipeline.pipeline[i]
+			for step in pipeline_steps:
 				status_counts['attempted'] += 1
 				logfile.write('Running pipeline step #{}: {}\n'.format(step.index+1, step.module.name))
 				logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
@@ -195,6 +204,9 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 							for f in results:
 								sample.add_file(f)
 						
+						#done running this step, update the output manifest
+						sample.write_file_manifest(output_manifest_location)
+			
 				except Exception as e:
 					if step.module.is_critical:
 						status_counts['critical'] += 1
@@ -209,7 +221,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 				finally:
 					logfile.write("--------------------------------------------\n\n")
 					logfile.flush()
-
+					
 		except Exception as e:
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].update(None, 'Error!').finish()
 			logfile.write('Encountered error during processing:\n')
@@ -225,6 +237,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
 			logfile.write("--------------------------------------------\n")
 			logfile.write("Total Pipeline Steps: {}\n".format(status_counts['total']))
+			logfile.write("-> # Steps Skipped:  {}\n".format(status_counts['skipped']))
 			logfile.write("-> # Steps Run:  {}\n".format(status_counts['attempted']))
 			logfile.write("-> # Steps Warn: {} (non-critical failure)\n".format(status_counts['warn']))
 			logfile.write("-> # Steps Fail: {} (critical failure)\n".format(status_counts['critical']))

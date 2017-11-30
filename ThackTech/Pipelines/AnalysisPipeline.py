@@ -1,11 +1,19 @@
 import re
+from ThackTech.Pipelines.PipelineModule import PipelineModule
 
 class AnalysisPipeline(object):
 
 	def __init__(self, name="Anonymous Pipeline"):
 		self.name = name
 		self.pipeline = []
+		self.offset = None #or checkpoint name to start from
 	#end __inti__()
+	
+# 	@property
+# 	def num_steps(self):
+# 		""" Gets the number of steps in this pipeline, including any offset
+# 		"""
+# 		return len(self.pipeline) + self.offset
 	
 	@property
 	def safe_name(self):
@@ -17,7 +25,20 @@ class AnalysisPipeline(object):
 	#end safe_name()
 	
 	def itersteps(self):
-		return [AnalysisPipelineStep(self.name, i, self.pipeline[i]) for i in range(len(self))]
+		i = 0
+		started = self.offset == None
+		steps_to_run = []
+		for step in self.pipeline:
+			if isinstance(step, AnalysisPipelineCheckpoint):
+				if self.offset is not None and self.offset == step.name:
+					started = True
+				
+			elif isinstance(object, PipelineModule):
+				if started:
+					steps_to_run.append(AnalysisPipelineStep(self.name, i, step))
+				i += 1
+		return steps_to_run
+		#return [AnalysisPipelineStep(self.name, i, self.pipeline[i]) for i in range(len(self))]
 	#end itersteps()
 	
 	def append_module(self, module, critical=None):
@@ -54,7 +75,11 @@ class AnalysisPipeline(object):
 	#end explain()
 	
 	def __len__(self):
-		return len(self.pipeline)
+		c = 0
+		for s in self.pipeline:
+			if isinstance(s, PipelineModule):
+				c += 1
+		return c
 #end class AnalysisPipeline
 
 
@@ -79,4 +104,16 @@ class AnalysisPipelineStep(object):
 	
 	def __str__(self):
 		return "{}_{}_{}".format(self.pipeline, self.step, self.module.name)
-#end class ModuleContext
+#end class AnalysisPipelineStep
+
+
+class AnalysisPipelineCheckpoint(object):
+	
+	def __init__(self, checkpoint_name):
+		self.name = checkpoint_name
+	
+#end class AnalysisPipelineCheckpoint
+
+
+
+

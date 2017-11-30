@@ -4,7 +4,7 @@ import os
 import sys
 import argparse
 import pandas as pd
-from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, FileContext
+from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, AnalysisPipelineCheckpoint, FileInfo, FileContext
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
 
@@ -98,8 +98,14 @@ def main():
             s.dest = args.override_dest
     sys.stdout.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
 
-    #get the pipeline and runner, then run the pipeline
+    #get the pipeline
     pipeline = make_read_alignment_pipeline(args, additional_args)
+    
+    #handle any checkpoints
+    if args.skipalign:
+        pipeline.offset = 'post_alignment_checkpoint'
+    
+    #get the runner, then run the pipeline
     runner = get_configured_runner(args, pipeline)
     runner.run(samples) #runner blocks until processing is complete
     
@@ -109,98 +115,96 @@ def main():
 #end main()
 
 def make_read_alignment_pipeline(args, additional_args):
-    if not args.skipalign:
-        pipeline_name = 'Read Alignment'
-    else:
-        pipeline_name = 'Read Alignment QC'
 
-    pipeline = AnalysisPipeline(pipeline_name)
+    pipeline = AnalysisPipeline('Read Alignment and QC')
+    
     if args.shm:
         from ThackTech.Pipelines.PipelineModules import TransferToShm
         x = TransferToShm.TransferToShm()
         x.set_parameter('shm_path', args.shm_path)
         pipeline.append_module(x, critical=True)
             
-    if not args.skipalign:
-        if args.trim:
-            from ThackTech.Pipelines.PipelineModules import Trimmomatic
-            x = Trimmomatic.Trimmomatic(critical=True, processors=args.threads)
-            def resolve_trimmomatic_reads(cxt):
-                return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
-            x.set_resolver('fastq', resolve_trimmomatic_reads)
-            pipeline.append_module(x)
-            
-            def resolve_bowtie1(cxt):
-                if cxt.sample.get_attribute('PE'):
-                    return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_paired_reads")
-                else:
-                    return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_reads")
-        else: 
-            def resolve_bowtie1(cxt):
-                return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
+    #if not args.skipalign:
+    if args.trim:
+        from ThackTech.Pipelines.PipelineModules import Trimmomatic
+        x = Trimmomatic.Trimmomatic(critical=True, processors=args.threads)
+        def resolve_trimmomatic_reads(cxt):
+            return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
+        x.set_resolver('fastq', resolve_trimmomatic_reads)
+        pipeline.append_module(x)
         
-        if 'fastqc' in args.qc:
-            if args.trim:
-                def fastqc_resolver(cxt):
-                    return [] + resolve_trimmomatic_reads(cxt) + resolve_bowtie1(cxt)
+        def resolve_bowtie1(cxt):
+            if cxt.sample.get_attribute('PE'):
+                return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_paired_reads")
             else:
-                def fastqc_resolver(cxt):
-                    return resolve_bowtie1(cxt)
-                
-            from ThackTech.Pipelines.PipelineModules import FastQC
-            x = FastQC.FastQC(processors=args.threads)
-            x.set_resolver('fastqs', fastqc_resolver)
-            pipeline.append_module(x)
-        
-        
-        if 'fqscreen' in args.qc:    
-            from ThackTech.Pipelines.PipelineModules import FastqScreen
-            x = FastqScreen.FastqScreen(processors=args.threads)
-            x.set_resolver('fastqs', resolve_bowtie1)
-            pipeline.append_module(x)
+                return cxt.sample.find_files(lambda f: f.cxt.role == "filtered_reads")
+    else: 
+        def resolve_bowtie1(cxt):
+            return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
     
-    
-        if args.bowtie_version == '1':
-            from ThackTech.Pipelines.PipelineModules import DecompressFiles
-            x = DecompressFiles.DecompressFiles()
-            x.set_resolver('files', resolve_bowtie1)
-            pipeline.append_module(x, critical=True)
-        
-            from ThackTech.Pipelines.PipelineModules import BowtieAlign
-            x = BowtieAlign.BowtieAlign()
-            x.set_available_cpus(args.threads)
-            x.set_parameter('unaligned', args.unaligned)
-            x.set_parameter('additional_args', additional_args)
-            x.set_resolver('fastq', resolve_bowtie1)
-            pipeline.append_module(x, critical=True)
-            
-            from ThackTech.Pipelines.PipelineModules import RemoveDecompressedFiles
-            x = RemoveDecompressedFiles.RemoveDecompressedFiles()
-            pipeline.append_module(x, critical=True)
-            
-        elif args.bowtie_version == '2':#run bowtie2
-            from ThackTech.Pipelines.PipelineModules import Bowtie2Align
-            x = Bowtie2Align.Bowtie2Align()
-            x.set_available_cpus(args.threads)
-            x.set_parameter('unaligned', args.unaligned)
-            x.set_parameter('additional_args', additional_args)
-            x.set_resolver('fastq', resolve_bowtie1)
-            pipeline.append_module(x, critical=True)
+    if 'fastqc' in args.qc:
+        if args.trim:
+            def fastqc_resolver(cxt):
+                return [] + resolve_trimmomatic_reads(cxt) + resolve_bowtie1(cxt)
         else:
-            raise ValueError("There is no bowtie version {}. Must be one of [1, 2].".format(args.bowtie_version))
+            def fastqc_resolver(cxt):
+                return resolve_bowtie1(cxt)
             
-        from ThackTech.Pipelines.PipelineModules import SamToBam
-        x = SamToBam.SamToBam()
-        x.set_available_cpus(args.threads)
-        x.set_resolver('sam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'sam')[0])
+        from ThackTech.Pipelines.PipelineModules import FastQC
+        x = FastQC.FastQC(processors=args.threads)
+        x.set_resolver('fastqs', fastqc_resolver)
+        pipeline.append_module(x)
+    
+    
+    if 'fqscreen' in args.qc:    
+        from ThackTech.Pipelines.PipelineModules import FastqScreen
+        x = FastqScreen.FastqScreen(processors=args.threads)
+        x.set_resolver('fastqs', resolve_bowtie1)
+        pipeline.append_module(x)
+
+
+    if args.bowtie_version == '1':
+        from ThackTech.Pipelines.PipelineModules import DecompressFiles
+        x = DecompressFiles.DecompressFiles()
+        x.set_resolver('files', resolve_bowtie1)
         pipeline.append_module(x, critical=True)
     
-    
-    else: #we are skipping alignment process
-        from ThackTech.Pipelines.PipelineModules import ReadOutputManifest
-        pipeline.append_module(ReadOutputManifest.ReadOutputManifest(), critical=True)
+        from ThackTech.Pipelines.PipelineModules import BowtieAlign
+        x = BowtieAlign.BowtieAlign()
+        x.set_available_cpus(args.threads)
+        x.set_parameter('unaligned', args.unaligned)
+        x.set_parameter('additional_args', additional_args)
+        x.set_resolver('fastq', resolve_bowtie1)
+        pipeline.append_module(x, critical=True)
         
-            
+        from ThackTech.Pipelines.PipelineModules import RemoveDecompressedFiles
+        x = RemoveDecompressedFiles.RemoveDecompressedFiles()
+        pipeline.append_module(x, critical=True)
+        
+    elif args.bowtie_version == '2':#run bowtie2
+        from ThackTech.Pipelines.PipelineModules import Bowtie2Align
+        x = Bowtie2Align.Bowtie2Align()
+        x.set_available_cpus(args.threads)
+        x.set_parameter('unaligned', args.unaligned)
+        x.set_parameter('additional_args', additional_args)
+        x.set_resolver('fastq', resolve_bowtie1)
+        pipeline.append_module(x, critical=True)
+    else:
+        raise ValueError("There is no bowtie version {}. Must be one of [1, 2].".format(args.bowtie_version))
+        
+    from ThackTech.Pipelines.PipelineModules import SamToBam
+    x = SamToBam.SamToBam()
+    x.set_available_cpus(args.threads)
+    x.set_resolver('sam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'sam')[0])
+    pipeline.append_module(x, critical=True)
+    
+    
+    ################################
+    # CHECKPOINT - for `--skipalign`
+    pipeline.append_module(AnalysisPipelineCheckpoint('post_alignment_checkpoint'))
+    ################################
+    
+   
     if (args.qc is not None) and (len(args.qc) > 0):
         
         def qc_bt_bam_resolver(cxt):
@@ -259,13 +263,9 @@ def make_read_alignment_pipeline(args, additional_args):
             pipeline.append_module(x)
             
             
-    
     if args.shm:
         from ThackTech.Pipelines.PipelineModules import TransferFromShm
         pipeline.append_module(TransferFromShm.TransferFromShm(), critical=True)
-    
-    from ThackTech.Pipelines.PipelineModules import OutputManifest
-    pipeline.append_module(OutputManifest.OutputManifest())
     
     return pipeline
 #end make_read_alignment_pipeline()
