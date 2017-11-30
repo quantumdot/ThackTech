@@ -168,6 +168,8 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			logfile.write('Processing sample "{}"....\n'.format(sample.name))
 			logfile.write('-> Pipeline: {} ({} steps)\n'.format(pipeline.name, pipeline_size))
 			
+			logfile.write("{}".format(pipeline_steps))
+				
 			if pipeline.offset is not None:
 				status_counts['skipped'] = pipeline_steps[0].index
 				logfile.write('-> Resuming from step: {} (checkpoint "{}")\n'.format(pipeline_steps[0].index+1, pipeline.offset))
