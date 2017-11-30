@@ -111,7 +111,17 @@ class AnalysisPipelineCheckpoint(object):
 	
 	def __init__(self, checkpoint_name):
 		self.name = checkpoint_name
-	
+		
+	def documentation(self):
+		"""Return a string that documents this checkpoint
+		"""
+		hash_length = 40
+		buff = 'Pipeline Checkpoint\n'
+		buff += '-' * hash_length
+		buff += 'CHECKPOINT NAME: {}'.format(self.name)
+		buff += '-' * hash_length
+		buff += '\n'
+		return buff
 #end class AnalysisPipelineCheckpoint
 
 
