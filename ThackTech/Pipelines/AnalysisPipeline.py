@@ -33,7 +33,7 @@ class AnalysisPipeline(object):
 				if self.offset is not None and self.offset == step.name:
 					started = True
 				
-			elif isinstance(object, PipelineModule):
+			elif isinstance(step, PipelineModule):
 				if started:
 					steps_to_run.append(AnalysisPipelineStep(self.name, i, step))
 				i += 1
