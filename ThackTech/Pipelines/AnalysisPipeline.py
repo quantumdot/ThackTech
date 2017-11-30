@@ -118,7 +118,7 @@ class AnalysisPipelineCheckpoint(object):
 		hash_length = 40
 		buff = 'Pipeline Checkpoint\n'
 		buff += '-' * hash_length
-		buff += 'CHECKPOINT NAME: {}'.format(self.name)
+		buff += '\nCHECKPOINT NAME: {}\n'.format(self.name)
 		buff += '-' * hash_length
 		buff += '\n'
 		return buff
