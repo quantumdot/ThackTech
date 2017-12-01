@@ -351,7 +351,7 @@ def main():
     sys.stderr.write("\n")
     
     #if we have multiple bed and multiple signals, add legand outside last avg plot
-    if 'avg' in gopts['args'].plot and len(args.sig) > 1 and len(args.bed) > 1:
+    if 'avg' in gopts['args'].plot and (len(args.sig) > 1 or len(args.bed) > 1):
         last_avg_ax = get_plot_axes('leg', 0, 0, 0)
         leg = last_avg_ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         leg.get_frame().set_linewidth(0.1)
