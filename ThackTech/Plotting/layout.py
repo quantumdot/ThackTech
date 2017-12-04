@@ -1,7 +1,7 @@
 
 
 
-# class PlotLayout:
+# class DynamicPlotLayout:
     # def __init__(self):
         # self.items = []
     # #end __init__()
@@ -17,15 +17,18 @@
                 # groups.add(s.group)
         # #for g in groups:
             
-    # #end finalize()
+    # #end finalize() 
 
 
 
-# class PlotItem:
+#class PlotItem:
     # def __init__(self, type, row, col, group):
         # self.type = type
         # self.relative_row = row
         # self.relative_col = col
         # self.samples = []
     # #end __inti__()
+    
+    #def render(self):
+    #	pass
 # #end class PlotItem

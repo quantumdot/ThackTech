@@ -350,14 +350,14 @@ def main():
         add_signal_to_figure(s)
     sys.stderr.write("\n")
     
-    #if we have multiple bed and multiple signals, add legand outside last avg plot
+    #if we have multiple bed and multiple signals, add legend outside last avg plot
     if 'avg' in gopts['args'].plot and (len(args.sig) > 1 or len(args.bed) > 1):
         last_avg_ax = get_plot_axes('leg', 0, 0, 0)
         leg = last_avg_ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         leg.get_frame().set_linewidth(0.1)
         gopts['extra_artists'].append(leg)
     
-    #add colorscale bar if necessary
+    #add color scale bar if necessary
     if 'heat' in gopts['args'].plot:
         make_colormap_strip_for_groups(fig, args.scalegroups, samples)
     

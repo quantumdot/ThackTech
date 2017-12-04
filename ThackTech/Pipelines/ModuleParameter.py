@@ -101,8 +101,8 @@ class ModuleParameter(object):
 		else:
 			raise ValueError('Unable to convert %s to type %s for parameter %s!' % (str(value), self.type_name, str(self.name),))
 		
-		if (self.choices is not None) and (new_value not in self.choices): 
-			raise ValueError('The supplied value %s for parameter %s is not present in the allowed choices: %s!' % (str(value), str(self.name), str(self.choices)))
+		if (self.choices is not None) and (new_value not in self.choices) and not (self.nullable and new_value is None):
+			raise ValueError('The supplied value `%s` for parameter "%s" is not present in the allowed choices: %s!' % (str(value), str(self.name), str(self.choices)))
 		
 		return new_value
 	#end _coerce_value()

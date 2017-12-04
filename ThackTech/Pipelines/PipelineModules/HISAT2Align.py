@@ -13,6 +13,9 @@ class HISAT2Align(PipelineModule):
 	
 	def _declare_parameters(self):
 		self.add_parameter(ModuleParameter('hisat2_path', 		str, 	'HISAT2',	desc="Path to the hisat2 executable."))
+		
+		self.add_parameter(ModuleParameter('dta', str, None, choices=['stringtie', 'cufflinks'], nullable=True, desc="Specify which, if any, downstrea, transcript assemblers output should be tailored to. see --dta* option in HISAT2"))
+		
 		self.add_parameter(ModuleParameter('unaligned', 		bool, 	False,	desc="Report reads that fail to align."))
 		self.add_parameter(ModuleParameter('multimap', 			bool, 	False,	desc="Report reads that map to multiple locations in the reference."))
 		self.add_parameter(ModuleParameter('max_align', 		int, 	None,	nullable=True, desc="If not none, maximum number of valid alignments to report."))
@@ -42,6 +45,11 @@ class HISAT2Align(PipelineModule):
 		handle.write('------------------------------------------\n\n')
 		handle.flush()
 	#end show_version()
+	def tool_versions(self):
+		return {
+			'HISAT2': self._call_output("bowtie --version 2>&1 | perl -ne 'if(m/.*bowtie.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+		}
+	#end tool_versions()
 	
 	def run(self, cxt):
 		cxt.log.write("\t-> Preparing HISAT2....\n")

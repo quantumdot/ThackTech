@@ -27,7 +27,19 @@ class TestModuleParameter(unittest.TestCase):
         p.value = 'True'
         self.assertIsInstance(p.value, bool)
         self.assertEqual(p.value, True)
+        
+    def test_choices(self):
+        p = ModuleParameter('test', str, None, nullable=True, choices=['a', 'b', 'c'])
+        self.assertIsNone(p.value, "value should be None!")
+        
+        p.value = 'a'
+        self.assertIsInstance(p.value, str, "value should be a string!")
+        self.assertEqual(p.value, 'a', "Value should be 'a'!")
 
+        with self.assertRaises(ValueError):
+            p.value = 'z'
+            
+        
 
 if __name__ == "__main__":
     unittest.main()

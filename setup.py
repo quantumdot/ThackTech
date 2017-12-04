@@ -39,6 +39,7 @@ setup(  name='ThackTech',
             "scripts/analyze_radial_intensity.py",
             "scripts/multi_venn.py",
             "scripts/designCNVprobes.py",
-            "scripts/subsample_fastq.py"
+            "scripts/subsample_fastq.py",
+            "scripts/tuxedo2_pipeline.py"
         ],
         zip_safe=False)
