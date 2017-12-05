@@ -34,7 +34,7 @@ class StringTieQuant(StringTieBase):
 	
 	def _declare_resolvers(self):
 		self._name_resolver('alignments')
-		#self._name_resolver('guide_gff')
+		self._name_resolver('guide_gff')
 	#end __declare_resolvers()
 
 	def _declare_parameters(self):
@@ -96,7 +96,7 @@ class StringTieQuant(StringTieBase):
 			'-p', str(self.processors), #not sure if this is actually supported, but lets give it a shot!
 			'-l', cxt.sample.name,
 			'-o', gtf_out,
-			'-G', #<guide_gff>, # @todo: need to implement this!
+			#'-G', #<guide_gff>, # @todo: need to implement this!
 			
 			#optional options
 			'-f', self.get_parameter_value_as_string('min_abd'),
@@ -106,8 +106,11 @@ class StringTieQuant(StringTieBase):
 			'-c', self.get_parameter_value_as_string('min_cov'),
 			'-g', self.get_parameter_value_as_string('bun_gap'),
 			'-M', self.get_parameter_value_as_string('max_mhf'),
-			
 		]
+		guide_gff = self.resolve_input('guide_gff', cxt)
+		if guide_gff is not None:
+			st_args.extend(['-G', guide_gff])
+			
 		if self.get_parameter_value('stranded') is not None:
 			st_args.append('--{}'.format(self.get_parameter_value_as_string('stranded')))
 		
@@ -175,7 +178,7 @@ class StringTieMerge(StringTieBase):
 
 	def _declare_resolvers(self):
 		self._name_resolver('assemblies')
-		#self._name_resolver('guide_gff')
+		self._name_resolver('guide_gff')
 	#end __declare_resolvers()
 
 	
@@ -188,7 +191,7 @@ class StringTieMerge(StringTieBase):
 			'-p', str(self.processors), #not sure if this is actually supported, but lets give it a shot!
 			'-l', cxt.sample.name,
 			'-o', gtf_out,
-			'-G', #<guide_gff>, # @todo: need to implement this!
+			#'-G', #<guide_gff>, # @todo: need to implement this!
 			
 			#optional args
 			'-m', self.get_parameter_value_as_string('min_len'),
@@ -197,8 +200,13 @@ class StringTieMerge(StringTieBase):
 			'-T', self.get_parameter_value_as_string('min_tpm'),
 			'-f', self.get_parameter_value_as_string('min_iso'),
 		]
+		
 		if self.get_parameter_value('keep_intron'):
 			st_args.append('-i')
+			
+		guide_gff = self.resolve_input('guide_gff', cxt)
+		if guide_gff is not None:
+			st_args.extend(['-G', guide_gff])
 		
 		#add the input transcript assemblies that we are merging
 		assemblies = self.resolve_input('assemblies', cxt)

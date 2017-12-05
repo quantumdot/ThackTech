@@ -33,21 +33,9 @@ class HISAT2Align(PipelineModule):
 		self._name_resolver('fastq')
 	#end __declare_resolvers()
 	
-	def load_modules(self):
-		subprocess.call("module load HISAT2", shell=True)
-	#end load_modules()
-	
-	def show_version(self, handle=None, fancy=True):
-		handle.write('\HISAT2 version is:\n------------------------------------------\n')
-		handle.flush()
-		proc = subprocess.Popen('HISAT2 --version', shell=True)
-		proc.communicate()
-		handle.write('------------------------------------------\n\n')
-		handle.flush()
-	#end show_version()
 	def tool_versions(self):
 		return {
-			'HISAT2': self._call_output("bowtie --version 2>&1 | perl -ne 'if(m/.*bowtie.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'HISAT2': self._call_output("hisat2 --version 2>&1 | perl -ne 'if(m/.*hisat2.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
@@ -74,10 +62,7 @@ class HISAT2Align(PipelineModule):
 		
 		if self.get_parameter_value('no_unaligned'):
 			bowtiecmd.append('--no-unal')
-		#if self.get_parameter_value('best'):
-		#	bowtiecmd.append('--best')
-		#if self.get_parameter_value('tryhard'):
-		#	bowtiecmd.append('--tryhard')
+
 		
 		#check if we need to output reads that multimap
 		if self.get_parameter_value('multimap'):

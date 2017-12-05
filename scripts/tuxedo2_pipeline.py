@@ -130,6 +130,10 @@ def main():
     
     
     #re-process original samples, now using the merged transcripts
+    merged_gtf = merge_sample.find_files(lambda f: f.role == 'merged_transcript_assembly')[0]
+    for sample in samples:
+        sample.add_file(FileInfo(merged_gtf, FileContext.from_origin('merged_transcript_assembly')))
+        
     pipeline = make_transcript_quant_pipeline(args)
     runner = get_configured_runner(args, pipeline)
     runner.run(samples)
@@ -223,6 +227,8 @@ def make_read_alignment_pipeline(args, additional_args):
         from ThackTech.Pipelines.PipelineModules import StringTie
         x = StringTie.StringTieQuant(processors=args.threads)
         x.set_resolver('alignments', mapped_bam_resolver)
+        # @todo: implement actual location (should be ref annot)!!!!!!!!
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))  
         pipeline.append_module(x, critical=True)
 
     return pipeline
@@ -244,6 +250,9 @@ def make_transcript_merge_pipeline(args):
         from ThackTech.Pipelines.PipelineModules import StringTie
         x = StringTie.StringTieMerge(processors=args.threads)
         x.set_resolver('assemblies', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.gtf'))
+        
+        # @todo: implement actual location (should be ref annot)!!!!!!!!
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))  
         pipeline.append_module(x, critical=True)
 
     
@@ -264,8 +273,8 @@ def make_transcript_quant_pipeline(args):
     if args.assembler == 'cufflinks':
         # @todo: implement cufflinks support
         # 1. run cuffquant
-        # 2. run cuffnorm
-        # 3. run cuffdiff? -> maybe need separate pipeline step....
+        # 2. run cuffnorm? -> maybe need separate pipeline step.... needs all samples
+        # 3. run cuffdiff? -> maybe need separate pipeline step.... needs all samples
         pass
         
     else:
@@ -276,6 +285,9 @@ def make_transcript_quant_pipeline(args):
         x.set_parameter('estimate', True)
         x.set_parameter('out_ballgown', True)
         x.set_resolver('alignments', mapped_bam_resolver)
+        
+        # @todo: should be merged gtf, think this is OK, but need to check!!!!!!!!
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.role == 'merged_transcript_assembly'))  
         pipeline.append_module(x, critical=True)
     
     
