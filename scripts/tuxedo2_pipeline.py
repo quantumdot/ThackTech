@@ -248,7 +248,7 @@ def make_transcript_merge_pipeline(args):
 
     
     #optional: Examine how the transcripts compare with the reference annotation
-    #ex: gffcompare –r chrX_data/genes/chrX.gtf –G –o merged stringtie_merged.gtf
+    #ex: gffcompare -r chrX_data/genes/chrX.gtf -G -o merged stringtie_merged.gtf
     
 #end make_transcript_merge_pipeline()
 
