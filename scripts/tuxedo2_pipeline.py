@@ -219,7 +219,7 @@ def make_read_alignment_pipeline(args, additional_args):
         
     else:
         #for each sample, assemble transcripts
-        #ex: stringtie -p 8 -G chrX_data/genes/chrX.gtf -o ERR188044_chrX.gtf –l ERR188044 ERR188044_chrX.bam
+        #ex: stringtie -p 8 -G chrX_data/genes/chrX.gtf -o ERR188044_chrX.gtf -l ERR188044 ERR188044_chrX.bam
         from ThackTech.Pipelines.PipelineModules import StringTie
         x = StringTie.StringTieQuant(processors=args.threads)
         x.set_resolver('alignments', mapped_bam_resolver)
@@ -270,7 +270,7 @@ def make_transcript_quant_pipeline(args):
         
     else:
         #Estimate transcript abundances and create table counts for Ballgown:
-        #stringtie –e –B -p 8 -G stringtie_merged.gtf -o ballgown/ERR188044/ERR188044_chrX.gtf ERR188044_chrX.bam
+        #stringtie -e -B -p 8 -G stringtie_merged.gtf -o ballgown/ERR188044/ERR188044_chrX.gtf ERR188044_chrX.bam
         from ThackTech.Pipelines.PipelineModules import StringTie
         x = StringTie.StringTieQuant(processors=args.threads)
         x.set_parameter('estimate', True)
