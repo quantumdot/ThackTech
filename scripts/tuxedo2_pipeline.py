@@ -6,15 +6,13 @@ import argparse
 import pandas as pd
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, AnalysisPipelineCheckpoint, FileInfo, FileContext
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
-from ThackTech.Pipelines.PipelineModules.HISAT2Align import HISAT2Align
-
 
 
 
 class Tuxedo2PipelineRawSample(PipelineSample):
 
     def __init__(self, sample, pe_prefix='_R', postfix=""):
-        super(Tuxedo2PipelineSample, self).__init__(sample['Basename'], sample['Genome'], sample['Dest'])
+        super(Tuxedo2PipelineRawSample, self).__init__(sample['Basename'], sample['Genome'], sample['Dest'])
         self.set_attribute('PE', ('PE' in sample and sample['PE']))
         self.discover_files(sample['Path'], pe_prefix, postfix)
     #end __init__()
@@ -57,24 +55,27 @@ class Tuxedo2PipelineRawSample(PipelineSample):
     #end find_files()
 #end Tuxedo2PipelineSample
 
-
+class Tuxedo2PipelineMergeSample(PipelineSample):
+    def __init__(self, sample):
+        super(Tuxedo2PipelineMergeSample, self).__init__(sample['Basename'], sample['Genome'], sample['Dest'])
+    #end __init__()
+#end Tuxedo2PipelineMergeSample
 
 
 def main():
-	parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument('manifest', help="Manifest file containing sample information in tab separated format. Should contain the following columns (headers must be present): [Path], [Basename], [PE], [Genome], [Dest]")
-    #parser.add_argument('--bowtie-version', choices=['1', '2'], default='1', help="Version of bowtie to run")
     
     available_qc_choices = ['ism', 'fqscreen', 'fastqc']
-    parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC pipelines to run after the alignment process completes. SPP is the cross-correlation analysis provided by ccQualityControl/phantompeakqualtools. PBC is the PRC bottleneck/library complexity estimation. ISM computes the distribution of insert size. FPT computes the \"BAM Fingerprint\" using DeepTools bamFingerprint program, and give a good idea of IP strength, especially for TF-like IPs. rpkm will generate a RPKM normalized BigWig from the aligned BAM file. All will run all available QC modules.")
+    parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC pipelines to run after the alignment process completes.")
     parser.add_argument('--pe_pre', default='_R', help="Paired-end prefix. String to insert between the file basename and the pair number when searching for read files. If your FASTQ files are names as [reads_R1.fastq, reads_R2.fastq] then use '_R1', or if reads_1.fastq then use '_1'. This option is only used when in paired end mode. default: _R1")
     parser.add_argument('--sample_postfix', default="", help="Postfix to append when looking for read files (ex lane number: '_001')")
     
-    parser.add_argument('--unaligned', action='store_true', help='Output reads that fail to align to the reference genome.')
+    #parser.add_argument('--unaligned', action='store_true', help='Output reads that fail to align to the reference genome.')
     parser.add_argument('--trim', action='store_true', help="Use trimmomatic to perform adapter clipping.")
     parser.add_argument('--override-dest', action='store', default=None, help="Override the destination read from the sample manifest.")
     
-    parser.add_argument('--assembler', action='store', default='stringtie', choices=['stringtie', 'cufflinks'])
+    parser.add_argument('--assembler', action='store', default='stringtie', choices=['stringtie', 'cufflinks'], help="Specify with transcript assembly program to use.")
     
     performance_group = add_runner_args(parser)
     performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
@@ -86,25 +87,57 @@ def main():
 
 
 
-	#get and run the read alignment pipeline
-    pipeline = make_read_alignment_pipeline(args, additional_args)	
-	runner = get_configured_runner(args, pipeline)
+    sys.stdout.write('Reading sample manifest.....\n')
+    #sample manifest should be in the following TAB separated format (with headers):
+    #Path    Basename    PE    Genome    Dest
+    #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
+    sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
+    samples = [Tuxedo2PipelineRawSample(s, args.pe_pre, args.sample_postfix) for s in sample_manifest.to_dict(orient='records')]
+    if args.override_dest is not None:
+        sys.stdout.write("Override Destination is turned ON\n")
+        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
+        for s in samples:
+            s.dest = args.override_dest
+    sys.stdout.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
+
+
+
+
+
+
+    #get and run the read alignment pipeline
+    pipeline = make_read_alignment_pipeline(args, additional_args)    
+    runner = get_configured_runner(args, pipeline)
     runner.run(samples)
-	sys.stdout.write("Completed alignment phase for all manifest items!\n")
+    sys.stdout.write("Completed alignment and initial quantification phase for all manifest items!\n")
     sys.stdout.write("=========================================================\n\n")
     sys.stdout.flush()
     
-    #get and run the Transcript Merge pipeline
-    	#process samples from previous step, and generate new pseudo-sample for transcript mergeing
     
-    pipeline = make_transcript_merge_pipeline(args, additional_args)	
-	runner = get_configured_runner(args, pipeline)
-    runner.run(samples)
-	sys.stdout.write("Completed alignment phase for all manifest items!\n")
+    #process samples from previous step, and generate new pseudo-sample for transcript merging
+    merge_sample = Tuxedo2PipelineMergeSample({'Basename': 'TranscriptMergePseudoSample', 'Genome': samples[0].genome, 'Dest': samples[0].dest})
+    for sample in samples:
+        gtf = sample.find_files(lambda f: f.ext == '.gtf')
+        merge_sample.add_file(FileInfo(gtf.fullpath, FileContext.from_origin(sample.name)))
+        
+    pipeline = make_transcript_merge_pipeline(args)
+    runner = get_configured_runner(args, pipeline)
+    runner.run([merge_sample])
+        
+    sys.stdout.write("Completed merge of transcript assemblies from all samples!\n")
     sys.stdout.write("=========================================================\n\n")
     sys.stdout.flush()
-
-
+    
+    
+    #re-process original samples, now using the merged transcripts
+    pipeline = make_transcript_quant_pipeline(args)
+    runner = get_configured_runner(args, pipeline)
+    runner.run(samples)
+    sys.stdout.write("Completed re-quantification using merged transcript assembly for all manifest items!\n")
+    sys.stdout.write("=========================================================\n\n")
+    sys.stdout.flush()
+    
+#end main()
 
 def make_read_alignment_pipeline(args, additional_args):
 
@@ -165,41 +198,54 @@ def make_read_alignment_pipeline(args, additional_args):
     x.set_resolver('sam', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'sam')[0])
     pipeline.append_module(x, critical=True)
     
+    def mapped_bam_resolver(cxt):
+        return cxt.sample.find_files(lambda f: f.basename == '{}.bam'.format(cxt.sample.name))[0]
+    
     #QC functions:
     if (args.qc is not None) and (len(args.qc) > 0):
-    	def qc_bt_bam_resolver(cxt):
-            return cxt.sample.find_files(lambda f: f.basename == '{}.bam'.format(cxt.sample.name))[0]
-    	
-	    if 'ism' in args.qc:
-	        from ThackTech.Pipelines.PipelineModules import InsertSizeMetrics
-	        x = InsertSizeMetrics.InsertSizeMetrics()
-	        x.set_resolver('bam', qc_bt_bam_resolver)
-	        pipeline.append_module(x)
-	        
+        
+        if 'ism' in args.qc:
+            from ThackTech.Pipelines.PipelineModules import InsertSizeMetrics
+            x = InsertSizeMetrics.InsertSizeMetrics()
+            x.set_resolver('bam', mapped_bam_resolver)
+            pipeline.append_module(x)
+            
     
-    #for each sample, assemble transcripts
-    #ex: stringtie -p 8 -G chrX_data/genes/chrX.gtf -o ERR188044_chrX.gtf –l ERR188044 ERR188044_chrX.bam
-    #dont forget to append the GTF from this step to the mergelist.txt file
-    from ThackTech.Pipelines.PipelineModules import StringTie
-    x = StringTie.StringTie(processors=args.threads)
-    x.set_resolver('alignments', lambda cxt: return None)
+    if args.assembler == 'cufflinks':
+        # @todo: implement cufflinks support
+        # 1. run cufflinks
+        # 2. run cuffcompare? optional, I think....
+        pass
+        
+    else:
+        #for each sample, assemble transcripts
+        #ex: stringtie -p 8 -G chrX_data/genes/chrX.gtf -o ERR188044_chrX.gtf –l ERR188044 ERR188044_chrX.bam
+        from ThackTech.Pipelines.PipelineModules import StringTie
+        x = StringTie.StringTieQuant(processors=args.threads)
+        x.set_resolver('alignments', mapped_bam_resolver)
+        pipeline.append_module(x, critical=True)
 
-	return pipeline
+    return pipeline
 #end make_read_alignment_pipeline()
     
    
     
     
 def make_transcript_merge_pipeline(args):
-	pipeline = AnalysisPipeline('Transcript Merge') 
-    #########################
-    #
-    # Start New Pipeline
-    #
-    #########################
-     
-    # Merge Transcript assemblies for all samples
-    #probably requires only one node
+    pipeline = AnalysisPipeline('Transcript Merge') 
+    
+    if args.assembler == 'cufflinks':
+        # @todo: implement cufflinks support
+        # 1. run cuffmerge
+        pass
+        
+    else:
+        # Merge Transcript assemblies for all samples
+        from ThackTech.Pipelines.PipelineModules import StringTie
+        x = StringTie.StringTieMerge(processors=args.threads)
+        x.set_resolver('assemblies', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.gtf'))
+        pipeline.append_module(x, critical=True)
+
     
     #optional: Examine how the transcripts compare with the reference annotation
     #ex: gffcompare –r chrX_data/genes/chrX.gtf –G –o merged stringtie_merged.gtf
@@ -208,16 +254,29 @@ def make_transcript_merge_pipeline(args):
 
    
     
-def make_transcript_quant_pipeline(args):   
-    #########################
-    #
-    # Start New Pipeline
-    #
-    #########################
+def make_transcript_quant_pipeline(args):
     
-    #Estimate transcript abundances and create table counts for Ballgown:
-    #stringtie –e –B -p 8 -G stringtie_merged.gtf -o ballgown/ERR188044/ERR188044_chrX.gtf ERR188044_chrX.bam
+    pipeline = AnalysisPipeline('Quantify Transcripts')
     
+    def mapped_bam_resolver(cxt):
+        return cxt.sample.find_files(lambda f: f.basename == '{}.bam'.format(cxt.sample.name))[0]
+    
+    if args.assembler == 'cufflinks':
+        # @todo: implement cufflinks support
+        # 1. run cuffquant
+        # 2. run cuffnorm
+        # 3. run cuffdiff? -> maybe need separate pipeline step....
+        pass
+        
+    else:
+        #Estimate transcript abundances and create table counts for Ballgown:
+        #stringtie –e –B -p 8 -G stringtie_merged.gtf -o ballgown/ERR188044/ERR188044_chrX.gtf ERR188044_chrX.bam
+        from ThackTech.Pipelines.PipelineModules import StringTie
+        x = StringTie.StringTieQuant(processors=args.threads)
+        x.set_parameter('estimate', True)
+        x.set_parameter('out_ballgown', True)
+        x.set_resolver('alignments', mapped_bam_resolver)
+        pipeline.append_module(x, critical=True)
     
     
 #end make_transcript_quant_pipeline()
@@ -237,4 +296,3 @@ def make_transcript_quant_pipeline(args):
     
     
     
-

@@ -60,6 +60,8 @@ class PbcAnalysis(PipelineModule):
 	
 	def run_filter_qc2(self, cxt, input_bam, samtools_params=None):
 		''' Run the PBC analysis
+			
+			Based on code: https://github.com/ENCODE-DCC/chip-seq-pipeline/blob/master/dnanexus/filter_qc/src/filter_qc.py
 		
 			Parameters:
 				cxt: ModuleRunContext
