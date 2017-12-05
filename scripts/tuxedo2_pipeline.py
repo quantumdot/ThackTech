@@ -280,19 +280,22 @@ def make_transcript_quant_pipeline(args):
     
     
 #end make_transcript_quant_pipeline()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
