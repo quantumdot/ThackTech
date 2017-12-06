@@ -149,6 +149,10 @@ class StringTieQuant(StringTieBase):
 			output_files.append(FileInfo(out_full_cov, FileContext.from_module_context(cxt, 'full_coverage_ref_transcripts')))
 			
 		
+		#add the input alignments that we are quantifying/assembling
+		alignments = self.resolve_input('alignments', cxt)
+		for a in alignments:
+			st_args.append(a.fullpath)
 
 		
 		#OK, we now have all the arguments setup, lets actually run StringTie
