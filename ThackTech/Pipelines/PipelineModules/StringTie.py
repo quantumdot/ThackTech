@@ -1,5 +1,4 @@
 import os
-import platform
 import subprocess
 from ThackTech.Pipelines import PipelineModule, ModuleParameter, FileInfo, FileContext
 

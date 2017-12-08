@@ -7,7 +7,12 @@ import pandas as pd
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, AnalysisPipelineCheckpoint, FileInfo, FileContext
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
+#sample manifest should be in the following TAB separated format (with headers):
+#Path    Basename    PE    Genome    Dest
+#/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
 
+#BEFORE RUNNING SCRIPT WHEN USING LMOD
+#module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 HISAT2/2.1.0
 
 class Tuxedo2PipelineRawSample(PipelineSample):
 
@@ -218,8 +223,13 @@ def make_read_alignment_pipeline(args, additional_args):
     if args.assembler == 'cufflinks':
         # @todo: implement cufflinks support
         # 1. run cufflinks
+        from ThackTech.Pipelines.PipelineModules import Cufflinks
+        x = Cufflinks.Cufflinks(processors=args.threads)
+        x.set_resolver('alignments', mapped_bam_resolver)
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))
+        pipeline.append_module(x, critical=True)
+        
         # 2. run cuffcompare? optional, I think....
-        pass
         
     else:
         #for each sample, assemble transcripts
@@ -243,7 +253,12 @@ def make_transcript_merge_pipeline(args):
     if args.assembler == 'cufflinks':
         # @todo: implement cufflinks support
         # 1. run cuffmerge
-        pass
+        from ThackTech.Pipelines.PipelineModules import Cuffmerge
+        x = Cuffmerge.Cuffmerge(processors=args.threads)
+        x.set_resolver('assemblies', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.gtf'))
+        # @todo: implement actual location (should be ref annot)!!!!!!!!
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))  
+        pipeline.append_module(x, critical=True)
         
     else:
         # Merge Transcript assemblies for all samples
@@ -273,6 +288,14 @@ def make_transcript_quant_pipeline(args):
     if args.assembler == 'cufflinks':
         # @todo: implement cufflinks support
         # 1. run cuffquant
+        from ThackTech.Pipelines.PipelineModules import Cuffquant
+        x = Cuffquant.Cuffquant(processors=args.threads)
+        x.set_resolver('alignments', mapped_bam_resolver)
+        # @todo: should be merged gtf, think this is OK, but need to check!!!!!!!!
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.role == 'merged_transcript_assembly'))  
+        pipeline.append_module(x, critical=True)
+        
+        
         # 2. run cuffnorm? -> maybe need separate pipeline step.... needs all samples
         # 3. run cuffdiff? -> maybe need separate pipeline step.... needs all samples
         pass

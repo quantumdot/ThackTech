@@ -2,8 +2,7 @@ import os
 import re
 import subprocess
 import tempfile
-from ThackTech.Pipelines import PipelineModule, ModuleParameter
-from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
+from ThackTech.Pipelines import PipelineModule, ModuleParameter, FileInfo, FileContext
 
 
 class Bowtie2Align(PipelineModule):

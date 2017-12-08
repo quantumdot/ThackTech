@@ -28,7 +28,9 @@ class GenomeInfo(object):
 		idx_types = {
 			'BowtieIndex': 	'*.1.ebwt',
 			'Bowtie2Index':	'*.1.bt2', 
-			'BWAIndex': 	'*.fa.bwt'
+			'BWAIndex': 	'*.fa.bwt',
+			'Hisat2Index':  '*_tran.*.ht2',
+			#'Hisat2Index':  'genome.*.ht2'
 		}
 		for idx in idx_types.keys():
 			idx_path = os.path.join(basepath, 'Sequence', idx)
