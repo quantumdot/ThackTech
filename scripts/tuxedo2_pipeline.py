@@ -8,16 +8,16 @@ from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, AnalysisPipeli
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
 #sample manifest should be in the following TAB separated format (with headers):
-#Path    Basename    PE    Genome    Dest
-#/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
+#Path    Basename    PE
+#/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true
 
 #BEFORE RUNNING SCRIPT WHEN USING LMOD
 #module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 HISAT2/2.1.0
 
 class Tuxedo2PipelineRawSample(PipelineSample):
 
-    def __init__(self, sample, pe_prefix='_R', postfix=""):
-        super(Tuxedo2PipelineRawSample, self).__init__(sample['Basename'], sample['Genome'], sample['Dest'])
+    def __init__(self, sample, genome, dest, pe_prefix='_R', postfix=""):
+        super(Tuxedo2PipelineRawSample, self).__init__(sample['Basename'], genome, dest)
         self.set_attribute('PE', ('PE' in sample and sample['PE']))
         self.discover_files(sample['Path'], pe_prefix, postfix)
     #end __init__()
@@ -70,20 +70,19 @@ class Tuxedo2PipelineMergeSample(PipelineSample):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('manifest', help="Manifest file containing sample information in tab separated format. Should contain the following columns (headers must be present): [Path], [Basename], [PE], [Genome], [Dest]")
+    parser.add_argument('--dest', action='store', required=True, help="Path to destination for results.")
+    parser.add_argument('--genome', action='store', required=True, help="Reference genome to use.")
     
     available_qc_choices = ['ism', 'fqscreen', 'fastqc']
     parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC pipelines to run after the alignment process completes.")
     parser.add_argument('--pe_pre', default='_R', help="Paired-end prefix. String to insert between the file basename and the pair number when searching for read files. If your FASTQ files are names as [reads_R1.fastq, reads_R2.fastq] then use '_R1', or if reads_1.fastq then use '_1'. This option is only used when in paired end mode. default: _R1")
     parser.add_argument('--sample_postfix', default="", help="Postfix to append when looking for read files (ex lane number: '_001')")
     
-    #parser.add_argument('--unaligned', action='store_true', help='Output reads that fail to align to the reference genome.')
     parser.add_argument('--trim', action='store_true', help="Use trimmomatic to perform adapter clipping.")
-    parser.add_argument('--override-dest', action='store', default=None, help="Override the destination read from the sample manifest.")
-    
     parser.add_argument('--assembler', action='store', default='stringtie', choices=['stringtie', 'cufflinks'], help="Specify with transcript assembly program to use.")
     
     performance_group = add_runner_args(parser)
-    performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
+    #performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
 
     args, additional_args = parser.parse_known_args()
     
@@ -94,20 +93,11 @@ def main():
 
     sys.stdout.write('Reading sample manifest.....\n')
     #sample manifest should be in the following TAB separated format (with headers):
-    #Path    Basename    PE    Genome    Dest
-    #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true    hg19    /path/to/bam/dest
+    #Path    Basename    PE
+    #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
-    samples = [Tuxedo2PipelineRawSample(s, args.pe_pre, args.sample_postfix) for s in sample_manifest.to_dict(orient='records')]
-    if args.override_dest is not None:
-        sys.stdout.write("Override Destination is turned ON\n")
-        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
-        for s in samples:
-            s.dest = args.override_dest
+    samples = [Tuxedo2PipelineRawSample(s, args.genome, os.path.join(args.dest, s['Basename']), args.pe_pre, args.sample_postfix) for s in sample_manifest.to_dict(orient='records')]
     sys.stdout.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
-
-
-
-
 
 
     #get and run the read alignment pipeline
@@ -120,7 +110,7 @@ def main():
     
     
     #process samples from previous step, and generate new pseudo-sample for transcript merging
-    merge_sample = Tuxedo2PipelineMergeSample({'Basename': 'TranscriptMergePseudoSample', 'Genome': samples[0].genome, 'Dest': samples[0].dest})
+    merge_sample = Tuxedo2PipelineMergeSample({'Basename': 'TranscriptMergePseudoSample', 'Genome': args.genome, 'Dest': args.dest})
     for sample in samples:
         gtf = sample.find_files(lambda f: f.ext == '.gtf')
         merge_sample.add_file(FileInfo(gtf.fullpath, FileContext.from_origin(sample.name)))

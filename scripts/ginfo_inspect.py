@@ -5,6 +5,7 @@ import sys
 import glob
 import argparse
 import tabulate
+from ThackTech import conf
 from ThackTech.Pipelines import GenomeInfo
 
 
@@ -12,8 +13,12 @@ from ThackTech.Pipelines import GenomeInfo
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('genome', nargs='?', help="Name of reference genome to inspect.")
-	
+	parser.add_argument('-c', '--config', help="specify additional genome configuration file.")
 	args = parser.parse_args()
+	
+	if args.config is not None:
+		sys.stderr.write('Registering configuration at "{}"\n\n'.format(args.config))
+		conf.register_config_location('genomes', args.config)
 	
 	
 	ref_genomes = GenomeInfo.get_reference_genomes()
