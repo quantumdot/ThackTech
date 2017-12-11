@@ -66,4 +66,23 @@ def main():
 		sys.stderr.write(tabulate.tabulate(data, tablefmt="grid"))
 		sys.stderr.write('\n\n\n')
 	
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
 	
