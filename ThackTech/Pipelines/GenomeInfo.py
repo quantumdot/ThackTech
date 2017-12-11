@@ -20,6 +20,7 @@ class GenomeInfo(object):
 		self.indexes = {}
 		self.wg_fasta = None
 		self.chr_fasta = {}
+		self.genes_gtf = None
 	#end __init__()
 	
 	def try_discover(self, basepath):
@@ -53,6 +54,11 @@ class GenomeInfo(object):
 			chrsize_results = glob.glob(os.path.join(basepath, 'Sequence', 'WholeGenomeFasta', 'chrom.sizes'))
 			if len(chrsize_results) > 0:
 				self.chrsize = chrsize_results[0]
+				
+		#gene annotations
+		genes_gtf_results = glob.glob(os.path.join(basepath, 'Annotation', 'Genes', 'genes.gtf'))
+		if len(genes_gtf_results) > 0:
+			self.genes_gtf = genes_gtf_results[0]
 	#end try_discover()
 	
 	def add_index(self, name, value):

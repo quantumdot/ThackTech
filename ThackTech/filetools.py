@@ -161,15 +161,15 @@ def prepend_file(filename, data):
 #end prepend_file()
 
 def touch(fname, times=None):
-	'''Update file timestamp '''
-	with open(fname, 'a'):
-		os.utime(fname, times)
+    '''Update file timestamp '''
+    with open(fname, 'a'):
+        os.utime(fname, times)
 #end touch()
 
 
 def get_first_line(filename):
-	'''Gets the first line of the given file '''
-	with open(filename, 'r') as f:
-		line = f.readline()
-	return line.strip()
+    '''Gets the first line of the given file '''
+    with open(filename, 'r') as f:
+        line = f.readline()
+    return line.strip()
 #end get_first_line()

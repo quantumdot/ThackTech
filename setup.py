@@ -40,6 +40,7 @@ setup(  name='ThackTech',
             "scripts/multi_venn.py",
             "scripts/designCNVprobes.py",
             "scripts/subsample_fastq.py",
-            "scripts/tuxedo2_pipeline.py"
+            "scripts/tuxedo2_pipeline.py",
+            "scripts/ginfo_i9nspect.py"
         ],
         zip_safe=False)

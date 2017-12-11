@@ -226,7 +226,7 @@ def make_read_alignment_pipeline(args, additional_args):
         from ThackTech.Pipelines.PipelineModules import Cufflinks
         x = Cufflinks.Cufflinks(processors=args.threads)
         x.set_resolver('alignments', mapped_bam_resolver)
-        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.genes_gtf)
         pipeline.append_module(x, critical=True)
         
         # 2. run cuffcompare? optional, I think....
@@ -237,8 +237,7 @@ def make_read_alignment_pipeline(args, additional_args):
         from ThackTech.Pipelines.PipelineModules import StringTie
         x = StringTie.StringTieQuant(processors=args.threads)
         x.set_resolver('alignments', mapped_bam_resolver)
-        # @todo: implement actual location (should be ref annot)!!!!!!!!
-        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))  
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.genes_gtf)  
         pipeline.append_module(x, critical=True)
 
     return pipeline
@@ -256,8 +255,7 @@ def make_transcript_merge_pipeline(args):
         from ThackTech.Pipelines.PipelineModules import Cuffmerge
         x = Cuffmerge.Cuffmerge(processors=args.threads)
         x.set_resolver('assemblies', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.gtf'))
-        # @todo: implement actual location (should be ref annot)!!!!!!!!
-        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))  
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.genes_gtf)  
         pipeline.append_module(x, critical=True)
         
     else:
@@ -265,14 +263,16 @@ def make_transcript_merge_pipeline(args):
         from ThackTech.Pipelines.PipelineModules import StringTie
         x = StringTie.StringTieMerge(processors=args.threads)
         x.set_resolver('assemblies', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.gtf'))
-        
-        # @todo: implement actual location (should be ref annot)!!!!!!!!
-        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.get_index('genes.gtf'))  
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.genes_gtf)  
         pipeline.append_module(x, critical=True)
 
     
-    #optional: Examine how the transcripts compare with the reference annotation
+    #optional: Examine how the merged transcripts compare with the reference annotation
     #ex: gffcompare -r chrX_data/genes/chrX.gtf -G -o merged stringtie_merged.gtf
+    #from ThackTech.Pipelines.PipelineModules import GffCompare
+    #x = GffCompare.GffCompare(processors=args.threads)
+    #x.set_resolver('reference_gtf', lambda cxt: cxt.sample.genome.genes_gtf)
+    #x.set_resolver('gtfs', lambda cxt: cxt.sample.find_files(lambda f: f.role == 'merged_transcript_assembly'))
     
 #end make_transcript_merge_pipeline()
 
