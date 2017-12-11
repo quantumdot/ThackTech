@@ -44,7 +44,7 @@ def main():
 			'Value': g.wg_fasta,
 			'Exists?': str(os.path.exists(g.wg_fasta) and os.path.isfile(g.wg_fasta))
 		})
-		for chrom_fasta in g.chr_fasta.keys():
+		for chrom_fasta in sorted(g.chr_fasta):
 			data.append({
 				'Attribute': '{} FASTA'.format(chrom_fasta),
 				'Value': g.chr_fasta[chrom_fasta],
@@ -55,15 +55,15 @@ def main():
 			'Value': g.genes_gtf,
 			'Exists?': str(os.path.exists(g.genes_gtf) and os.path.isfile(g.genes_gtf))
 		})
-		for idx in g.indexes.keys():
+		for idx in sorted(g.indexes):
 			data.append({
 				'Attribute': idx,
 				'Value': g.indexes[idx],
 				'Exists?': str(len(glob.glob(g.indexes[idx]+'*')) > 0)
 			})
 		
-		sys.stderr.write('Inspecting genome "{}":\n'.format(gname))
-		sys.stderr.write(tabulate.tabulate(data, tablefmt="grid"))
+		sys.stderr.write('Inspecting Genome "{}":\n'.format(gname))
+		sys.stderr.write(tabulate.tabulate(data, headers='keys', tablefmt="grid"))
 		sys.stderr.write('\n\n\n')
 	
 
@@ -74,7 +74,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+	main()
 
 
 
