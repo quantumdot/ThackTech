@@ -37,7 +37,7 @@ class StringTieQuant(StringTieBase):
 	#end __declare_resolvers()
 
 	def _declare_parameters(self):
-		super(StringTieMerge, self)._declare_parameters()
+		super(StringTieQuant, self)._declare_parameters()
 		
 		#--fr/--rf
 		self.add_parameter(ModuleParameter('stranded', str, None, nullable=True, choices=['rf', 'fr'], desc="Sets the library type. See --rf and --fr from stringtie."))
@@ -183,6 +183,18 @@ class StringTieMerge(StringTieBase):
 		self._name_resolver('assemblies')
 		self._name_resolver('guide_gff')
 	#end __declare_resolvers()
+	
+	def _declare_parameters(self):
+		super(StringTieMerge, self)._declare_parameters()
+		
+		self.add_parameter(ModuleParameter('min_len', int, 50, desc="minimum input transcript length to include in the merge"))
+		self.add_parameter(ModuleParameter('min_cov', float, 0, desc="minimum input transcript coverage to include in the merge"))
+		self.add_parameter(ModuleParameter('min_fpkm', float, 1.0, desc="minimum input transcript FPKM to include in the merge"))
+		self.add_parameter(ModuleParameter('min_tpm', float, 1.0, desc="minimum input transcript TPM to include in the merge"))
+		self.add_parameter(ModuleParameter('min_iso', float, 0.01, desc="minimum isoform fraction"))
+		self.add_parameter(ModuleParameter('gap_len', int, 250, desc="gap between transcripts to merge together"))
+		self.add_parameter(ModuleParameter('keep_intron', bool, False, desc="keep merged transcripts with retained introns"))
+	#end _declare_parameters()
 
 	
 	def run(self, cxt):		
@@ -194,7 +206,6 @@ class StringTieMerge(StringTieBase):
 			'-p', str(self.processors), #not sure if this is actually supported, but lets give it a shot!
 			'-l', cxt.sample.name,
 			'-o', gtf_out,
-			#'-G', #<guide_gff>, # @todo: need to implement this!
 			
 			#optional args
 			'-m', self.get_parameter_value_as_string('min_len'),
