@@ -125,8 +125,9 @@ def main():
         merge_sample.add_file(FileInfo(gtf[0].fullpath, FileContext.from_origin(sample.name)))
         
     pipeline = make_transcript_merge_pipeline(args)
-    if args.resume is None or (ckpts.index(args.resume) >= ckpts.index('pre_merge') and ckpts.index(args.resume) < ckpts.index('post_merge')):
-        pipeline.offset = args.resume
+    if args.resume is None or ckpts.index(args.resume) < ckpts.index('post_merge'):
+        if ckpts.index(args.resume) >= ckpts.index('pre_merge'):
+            pipeline.offset = args.resume
         runner = get_configured_runner(args, pipeline)
         runner.run([merge_sample])            
         sys.stdout.write("Completed merge of transcript assemblies from all samples!\n")
