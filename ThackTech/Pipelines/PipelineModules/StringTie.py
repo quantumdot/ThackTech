@@ -96,7 +96,6 @@ class StringTieQuant(StringTieBase):
 			'-p', str(self.processors), #not sure if this is actually supported, but lets give it a shot!
 			'-l', cxt.sample.name,
 			'-o', gtf_out,
-			#'-G', #<guide_gff>, # @todo: need to implement this!
 			
 			#optional options
 			'-f', self.get_parameter_value_as_string('min_abd'),
@@ -107,7 +106,7 @@ class StringTieQuant(StringTieBase):
 			'-g', self.get_parameter_value_as_string('bun_gap'),
 			'-M', self.get_parameter_value_as_string('max_mhf'),
 		]
-		guide_gff = self.resolve_input('guide_gff', cxt)
+		guide_gff = self.resolve_input_path('guide_gff', cxt)
 		if guide_gff is not None:
 			st_args.extend(['-G', guide_gff])
 			
@@ -150,12 +149,7 @@ class StringTieQuant(StringTieBase):
 			
 		
 		#add the input alignments that we are quantifying/assembling
-		alignments = self.resolve_input('alignments', cxt)
-		if isinstance(alignments, FileInfo):
-			st_args.append(alignments.fullpath)
-		else:
-			for a in alignments:
-				st_args.append(a.fullpath)
+		st_args.append(self.resolve_input_path('alignments', cxt))
 
 		
 		#OK, we now have all the arguments setup, lets actually run StringTie
@@ -221,21 +215,13 @@ class StringTieMerge(StringTieBase):
 		
 		if self.get_parameter_value('keep_intron'):
 			st_args.append('-i')
-			
-		guide_gff = self.resolve_input('guide_gff', cxt)
+		
+		guide_gff = self.resolve_input_path('guide_gff', cxt)
 		if guide_gff is not None:
-			if isinstance(guide_gff, FileInfo):
-				st_args.extend(['-G', guide_gff.fullpath])
-			else:
-				st_args.extend(['-G', guide_gff[0].fullpath])
+			st_args.extend(['-G', guide_gff])	
 		
 		#add the input transcript assemblies that we are merging
-		assemblies = self.resolve_input('assemblies', cxt)
-		if isinstance(assemblies, FileInfo):
-			st_args.append(assemblies.fullpath)
-		else:
-			for a in assemblies:
-				st_args.append(a.fullpath)
+		st_args.extend(self.resolve_input_paths('assemblies', cxt))
 		
 		#OK, we now have all the arguments setup, lets actually run StringTie
 		cxt.log.write("\t-> Merging transcript assemblies with StringTie......")

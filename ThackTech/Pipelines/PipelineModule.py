@@ -1,10 +1,11 @@
 import subprocess
-from tabulate import tabulate
-from ThackTech.Pipelines import ModuleParameter
-from ThackTech import conf
 import textwrap
+from tabulate import tabulate
 from abc import ABCMeta, abstractmethod
 from _pyio import __metaclass__
+from ThackTech import conf
+from ThackTech.Pipelines import ModuleParameter, FileInfo
+
 
 
 class PipelineModule(object):
@@ -176,6 +177,34 @@ class PipelineModule(object):
 	def resolve_input(self, name, cxt):
 		return self.resolvers[name](cxt)
 	#end resolve_input()
+	
+	def resolve_input_path(self, name, cxt):
+		i = self.resolve_input_paths(name, cxt)
+		if i is None:
+			return None
+		else:
+			return i[0]
+	#end resolve_input_path()
+	
+	def resolve_input_paths(self, name, cxt):
+		i = self.resolve_input(name, cxt)
+		o = []
+		if isinstance(i, basestring):
+			o.append(i)
+		elif isinstance(i, FileInfo):
+			o.append(i.fullpath)
+		else: #assume iterable of some type
+			for j in i:
+				if isinstance(j, basestring):
+					o.append(j)
+				elif isinstance(j, FileInfo):
+					o.append(j.fullpath)
+		
+		if len(o) == 0:
+			return None
+		else:
+			return o
+	#end resolve_input_paths()
 	
 	def get_resolver_names(self):
 		"""Gets a list of declared resolver names

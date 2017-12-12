@@ -103,7 +103,7 @@ def main():
     #/path/to/fastq    anti_H3K18Ac_K562_WCE_CAGATC_ALL    true
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
     samples = [Tuxedo2PipelineRawSample(s, args.genome, os.path.join(args.dest, s['Basename']), args.pe_pre, args.sample_postfix) for s in sample_manifest.to_dict(orient='records')]
-    sys.stdout.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
+    sys.stdout.write(' -> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
 
 
     #get and run the read alignment pipeline
