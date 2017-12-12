@@ -115,7 +115,7 @@ class HISAT2Align(PipelineModule):
 			'--mp', "{max},{min}".format(min=self.get_parameter_value('pen_mismatch_min'), max=self.get_parameter_value('pen_mismatch_min')),
   			'--sp', "{max},{min}".format(min=self.get_parameter_value('pen_sclip_min'), max=self.get_parameter_value('pen_sclip_max')),
     		
-			'--np', self.get_parameter_value('pen_n'),
+			'--np', self.get_parameter_value_as_string('pen_n'),
 			'--rdg', "{opn},{ext}".format(opn=self.get_parameter_value('pen_read_gap_open'), ext=self.get_parameter_value('pen_read_gap_extn')),
 			'--rfg', "{opn},{ext}".format(opn=self.get_parameter_value('pen_ref_gap_open'), ext=self.get_parameter_value('pen_ref_gap_extn')),
 			'--score-min',  self.get_parameter_value_as_string('score_min'),
