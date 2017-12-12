@@ -21,8 +21,8 @@ class HISAT2Align(PipelineModule):
 		#Alignment:
 		self.add_parameter(ModuleParameter('n_ceil', str, 'L,0,0.15', desc="func for max # non-A/C/G/Ts permitted in alignment"))
 		self.add_parameter(ModuleParameter('ignore_quals', bool, False, desc="treat all quality values as 30 on Phred scale"))
-		self.add_parameter(ModuleParameter('nofw ', bool, False, desc="do not align forward (original) version of read"))
-		self.add_parameter(ModuleParameter('norc ', bool, False, desc="do not align reverse-complement version of read"))
+		self.add_parameter(ModuleParameter('nofw', bool, False, desc="do not align forward (original) version of read"))
+		self.add_parameter(ModuleParameter('norc', bool, False, desc="do not align reverse-complement version of read"))
 		
 		#Spliced Alignment:
 		self.add_parameter(ModuleParameter('no_spliced_alignment', bool, False, desc="disable spliced alignment"))
@@ -227,4 +227,4 @@ class HISAT2Align(PipelineModule):
 		
 		return output_result
 	#end run()
-#end class BowtieAlign
+#end class HISAT2Align
