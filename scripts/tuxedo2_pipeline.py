@@ -19,11 +19,7 @@ class Tuxedo2PipelineRawSample(PipelineSample):
     def __init__(self, sample, genome, dest, pe_prefix='_R', postfix=""):
         super(Tuxedo2PipelineRawSample, self).__init__(sample['Basename'], genome, dest)
         self.set_attribute('PE', ('PE' in sample and sample['PE']))
-        
-        try:
-            self.read_file_manifest(self.default_file_manifest_location)
-        except:
-            self.discover_files(sample['Path'], pe_prefix, postfix)
+        self.discover_files(sample['Path'], pe_prefix, postfix)
     #end __init__()
     
     def discover_files(self, path, pe_prefix, postfix):
@@ -116,6 +112,10 @@ def main():
         sys.stdout.write("=========================================================\n\n")
         sys.stdout.flush()
     
+    #re-read the output manifests
+    for s in samples:
+        s.read_file_manifest(s.default_file_manifest_location)
+    
     
     #process samples from previous step, and generate new pseudo-sample for transcript merging
     merge_sample = Tuxedo2PipelineMergeSample({'Basename': 'TranscriptMergePseudoSample', 'Genome': args.genome, 'Dest': args.dest})
@@ -133,6 +133,9 @@ def main():
         sys.stdout.write("Completed merge of transcript assemblies from all samples!\n")
         sys.stdout.write("=========================================================\n\n")
         sys.stdout.flush()
+        
+    #re-read the output manifest
+    merge_sample.read_file_manifest(merge_sample.default_file_manifest_location)    
     
     
     #re-process original samples, now using the merged transcripts
