@@ -19,7 +19,11 @@ class Tuxedo2PipelineRawSample(PipelineSample):
     def __init__(self, sample, genome, dest, pe_prefix='_R', postfix=""):
         super(Tuxedo2PipelineRawSample, self).__init__(sample['Basename'], genome, dest)
         self.set_attribute('PE', ('PE' in sample and sample['PE']))
-        self.discover_files(sample['Path'], pe_prefix, postfix)
+        
+        try:
+            self.read_file_manifest(self.default_file_manifest_location)
+        except:
+            self.discover_files(sample['Path'], pe_prefix, postfix)
     #end __init__()
     
     def discover_files(self, path, pe_prefix, postfix):

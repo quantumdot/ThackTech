@@ -151,7 +151,6 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 		sys.stdout = sys.stderr = logfile
 		try:
 			tasks_statuses[sample.name] = tasks_statuses[sample.name].start()
-			output_manifest_location = os.path.join(sample.dest, sample.name+'_output_manifest.tsv')
 			logfile.write(pipeline.documentation())
 			
 			pipeline_size = len(pipeline)
@@ -171,7 +170,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			if pipeline.offset is not None:
 				status_counts['skipped'] = pipeline_steps[0].index
 				logfile.write('-> Resuming from step: {} (checkpoint "{}")\n'.format(pipeline_steps[0].index+1, pipeline.offset))
-				sample.read_file_manifest(output_manifest_location)
+				sample.read_file_manifest(sample.default_file_manifest_location)
 			
 			logfile.write('-> Running on: {}\n'.format(' '.join(platform.uname())))
 			logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
@@ -205,7 +204,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 								sample.add_file(f)
 						
 						#done running this step, update the output manifest
-						sample.write_file_manifest(output_manifest_location)
+						sample.write_file_manifest(sample.default_file_manifest_location)
 			
 				except Exception as e:
 					if step.module.is_critical:

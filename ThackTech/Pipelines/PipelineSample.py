@@ -142,6 +142,10 @@ class PipelineSample(object):
 		return list(filter(predicate, self.files))
 	#end find_files()
 	
+	@property
+	def default_file_manifest_location(self):
+		return os.path.join(self.dest, self.name+'_output_manifest.tsv')
+	
 	def write_file_manifest(self, path):
 		
 		def write_manifest_line(index, parent, f, out):
