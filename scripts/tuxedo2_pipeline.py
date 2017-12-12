@@ -311,6 +311,7 @@ def make_transcript_merge_pipeline(args):
     #x.set_resolver('reference_gtf', lambda cxt: cxt.sample.genome.genes_gtf)
     #x.set_resolver('gtfs', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly'))
     
+    return pipeline
 #end make_transcript_merge_pipeline()
 
    
@@ -350,7 +351,7 @@ def make_transcript_quant_pipeline(args):
         x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly'))  
         pipeline.append_module(x, critical=True)
     
-    
+    return pipeline
 #end make_transcript_quant_pipeline()
 
 
