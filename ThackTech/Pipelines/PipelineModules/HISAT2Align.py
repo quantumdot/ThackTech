@@ -33,7 +33,7 @@ class HISAT2Align(PipelineModule):
 		self.add_parameter(ModuleParameter('min_intronlen', int, 20, desc="minimum intron length"))
 		self.add_parameter(ModuleParameter('max_intronlen', int, 500000, desc="maximum intron length"))
 		self.add_parameter(ModuleParameter('no_temp_splicesite', bool, False, desc="disable the use of splice sites found"))
-		self.add_parameter(ModuleParameter('rna_strandness', str, 'unstranded', desc="specify strand-specific information"))
+		self.add_parameter(ModuleParameter('rna_strandness', str, None, nullable=True, choices=['F', 'R'], desc="specify strand-specific information"))
 		self.add_parameter(ModuleParameter('tmo', bool, False, desc="reports only those alignments within known transcriptome"))
 		self.add_parameter(ModuleParameter('dta', str, None, choices=['stringtie', 'cufflinks'], nullable=True, desc="Specify which, if any, downstream, transcript assemblers output should be tailored to. see --dta* option in HISAT2"))
 		self.add_parameter(ModuleParameter('avoid_pseudogene', bool, False, desc="tries to avoid aligning reads to pseudogenes; experimental!"))
@@ -157,9 +157,17 @@ class HISAT2Align(PipelineModule):
 				'--pen-canintronlen', self.get_parameter_value_as_string('pen_canintronlen'),
 				'--pen-noncanintronlen', self.get_parameter_value_as_string('pen_noncanintronlen'),
 				'--min-intronlen', self.get_parameter_value_as_string('min_intronlen'),
-				'--max-intronlen', self.get_parameter_value_as_string('max_intronlen'),
-				'--rna-strandness', self.get_parameter_value_as_string('rna_strandness'),
+				'--max-intronlen', self.get_parameter_value_as_string('max_intronlen')
 			])
+			if self.get_parameter_value('rna_strandness') is not None:
+				if cxt.sample.get_attribute('PE'):
+					if self.get_parameter_value('rna_strandness') == 'F':
+						bowtiecmd.extend(['--rna-strandness', 'FR'])
+					else:
+						bowtiecmd.extend(['--rna-strandness', 'RF'])
+				else:
+					bowtiecmd.extend(['--rna-strandness', self.get_parameter_value_as_string('rna_strandness')])
+			
 			if self.get_parameter_value('no_temp_splicesite'):
 				bowtiecmd.append('--no-temp-splicesite')
 				
