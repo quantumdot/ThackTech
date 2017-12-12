@@ -95,7 +95,7 @@ class HISAT2Align(PipelineModule):
 		#start constructing our HISAT2 arguments...
 		bowtiecmd = [ 
 			self.get_parameter_value_as_string('hisat2_path'),
-			'-x', cxt.sample.genome.get_index('HISAT2Index'),
+			'-x', cxt.sample.genome.get_index('Hisat2Index'),
 		]
 		if cxt.sample.get_attribute('PE'):
 			bowtiecmd.extend([
