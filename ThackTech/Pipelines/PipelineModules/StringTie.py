@@ -224,7 +224,10 @@ class StringTieMerge(StringTieBase):
 			
 		guide_gff = self.resolve_input('guide_gff', cxt)
 		if guide_gff is not None:
-			st_args.extend(['-G', guide_gff])
+			if isinstance(guide_gff, FileInfo):
+				st_args.extend(['-G', guide_gff.fullpath])
+			else:
+				st_args.extend(['-G', guide_gff[0].fullpath])
 		
 		#add the input transcript assemblies that we are merging
 		assemblies = self.resolve_input('assemblies', cxt)
@@ -237,7 +240,7 @@ class StringTieMerge(StringTieBase):
 		#OK, we now have all the arguments setup, lets actually run StringTie
 		cxt.log.write("\t-> Merging transcript assemblies with StringTie......")
 		cxt.log.write("\n..............................................\n")
-		cxt.log.write(" ".join(st_args))
+		cxt.log.write(" ".join([str(p) for p in st_args]))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
 		self._run_subprocess(st_args, stderr=subprocess.STDOUT, stdout=cxt.log)
