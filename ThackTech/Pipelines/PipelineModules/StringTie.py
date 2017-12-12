@@ -196,7 +196,7 @@ class StringTieMerge(StringTieBase):
 
 	
 	def run(self, cxt):		
-		gtf_out = os.path.join(cxt.sample.dest, cxt.sample.name+'.gtf'),
+		gtf_out = os.path.join(cxt.sample.dest, cxt.sample.name+'.gtf')
 		
 		st_args = [
 			self.get_parameter_value_as_string('stringtie_path'),
