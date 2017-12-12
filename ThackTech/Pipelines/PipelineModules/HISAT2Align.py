@@ -98,14 +98,12 @@ class HISAT2Align(PipelineModule):
 			'-x', cxt.sample.genome.get_index('HISAT2Index'),
 		]
 		if cxt.sample.get_attribute('PE'):
-			bowtiecmd += [
+			bowtiecmd.extend([
 				'-1', ",".join([f.fullpath for f in read_files if f.has_attribute_value("mate", 1)]), 
 				'-2', ",".join([f.fullpath for f in read_files if f.has_attribute_value("mate", 2)])
-			]
+			])
 		else:
-			bowtiecmd += [
-				'-U', ",".join([f.fullpath for f in read_files])
-			]
+			bowtiecmd.extend(['-U', ",".join([f.fullpath for f in read_files])])
 		
 		bowtiecmd.extend([
 			'-S', output_result['sam'],
@@ -210,16 +208,17 @@ class HISAT2Align(PipelineModule):
 				output_result['unaligned_2'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned_2.fastq')
 			else:
 				output_result['unaligned'] = os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned.fastq')
-			bowtiecmd += ['--un', os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned.fastq')]
+			bowtiecmd.extend(['--un', os.path.join(cxt.sample.dest, cxt.sample.name+'_unaligned.fastq')])
 		
 		#hook in any additional args the user may want to supply to HISAT2
-		bowtiecmd += self.get_parameter_value('additional_args')
+		bowtiecmd.extend(self.get_parameter_value('additional_args'))
 
 
-
+		
 		#OK, we now have all the arguments setup, lets actually run HISAT2
 		cxt.log.write("\t-> Performing alignment with HISAT2......")
 		cxt.log.write("\n..............................................\n")
+		cxt.log.write(str(bowtiecmd))
 		cxt.log.write(" ".join(bowtiecmd))
 		cxt.log.write("\n..............................................\n")
 		cxt.log.flush()
