@@ -12,7 +12,7 @@ class HISAT2Align(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
-		self.add_parameter(ModuleParameter('hisat2_path', 		str, 	'HISAT2',	desc="Path to the hisat2 executable."))
+		self.add_parameter(ModuleParameter('hisat2_path', str, 'hisat2', desc="Path to the hisat2 executable."))
 		
 		#Input:
 		self.add_parameter(ModuleParameter('skip', int, None, nullable=True, desc="skip the first <int> reads/pairs in the input"))
@@ -80,7 +80,7 @@ class HISAT2Align(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'HISAT2': self._call_output("hisat2 --version 2>&1 | perl -ne 'if(m/.*hisat2.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'HISAT2': self._call_output(self.get_parameter_value_as_string('hisat2_path')+" --version 2>&1 | perl -ne 'if(m/.*hisat2.*version\s+([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
