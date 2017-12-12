@@ -135,7 +135,7 @@ def main():
     
     
     #re-process original samples, now using the merged transcripts
-    merged_gtf = merge_sample.find_files(lambda f: f.role == 'merged_transcript_assembly')[0]
+    merged_gtf = merge_sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly')[0]
     for sample in samples:
         sample.add_file(FileInfo(merged_gtf, FileContext.from_origin('merged_transcript_assembly')))
         
@@ -308,7 +308,7 @@ def make_transcript_merge_pipeline(args):
     #from ThackTech.Pipelines.PipelineModules import GffCompare
     #x = GffCompare.GffCompare(processors=args.threads)
     #x.set_resolver('reference_gtf', lambda cxt: cxt.sample.genome.genes_gtf)
-    #x.set_resolver('gtfs', lambda cxt: cxt.sample.find_files(lambda f: f.role == 'merged_transcript_assembly'))
+    #x.set_resolver('gtfs', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly'))
     
 #end make_transcript_merge_pipeline()
 
@@ -328,7 +328,7 @@ def make_transcript_quant_pipeline(args):
         x = Cuffquant.Cuffquant(processors=args.threads)
         x.set_resolver('alignments', mapped_bam_resolver)
         # @todo: should be merged gtf, think this is OK, but need to check!!!!!!!!
-        x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.role == 'merged_transcript_assembly'))  
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly'))  
         pipeline.append_module(x, critical=True)
         
         
@@ -346,7 +346,7 @@ def make_transcript_quant_pipeline(args):
         x.set_resolver('alignments', mapped_bam_resolver)
         
         # @todo: should be merged gtf, think this is OK, but need to check!!!!!!!!
-        x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.role == 'merged_transcript_assembly'))  
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly'))  
         pipeline.append_module(x, critical=True)
     
     
