@@ -83,8 +83,8 @@ def main():
     
     performance_group = add_runner_args(parser)
     #performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
-    checkpoints = ['post_trim', 'pre_align', 'post_align', 'pre_assembly', 'post_assembly', 'pre_merge', 'post_merge']
-    performance_group.add_argument('--resume', action='store', default=None, choices=checkpoints, help='Resume the pipeline from this checkpoint.')
+    ckpts = ['post_trim', 'pre_align', 'post_align', 'pre_assembly', 'post_assembly', 'pre_merge', 'post_merge']
+    performance_group.add_argument('--resume', action='store', default=None, choices=ckpts, help='Resume the pipeline from this checkpoint.')
 
     args, additional_args = parser.parse_known_args()
     
@@ -104,17 +104,13 @@ def main():
 
     #get and run the read alignment pipeline
     pipeline = make_read_alignment_pipeline(args, additional_args)
-    if args.resume is not None:
-        if checkpoints.index(args.resume) >= checkpoints.index('post_assembly'):
-            pipeline.offset = 'post_assembly'
-        else:
-            pipeline.offset = args.resume
-            
-    runner = get_configured_runner(args, pipeline)
-    runner.run(samples)
-    sys.stdout.write("Completed alignment and initial quantification phase for all manifest items!\n")
-    sys.stdout.write("=========================================================\n\n")
-    sys.stdout.flush()
+    if args.resume is None or ckpts.index(args.resume) < ckpts.index('post_assembly'):
+        pipeline.offset = args.resume
+        runner = get_configured_runner(args, pipeline)
+        runner.run(samples)
+        sys.stdout.write("Completed alignment and initial quantification phase for all manifest items!\n")
+        sys.stdout.write("=========================================================\n\n")
+        sys.stdout.flush()
     
     
     #process samples from previous step, and generate new pseudo-sample for transcript merging
@@ -125,18 +121,13 @@ def main():
         merge_sample.add_file(FileInfo(gtf[0].fullpath, FileContext.from_origin(sample.name)))
         
     pipeline = make_transcript_merge_pipeline(args)
-    if args.resume is not None:
-        if checkpoints.index(args.resume) >= checkpoints.index('post_merge'):
-            pipeline.offset = 'post_merge' #last checkpoint in this pipeline
-        elif checkpoints.index(args.resume) >= checkpoints.index('pre_merge'):
-            pipeline.offset = args.resume #first checkpoint in this pipeline
-            
-    runner = get_configured_runner(args, pipeline)
-    runner.run([merge_sample])
-        
-    sys.stdout.write("Completed merge of transcript assemblies from all samples!\n")
-    sys.stdout.write("=========================================================\n\n")
-    sys.stdout.flush()
+    if args.resume is None or (ckpts.index(args.resume) >= ckpts.index('pre_merge') and ckpts.index(args.resume) < ckpts.index('post_merge')):
+        pipeline.offset = args.resume
+        runner = get_configured_runner(args, pipeline)
+        runner.run([merge_sample])            
+        sys.stdout.write("Completed merge of transcript assemblies from all samples!\n")
+        sys.stdout.write("=========================================================\n\n")
+        sys.stdout.flush()
     
     
     #re-process original samples, now using the merged transcripts
