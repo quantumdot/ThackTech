@@ -1,6 +1,7 @@
 import os
 import subprocess
 from ThackTech.Pipelines import PipelineModule, ModuleParameter, FileInfo, FileContext
+from __builtin__ import isinstance
 
 
 class StringTieBase(PipelineModule):
@@ -150,8 +151,11 @@ class StringTieQuant(StringTieBase):
 		
 		#add the input alignments that we are quantifying/assembling
 		alignments = self.resolve_input('alignments', cxt)
-		for a in alignments:
-			st_args.append(a.fullpath)
+		if isinstance(alignments, FileInfo):
+			st_args.append(alignments.fullpath)
+		else:
+			for a in alignments:
+				st_args.append(a.fullpath)
 
 		
 		#OK, we now have all the arguments setup, lets actually run StringTie
@@ -224,8 +228,11 @@ class StringTieMerge(StringTieBase):
 		
 		#add the input transcript assemblies that we are merging
 		assemblies = self.resolve_input('assemblies', cxt)
-		for a in assemblies:
-			st_args.append(a.fullpath)
+		if isinstance(assemblies, FileInfo):
+			st_args.append(assemblies.fullpath)
+		else:
+			for a in assemblies:
+				st_args.append(a.fullpath)
 		
 		#OK, we now have all the arguments setup, lets actually run StringTie
 		cxt.log.write("\t-> Merging transcript assemblies with StringTie......")
