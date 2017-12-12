@@ -83,6 +83,8 @@ def main():
     
     performance_group = add_runner_args(parser)
     #performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
+    checkpoints = ['post_trim', 'pre_align', 'post_align', 'pre_assembly', 'post_assembly', 'pre_merge', 'post_merge']
+    performance_group.add_argument('--resume', action='store', default=None, choices=checkpoints, help='Resume the pipeline from this checkpoint.')
 
     args, additional_args = parser.parse_known_args()
     
@@ -101,7 +103,13 @@ def main():
 
 
     #get and run the read alignment pipeline
-    pipeline = make_read_alignment_pipeline(args, additional_args)    
+    pipeline = make_read_alignment_pipeline(args, additional_args)
+    if args.resume is not None:
+        if checkpoints.index(args.resume) >= checkpoints.index('post_assembly'):
+            pipeline.offset = 'post_assembly'
+        else:
+            pipeline.offset = args.resume
+            
     runner = get_configured_runner(args, pipeline)
     runner.run(samples)
     sys.stdout.write("Completed alignment and initial quantification phase for all manifest items!\n")
@@ -116,6 +124,12 @@ def main():
         merge_sample.add_file(FileInfo(gtf.fullpath, FileContext.from_origin(sample.name)))
         
     pipeline = make_transcript_merge_pipeline(args)
+    if args.resume is not None:
+        if checkpoints.index(args.resume) >= checkpoints.index('post_merge'):
+            pipeline.offset = 'post_merge' #last checkpoint in this pipeline
+        elif checkpoints.index(args.resume) >= checkpoints.index('pre_merge'):
+            pipeline.offset = args.resume #first checkpoint in this pipeline
+            
     runner = get_configured_runner(args, pipeline)
     runner.run([merge_sample])
         
@@ -159,7 +173,10 @@ def make_read_alignment_pipeline(args, additional_args):
         def resolve_bowtie1(cxt):
             return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
     
-    
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('post_trim'))
+    ################################
     
     if 'fastqc' in args.qc:
         if args.trim:
@@ -180,6 +197,12 @@ def make_read_alignment_pipeline(args, additional_args):
         x = FastqScreen.FastqScreen(processors=args.threads)
         x.set_resolver('fastqs', resolve_bowtie1)
         pipeline.append_module(x)
+        
+    
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('pre_align'))
+    ################################
     
     
     #Align with HISAT2
@@ -199,6 +222,12 @@ def make_read_alignment_pipeline(args, additional_args):
     
     def mapped_bam_resolver(cxt):
         return cxt.sample.find_files(lambda f: f.basename == '{}.bam'.format(cxt.sample.name))[0]
+       
+       
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('post_align'))
+    ################################
     
     #QC functions:
     if (args.qc is not None) and (len(args.qc) > 0):
@@ -208,6 +237,12 @@ def make_read_alignment_pipeline(args, additional_args):
             x = InsertSizeMetrics.InsertSizeMetrics()
             x.set_resolver('bam', mapped_bam_resolver)
             pipeline.append_module(x)
+    
+    
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('pre_assembly'))
+    ################################
             
     
     if args.assembler == 'cufflinks':
@@ -229,6 +264,11 @@ def make_read_alignment_pipeline(args, additional_args):
         x.set_resolver('alignments', mapped_bam_resolver)
         x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.genes_gtf)  
         pipeline.append_module(x, critical=True)
+        
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('post_assembly'))
+    ################################
 
     return pipeline
 #end make_read_alignment_pipeline()
@@ -237,7 +277,12 @@ def make_read_alignment_pipeline(args, additional_args):
     
     
 def make_transcript_merge_pipeline(args):
-    pipeline = AnalysisPipeline('Transcript Merge') 
+    pipeline = AnalysisPipeline('Transcript Merge')
+    
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('pre_merge'))
+    ################################
     
     if args.assembler == 'cufflinks':
         # @todo: implement cufflinks support
@@ -255,6 +300,11 @@ def make_transcript_merge_pipeline(args):
         x.set_resolver('assemblies', lambda cxt: cxt.sample.find_files(lambda f: f.ext == '.gtf'))
         x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.genes_gtf)  
         pipeline.append_module(x, critical=True)
+        
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('post_merge'))
+    ################################
 
     
     #optional: Examine how the merged transcripts compare with the reference annotation
