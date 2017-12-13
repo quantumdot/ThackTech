@@ -126,7 +126,7 @@ def main():
         
     pipeline = make_transcript_merge_pipeline(args)
     if args.resume is None or ckpts.index(args.resume) < ckpts.index('post_merge'):
-        if ckpts.index(args.resume) >= ckpts.index('pre_merge'):
+        if args.resume is not None and ckpts.index(args.resume) >= ckpts.index('pre_merge'):
             pipeline.offset = args.resume
         runner = get_configured_runner(args, pipeline)
         runner.run([merge_sample])            
