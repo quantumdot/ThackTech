@@ -2,6 +2,7 @@
 
 import os
 import sys
+import tarfile
 import argparse
 import pandas as pd
 from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, AnalysisPipelineCheckpoint, FileInfo, FileContext
@@ -83,7 +84,7 @@ def main():
     
     performance_group = add_runner_args(parser)
     #performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
-    ckpts = ['post_trim', 'pre_align', 'post_align', 'pre_assembly', 'post_assembly', 'pre_merge', 'post_merge']
+    ckpts = ['post_trim', 'pre_align', 'post_align', 'pre_assembly', 'post_assembly', 'pre_merge', 'post_merge', 'post_quant']
     performance_group.add_argument('--resume', action='store', default=None, choices=ckpts, help='Resume the pipeline from this checkpoint.')
 
     args, additional_args = parser.parse_known_args()
@@ -142,14 +143,28 @@ def main():
     merged_gtf = merge_sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly')[0]
     for sample in samples:
         sample.add_file(FileInfo(merged_gtf, FileContext.from_origin('merged_transcript_assembly')))
-        
-    pipeline = make_transcript_quant_pipeline(args)
-    runner = get_configured_runner(args, pipeline)
-    runner.run(samples)
-    sys.stdout.write("Completed re-quantification using merged transcript assembly for all manifest items!\n")
+    
+    if args.resume is None or ckpts.index(args.resume) < ckpts.index('post_quant'): 
+        pipeline = make_transcript_quant_pipeline(args)
+        runner = get_configured_runner(args, pipeline)
+        runner.run(samples)
+        sys.stdout.write("Completed re-quantification using merged transcript assembly for all manifest items!\n")
+        sys.stdout.write("=========================================================\n\n")
+        sys.stdout.flush()
+    
+    #re-read the output manifests
+    for s in samples:
+        s.read_file_manifest(s.default_file_manifest_location)
+    
+       
+    #prepare ballgown out file
+    sys.stdout.write("Preparing archive suitable for ballgown consumption...\n")
+    sys.stdout.flush()
+    bg_tar_loc = prepare_ballgown_archive(samples, args)
+    sys.stdout.write("See ballgown archive at {}\n".format(bg_tar_loc))
+    sys.stdout.write("Done!\n")
     sys.stdout.write("=========================================================\n\n")
     sys.stdout.flush()
-    
 #end main()
 
 def make_read_alignment_pipeline(args, additional_args):
@@ -358,6 +373,22 @@ def make_transcript_quant_pipeline(args):
 #end make_transcript_quant_pipeline()
 
 
+def prepare_ballgown_archive(samples, args):
+    tarloc = os.path.join(args.dest, 'ballgown.tar.gz')
+    with tarfile.open(tarloc, 'w:gz') as tar:
+        tar.add(os.path.join(args.dest, 'TranscriptMergePseudoSample.gtf'), arcname='merged_transcripts.gtf')
+        
+        for s in samples:
+            st = tarfile.TarInfo(s.name)
+            st.type = tarfile.DIRTYPE
+            tar.addfile(st)
+            
+            files_to_add = s.find_files(lambda f: f.cxt.pipeline == 'Quantify Transcripts' and f.cxt.module == 'StringTieQuant')
+            for f in files_to_add:
+                tar.add(f.fullpath, arcname=os.path.join(s.name, f.basename))
+
+    return tarloc
+#end prepare_ballgown_archive()
 
 
 
@@ -365,8 +396,6 @@ def make_transcript_quant_pipeline(args):
 
 if __name__ == "__main__":
     main()
-
-
 
 
 
