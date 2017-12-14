@@ -122,7 +122,7 @@ def main():
     merge_sample = Tuxedo2PipelineMergeSample({'Basename': 'TranscriptMergePseudoSample', 'Genome': args.genome, 'Dest': args.dest})
     for sample in samples:
         gtf = sample.find_files(lambda f: f.cxt.role == 'assembled_transcripts')
-        sys.stdout.write(str(gtf))
+        #sys.stdout.write(str(gtf))
         merge_sample.add_file(FileInfo(gtf[0].fullpath, FileContext.from_origin(sample.name)))
         
     pipeline = make_transcript_merge_pipeline(args)
