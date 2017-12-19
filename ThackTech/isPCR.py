@@ -68,7 +68,7 @@ class gfServer(object):
             time.sleep(15)
             cmd = '{gfserver} -canStop -log="{log}" '.format(gfserver=self.exe, log=log_file)
             cmd += '-tileSize={tile_size} -stepSize={step_size} -minMatch={min_match} -maxGap={max_gap} ' \
-            	 + '-repMatch={rep_match} -maxDnaHits={max_dna_hits} -maxTransHits={max_trans_hits} -maxNtSize={max_nt_size} -maxAsSize={max_as_size} '.format(self.gfServe_params)
+            	 + '-repMatch={rep_match} -maxDnaHits={max_dna_hits} -maxTransHits={max_trans_hits} -maxNtSize={max_nt_size} -maxAsSize={max_as_size} '.format(**self.gfServe_params)
             
             if self.gfServe_params['mask']:
                 cmd += '-mask '
