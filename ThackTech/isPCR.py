@@ -8,7 +8,7 @@ import pybedtools
 
 class gfServer(object):
     
-    def __init__(self, name, executible, host, port, genome2bit):
+    def __init__(self, name, executible, host, port, genome2bit, **kwargs):
         """Initializes a new gfServer instance, but deos not start it.
         
         API:
@@ -30,6 +30,23 @@ class gfServer(object):
         self.port = int(port)
         self.genome = genome2bit
         
+        self.gfServe_params = {
+			'tile_size': 11,
+	        'step_size': 5,
+	        'min_match': 2,
+	        'max_gap': 2,
+	        'translate': False,
+	        'mask': False,
+	        'rep_match': 1024,
+	        'max_dna_hits': 100,
+	        'max_trans_hits': 200,
+	        'max_nt_size': 40000,
+	        'max_as_size': 8000
+		}
+        self.gfServe_params.update(kwargs)
+    #end __init__()
+        
+        
     def start(self):
         """Starts the gfServer
         
@@ -49,7 +66,17 @@ class gfServer(object):
         os.chdir(os.path.dirname(self.genome))
         try:
             time.sleep(15)
-            cmd = '{gfserver} -canStop -tileSize=11 -stepSize=5 -log="{log}" start {gfhost} {gfport} {genome} &> /dev/null &'.format(gfserver=self.exe, gfhost=self.host, gfport=self.port, genome=os.path.basename(self.genome), log=log_file)
+            cmd = '{gfserver} -canStop -log="{log}" '.format(gfserver=self.exe, log=log_file)
+            cmd += '-tileSize={tile_size} -stepSize={step_size} -minMatch={min_match} -maxGap={max_gap} ' \
+            	 + '-repMatch={rep_match} -maxDnaHits={max_dna_hits} -maxTransHits={max_trans_hits} -maxNtSize={max_nt_size} -maxAsSize={max_as_size} '.format(self.gfServe_params)
+            
+            if self.gfServe_params['mask']:
+                cmd += '-mask '
+            if self.gfServe_params['translate']:
+                cmd += '-trans '
+
+            cmd += 'start {gfhost} {gfport} {genome} &> /dev/null &'.format(gfhost=self.host, gfport=self.port, genome=os.path.basename(self.genome))
+             
             #print cmd
             subprocess.check_call(cmd, shell=True)
         except subprocess.CalledProcessError as e:
