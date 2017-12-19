@@ -77,7 +77,7 @@ class gfServer(object):
 
             cmd += 'start {gfhost} {gfport} {genome} &> /dev/null &'.format(gfhost=self.host, gfport=self.port, genome=os.path.basename(self.genome))
              
-            #print cmd
+            print cmd
             subprocess.check_call(cmd, shell=True)
         except subprocess.CalledProcessError as e:
             sys.stderr.write("Execution failed for gfServer:\n"+e)
