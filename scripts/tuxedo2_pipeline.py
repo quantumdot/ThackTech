@@ -360,14 +360,31 @@ def make_transcript_quant_pipeline(args):
         #Estimate transcript abundances and create table counts for Ballgown:
         #stringtie -e -B -p 8 -G stringtie_merged.gtf -o ballgown/ERR188044/ERR188044_chrX.gtf ERR188044_chrX.bam
         from ThackTech.Pipelines.PipelineModules import StringTie
-        x = StringTie.StringTieQuant(processors=args.threads)
+        x = StringTie.StringTieQuant(name='StringTieQuant_denovo', processors=args.threads)
         x.set_parameter('estimate', True)
         x.set_parameter('out_ballgown', True)
         x.set_resolver('alignments', mapped_bam_resolver)
-        
-        # @todo: should be merged gtf, think this is OK, but need to check!!!!!!!!
         x.set_resolver('guide_gff', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'merged_transcript_assembly'))  
         pipeline.append_module(x, critical=True)
+        
+        from ThackTech.Pipelines.PipelineModules import MoveFiles
+        x = MoveFiles.MoveFiles()
+        x.set_resolver('files', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module =='StringTieQuant_denovo'))
+        x.set_resolver('dest_dir', lambda cxt: os.path.join(cxt.sample.dest, 'ballgown_denovo'))
+        pipeline.append_module(x, critical=True)
+        
+        x = StringTie.StringTieQuant(name='StringTieQuant_refonly', processors=args.threads)
+        x.set_parameter('estimate', True)
+        x.set_parameter('out_ballgown', True)
+        x.set_resolver('alignments', mapped_bam_resolver)
+        x.set_resolver('guide_gff', lambda cxt: cxt.sample.genome.genes_gtf)
+        pipeline.append_module(x, critical=True)
+        
+        x = MoveFiles.MoveFiles()
+        x.set_resolver('files', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.module =='StringTieQuant_refonly'))
+        x.set_resolver('dest_dir', lambda cxt: os.path.join(cxt.sample.dest, 'ballgown_refonly'))
+        pipeline.append_module(x, critical=True)
+        
     
     return pipeline
 #end make_transcript_quant_pipeline()
@@ -375,17 +392,28 @@ def make_transcript_quant_pipeline(args):
 
 def prepare_ballgown_archive(samples, args):
     tarloc = os.path.join(args.dest, 'ballgown.tar.gz')
+    st_mod_names = ['_denovo', '_refonly']
+    
     with tarfile.open(tarloc, 'w:gz') as tar:
-        tar.add(os.path.join(args.dest, 'TranscriptMergePseudoSample.gtf'), arcname='merged_transcripts.gtf')
-        
-        for s in samples:
-            st = tarfile.TarInfo(s.name)
-            st.type = tarfile.DIRTYPE
-            tar.addfile(st)
+        for mn in st_mod_names:
+            bgt_name = 'ballgown_'+mn
+            bgt = tarfile.TarInfo(bgt_name)
+            bgt.type = tarfile.DIRTYPE
+            tar.addfile(bgt)
             
-            files_to_add = s.find_files(lambda f: f.cxt.pipeline == 'Quantify Transcripts' and f.cxt.module == 'StringTieQuant')
-            for f in files_to_add:
-                tar.add(f.fullpath, arcname=os.path.join(s.name, f.basename))
+            if mn == '_refonly':
+                tar.add(samples[0].genome.genes_gtf, arcname=os.path.join(bgt_name, 'ref_transcripts.gtf'))
+            else:
+                tar.add(os.path.join(args.dest, 'TranscriptMergePseudoSample.gtf'), arcname=os.path.join(bgt_name, 'merged_transcripts.gtf'))
+            
+            for s in samples:
+                st = tarfile.TarInfo(os.path.join(bgt_name, s.name))
+                st.type = tarfile.DIRTYPE
+                tar.addfile(st)
+                
+                files_to_add = s.find_files(lambda f: f.cxt.pipeline == 'Quantify Transcripts' and f.cxt.module == 'StringTieQuant'+mn)
+                for f in files_to_add:
+                    tar.add(f.fullpath, arcname=os.path.join(bgt_name, s.name, f.basename))
 
     return tarloc
 #end prepare_ballgown_archive()
@@ -396,7 +424,6 @@ def prepare_ballgown_archive(samples, args):
 
 if __name__ == "__main__":
     main()
-
 
 
 
