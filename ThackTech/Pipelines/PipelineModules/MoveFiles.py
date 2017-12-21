@@ -27,7 +27,7 @@ class MoveFiles(PipelineModule):
 		outdir = self.resolve_input_path('dest_dir', cxt)
 		filetools.ensure_dir(outdir)
 		
-		files_to_move = self.resolve_input_paths('files', cxt)
+		files_to_move = self.resolve_input('files', cxt)
 		for f in files_to_move:
 			f.move(outdir)
 		
