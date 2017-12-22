@@ -396,7 +396,7 @@ def prepare_ballgown_archive(samples, args):
     
     with tarfile.open(tarloc, 'w:gz') as tar:
         for mn in st_mod_names:
-            bgt_name = 'ballgown_'+mn
+            bgt_name = 'ballgown'+mn
             bgt = tarfile.TarInfo(bgt_name)
             bgt.type = tarfile.DIRTYPE
             tar.addfile(bgt)
