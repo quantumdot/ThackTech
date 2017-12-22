@@ -404,7 +404,7 @@ def prepare_ballgown_archive(samples, args):
             if mn == '_refonly':
                 tar.add(samples[0].genome.genes_gtf, arcname=os.path.join(bgt_name, 'ref_transcripts.gtf'))
             else:
-                tar.add(os.path.join(args.dest, 'TranscriptMergePseudoSample.gtf'), arcname=os.path.join(bgt_name, 'merged_transcripts.gtf'))
+                tar.add(os.path.join(args.dest, bgt_name, 'TranscriptMergePseudoSample.gtf'), arcname=os.path.join(bgt_name, 'merged_transcripts.gtf'))
             
             for s in samples:
                 st = tarfile.TarInfo(os.path.join(bgt_name, s.name))
