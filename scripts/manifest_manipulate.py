@@ -57,7 +57,7 @@ def main():
             sys.stderr.write('Matched {} items\n'.format(match_count))
             
         if changed and not args.nocommit:
-            sys.stderr.write('Writing out manifest for {}\n'.formt(m_path))
+            sys.stderr.write('Writing out manifest for {}\n'.format(m_path))
             s.write_file_manifest(m_path)
         elif changed and args.nocommit:
             sys.stderr.write('Running in --nocommit mode, changes will not be saved.\n')
