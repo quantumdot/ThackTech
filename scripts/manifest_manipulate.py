@@ -11,9 +11,16 @@ from ThackTech.Pipelines import PipelineSample
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
-    action_choices = ['show', 'del']
-    parser.add_argument('--action', action='store', choices=action_choices, default=action_choices[0], help="Action to perform")
+    #action_choices = ['show', 'del']
+    #parser.add_argument('--action', action='store', choices=action_choices, default=action_choices[0], help="Action to perform")
     parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
+    
+    subparsers = parser.add_subparsers(dest='action')
+    show_cmd = subparsers.add_parser('show')
+    del_cmd = subparsers.add_parser('del')
+    
+    move_cmd = subparsers.add_parser('move')
+    move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname, fname]")
     
     filter_group = parser.add_argument_group('Filters')
     filter_group.add_argument('--pipeline', action='append')
@@ -24,6 +31,9 @@ def main():
     filter_group.add_argument('--attribute', action='append')
     args = parser.parse_args()
     
+    filter_func = generate_filter(args)
+    action_func = globals()["action_"+args.action]
+        
     
     for manifest in args.manifest:
         changed = False
@@ -39,32 +49,54 @@ def main():
         sys.stderr.write("Sample Dest: {}\n".format(s.dest))
         sys.stderr.write("-----------------------------------------\n")
         
-        filter_func = generate_filter(args)
         match_count = 0
+        change_count = 0
         for f in s.files[:]:
             if filter_func(f):
                 match_count += 1
-                if args.action == 'show':
-                    print f
-                elif args.action == 'del':
-                    changed = True
-                    sys.stderr.write('Removing file {}\n'.format(str(f)))
-                    s.remove_file(f)
+                action_func(s, f, args)
+        
         if match_count <= 0:
             sys.stderr.write('No items matched.\n')
         sys.stderr.write("-----------------------------------------\n")
         if match_count > 0:
             sys.stderr.write('Matched {} items\n'.format(match_count))
             
-        if changed and not args.nocommit:
-            sys.stderr.write('Writing out manifest for {}\n'.format(m_path))
+        if change_count >= 0 and not args.nocommit:
+            sys.stderr.write('Writing {} changes to output manifest {}\n'.format(change_count, m_path))
             s.write_file_manifest(m_path)
-        elif changed and args.nocommit:
-            sys.stderr.write('Running in --nocommit mode, changes will not be saved.\n')
+        elif change_count >= 0 and args.nocommit:
+            sys.stderr.write('Running in --nocommit mode, {} changes will not be saved.\n'.format(change_count))
         sys.stderr.write('\n\n')
+#end main()
+ 
+#########################################
+# BEGIN Action Plugins
+#########################################
+
+def action_show(s, f, args):
+    print f
+    return False
+#end action_show()
+
+def action_del(s, f, args):
+    sys.stderr.write('Removing file {}\n'.format(str(f)))
+    s.remove_file(f)
+    return True
+#end action_del()
+
+def action_move(s, f, args):
+    d = args.dest.format({'sdest': s.dest, 'sname': s.name})
+    d_fullpath = os.path.join(d, f.basename)
+    sys.stderr.write('Moving file {} -> {}'.format(f.fullpath, d_fullpath))
+    f.move(d)
+#end action_move
+ 
+#########################################
+# END Action Plugins
+#########################################
     
 def generate_filter(args):
-    
     def passes_filter(f):
         if args.pipeline is not None and f.cxt.pipeline not in args.pipeline:
             return False
