@@ -40,23 +40,27 @@ def main():
         sys.stderr.write("-----------------------------------------\n")
         
         filter_func = generate_filter(args)
-        any_matches = False
+        match_count = 0
         for f in s.files[:]:
-            any_matches = True
             if filter_func(f):
+                match_count += 1
                 if args.action == 'show':
                     print f
                 elif args.action == 'del':
                     changed = True
                     sys.stderr.write('Removing file {}\n'.format(str(f)))
                     s.remove_file(f)
-        if not any_matches:
+        if match_count <= 0:
             sys.stderr.write('No items matched.\n')
         sys.stderr.write("-----------------------------------------\n")
+        if match_count > 0:
+            sys.stderr.write('Matched {} items\n'.format(match_count))
             
         if changed and not args.nocommit:
             sys.stderr.write('Writing out manifest for {}\n'.formt(m_path))
             s.write_file_manifest(m_path)
+        elif changed and args.nocommit:
+            sys.stderr.write('Running in --nocommit mode, changes will not be saved.\n')
         sys.stderr.write('\n\n')
     
 def generate_filter(args):
