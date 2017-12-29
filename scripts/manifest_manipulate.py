@@ -11,10 +11,10 @@ from ThackTech.Pipelines import PipelineSample
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='action')
-    show_cmd = subparsers.add_parser('show')
-    del_cmd = subparsers.add_parser('del')
+    show_cmd = subparsers.add_parser('show', parents=[parser], help="Show files matching filters")
+    del_cmd = subparsers.add_parser('del', parents=[parser], help="Remove files matching filters")
     
-    move_cmd = subparsers.add_parser('move')
+    move_cmd = subparsers.add_parser('move', parents=[parser], help="Move files matching filters")
     move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname]")
     move_cmd.add_argument('--fs', action='store_true', help="move the file on the filesystem in addition to changing the manifest entry.")
 
