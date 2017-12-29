@@ -34,7 +34,9 @@ def main():
         for f in s.files[:]:
             if filter_func(f):
                 match_count += 1
-                action_func(s, f, args)
+                if action_func(s, f, args):
+                    change_count +=1
+                
         
         if match_count <= 0:
             sys.stderr.write('No items matched.\n')
