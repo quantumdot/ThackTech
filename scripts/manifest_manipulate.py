@@ -10,17 +10,17 @@ from ThackTech.Pipelines import PipelineSample
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
-    #action_choices = ['show', 'del']
-    #parser.add_argument('--action', action='store', choices=action_choices, default=action_choices[0], help="Action to perform")
-    parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
-    
     subparsers = parser.add_subparsers(dest='action')
     show_cmd = subparsers.add_parser('show')
     del_cmd = subparsers.add_parser('del')
     
     move_cmd = subparsers.add_parser('move')
     move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname, fname]")
+
+    parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
+    #action_choices = ['show', 'del']
+    #parser.add_argument('--action', action='store', choices=action_choices, default=action_choices[0], help="Action to perform")
+    parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
     
     filter_group = parser.add_argument_group('Filters')
     filter_group.add_argument('--pipeline', action='append')
