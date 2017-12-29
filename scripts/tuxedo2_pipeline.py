@@ -413,7 +413,7 @@ def prepare_ballgown_archive(samples, args):
                 
                 files_to_add = s.find_files(lambda f: f.cxt.pipeline == 'Quantify Transcripts' and f.cxt.module == 'StringTieQuant'+mn)
                 for f in files_to_add:
-                    tar.add(f.fullpath, arcname=os.path.join(st, f.basename))
+                    tar.add(f.fullpath, arcname=os.path.join(st.name, f.basename))
 
     return tarloc
 #end prepare_ballgown_archive()
