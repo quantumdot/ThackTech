@@ -9,7 +9,7 @@ from ThackTech.Pipelines import PipelineSample
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
     subparsers = parser.add_subparsers(dest='action')
     show_cmd = subparsers.add_parser('show', parents=[parser], help="Show files matching filters")
     del_cmd = subparsers.add_parser('del', parents=[parser], help="Remove files matching filters")
