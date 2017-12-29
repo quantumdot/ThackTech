@@ -9,27 +9,29 @@ from ThackTech.Pipelines import PipelineSample
 
 
 def main():
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
-    parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
-    
-    filter_group = parser.add_argument_group('Filters')
-    filter_group.add_argument('--pipeline', action='append')
-    filter_group.add_argument('--step', action='append')
-    filter_group.add_argument('--module', action='append')
-    filter_group.add_argument('--role', action='append')
-    filter_group.add_argument('--path', action='append')
-    filter_group.add_argument('--attribute', action='append')
-    
-    subparsers = parser.add_subparsers(dest='action')
-    show_cmd = subparsers.add_parser('show', parents=[parser], help="Show files matching filters")
-    del_cmd = subparsers.add_parser('del', parents=[parser], help="Remove files matching filters")
-    
-    move_cmd = subparsers.add_parser('move', parents=[parser], help="Move files matching filters")
-    move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname]")
-    move_cmd.add_argument('--fs', action='store_true', help="move the file on the filesystem in addition to changing the manifest entry.")
-
-    args = parser.parse_args()
+    oh = OptionHelper()
+    args = oh.parse_args()
+#     parser = argparse.ArgumentParser(add_help=False)
+#     parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
+#     parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
+#     
+#     filter_group = parser.add_argument_group('Filters')
+#     filter_group.add_argument('--pipeline', action='append')
+#     filter_group.add_argument('--step', action='append')
+#     filter_group.add_argument('--module', action='append')
+#     filter_group.add_argument('--role', action='append')
+#     filter_group.add_argument('--path', action='append')
+#     filter_group.add_argument('--attribute', action='append')
+#     
+#     subparsers = parser.add_subparsers(dest='action')
+#     show_cmd = subparsers.add_parser('show', parents=[parser], help="Show files matching filters")
+#     del_cmd = subparsers.add_parser('del', parents=[parser], help="Remove files matching filters")
+#     
+#     move_cmd = subparsers.add_parser('move', parents=[parser], help="Move files matching filters")
+#     move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname]")
+#     move_cmd.add_argument('--fs', action='store_true', help="move the file on the filesystem in addition to changing the manifest entry.")
+# 
+#     args = parser.parse_args()
     
     filter_func = generate_filter(args)
     action_func = globals()["action_"+args.action]
@@ -122,7 +124,59 @@ def generate_filter(args):
 #end generate_filter()
     
 
+class OptionHelper(object):
 
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(
+            description='Pretends to be git',
+            usage='''git <command> [<args>]
+
+The most commonly used git commands are:
+   commit     Record changes to the repository
+   fetch      Download objects and refs from another repository
+''')
+        self.parser.add_argument('command', help='Subcommand to run')
+        
+    def parse_args(self):
+        args = self.parser.parse_args(sys.argv[1:2])
+        if not hasattr(self, args.command):
+            print 'Unrecognized command'
+            self.parser.print_help()
+            exit(1)
+        # use dispatch pattern to invoke method with same name
+        cmd_parser = getattr(self, args.command)()
+        self.add_filter_opts(cmd_parser)
+        self.add_manifest_opts(cmd_parser)
+        args = cmd_parser.parse_args(sys.argv[2:])
+        return args
+        
+    
+    def add_filter_opts(self, parser):
+        filter_group = parser.add_argument_group('Filters')
+        filter_group.add_argument('--pipeline', action='append')
+        filter_group.add_argument('--step', action='append')
+        filter_group.add_argument('--module', action='append')
+        filter_group.add_argument('--role', action='append')
+        filter_group.add_argument('--path', action='append')
+        filter_group.add_argument('--attribute', action='append')
+        
+    def add_manifest_opts(self, parser):
+        parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
+        parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
+    
+    def show(self):
+        parser = argparse.ArgumentParser(description='Show files matching filters')
+        return parser
+
+    def remove(self):
+        parser = argparse.ArgumentParser(description='Show files matching filters')
+        return parser
+    
+    def move(self):
+        parser = argparse.ArgumentParser(description='Show files matching filters')
+        parser.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname]")
+        parser.add_argument('--fs', action='store_true', help="move the file on the filesystem in addition to changing the manifest entry.")
+        return parser
 
 
 
