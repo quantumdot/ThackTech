@@ -15,7 +15,8 @@ def main():
     del_cmd = subparsers.add_parser('del')
     
     move_cmd = subparsers.add_parser('move')
-    move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname, fname]")
+    move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname]")
+    move_cmd.add_argument('--fs', action='store_true', help="move the file on the filesystem in addition to changing the manifest entry.")
 
     parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
     #action_choices = ['show', 'del']
@@ -36,7 +37,6 @@ def main():
         
     
     for manifest in args.manifest:
-        changed = False
         m_path = os.path.abspath(manifest)
         m_dir = os.path.dirname(m_path)
         m_base = filetools.basename_noext(m_path, True)
@@ -88,8 +88,15 @@ def action_del(s, f, args):
 def action_move(s, f, args):
     d = args.dest.format({'sdest': s.dest, 'sname': s.name})
     d_fullpath = os.path.join(d, f.basename)
-    sys.stderr.write('Moving file {} -> {}'.format(f.fullpath, d_fullpath))
-    f.move(d)
+    s.remove_file(f)
+    if args.fs:
+        sys.stderr.write('Moving file {} -> {}'.format(f.fullpath, d_fullpath))
+        f.move(d)
+    else:
+        sys.stderr.write('Changing path {} -> {}'.format(f.fullpath, d_fullpath))
+        f.__fullpath = d_fullpath
+    s.add_file(f)
+    return True
 #end action_move
  
 #########################################
