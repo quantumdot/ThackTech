@@ -76,7 +76,7 @@ def action_move(s, f, args):
         f.move(d)
     else:
         sys.stderr.write('Changing path {} -> {}\n'.format(f.fullpath, d_fullpath))
-        f.__fullpath = d_fullpath
+        f._set_path(d_fullpath)
     s.add_file(f)
     return True
 #end action_move
