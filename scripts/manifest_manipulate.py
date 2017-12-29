@@ -128,12 +128,13 @@ class OptionHelper(object):
 
     def __init__(self):
         self.parser = argparse.ArgumentParser(
-            description='Pretends to be git',
-            usage='''git <command> [<args>]
+            description='Manipulate output manifest(s)',
+            usage='''manifest_manipulate.py <command> [<args>]
 
-The most commonly used git commands are:
-   commit     Record changes to the repository
-   fetch      Download objects and refs from another repository
+The most commonly used commands are:
+   show     Show files matching filters
+   remove   Remove files matching filters
+   move     Move files matching filters
 ''')
         self.parser.add_argument('command', help='Subcommand to run')
         
