@@ -24,26 +24,37 @@ def main():
     filter_group.add_argument('--attribute')
     args = parser.parse_args()
     
-    changed = False
+    
     for manifest in args.manifest:
+        changed = False
         m_path = os.path.abspath(manifest)
+        sys.stderr.write("Processing manifest {}\n".format(m_path))
         s = PipelineSample(filetools.basename_noext(m_path, True), 'mm9', os.path.dirname(m_path))
         s.read_file_manifest(m_path)
+        sys.stderr.write("Inferred Information:\n")
+        sys.stderr.write("Sample Name: {}\n".format(s.name))
+        sys.stderr.write("Sample Dest: {}\n".format(s.dest))
+        sys.stderr.write("-----------------------------------------\n")
         
         filter_func = generate_filter(args)
+        any_matches = False
         for f in s.files:
+            any_matches = True
             if filter_func(f):
                 if args.action == 'show':
                     print f
                 elif args.action == 'del':
                     changed = True
-                    sys.stderr.write('Removing file {} from manifest {}'.format(str(f), s.name))
+                    sys.stderr.write('Removing file {} from manifest {}\n'.format(str(f), s.name))
                     s.remove_file(f)
-                    
+        if not any_matches:
+            sys.stderr.write('No items matched.\n')
+        sys.stderr.write("-----------------------------------------\n")
+            
         if changed and not args.nocommit:
-            sys.stderr.write('Writing out manifest for {}'.formt(m_path))
+            sys.stderr.write('Writing out manifest for {}\n'.formt(m_path))
             s.write_file_manifest(m_path)
-    
+        sys.stderr.write('\n\n')
     
 def generate_filter(args):
     
