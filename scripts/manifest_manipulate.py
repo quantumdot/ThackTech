@@ -11,27 +11,6 @@ from ThackTech.Pipelines import PipelineSample
 def main():
     oh = OptionHelper()
     args = oh.parse_args()
-#     parser = argparse.ArgumentParser(add_help=False)
-#     parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
-#     parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
-#     
-#     filter_group = parser.add_argument_group('Filters')
-#     filter_group.add_argument('--pipeline', action='append')
-#     filter_group.add_argument('--step', action='append')
-#     filter_group.add_argument('--module', action='append')
-#     filter_group.add_argument('--role', action='append')
-#     filter_group.add_argument('--path', action='append')
-#     filter_group.add_argument('--attribute', action='append')
-#     
-#     subparsers = parser.add_subparsers(dest='action')
-#     show_cmd = subparsers.add_parser('show', parents=[parser], help="Show files matching filters")
-#     del_cmd = subparsers.add_parser('del', parents=[parser], help="Remove files matching filters")
-#     
-#     move_cmd = subparsers.add_parser('move', parents=[parser], help="Move files matching filters")
-#     move_cmd.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname]")
-#     move_cmd.add_argument('--fs', action='store_true', help="move the file on the filesystem in addition to changing the manifest entry.")
-# 
-#     args = parser.parse_args()
     
     filter_func = generate_filter(args)
     action_func = globals()["action_"+args.action]
@@ -80,7 +59,7 @@ def action_show(s, f, args):
     return False
 #end action_show()
 
-def action_del(s, f, args):
+def action_remove(s, f, args):
     sys.stderr.write('Removing file {}\n'.format(str(f)))
     s.remove_file(f)
     return True
