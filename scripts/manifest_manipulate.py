@@ -66,7 +66,7 @@ def action_remove(s, f, args):
 #end action_del()
 
 def action_move(s, f, args):
-    d = args.dest.format({'sdest': s.dest, 'sname': s.name})
+    d = args.dest.format(**{'sdest': s.dest, 'sname': s.name})
     d_fullpath = os.path.join(d, f.basename)
     s.remove_file(f)
     if args.fs:
