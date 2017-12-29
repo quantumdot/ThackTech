@@ -13,7 +13,7 @@ def main():
     args = oh.parse_args()
     
     filter_func = generate_filter(args)
-    action_func = globals()["action_"+args.action]
+    action_func = globals()["action_"+args.command]
         
     
     for manifest in args.manifest:
@@ -127,7 +127,8 @@ The most commonly used commands are:
         cmd_parser = getattr(self, args.command)()
         self.add_filter_opts(cmd_parser)
         self.add_manifest_opts(cmd_parser)
-        args = cmd_parser.parse_args(sys.argv[2:])
+        cmd_args = cmd_parser.parse_args(sys.argv[2:])
+        cmd_args.command = args.command
         return args
         
     
