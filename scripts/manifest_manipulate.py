@@ -16,12 +16,12 @@ def main():
     parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
     
     filter_group = parser.add_argument_group('Filters')
-    filter_group.add_argument('--pipeline')
-    filter_group.add_argument('--step')
-    filter_group.add_argument('--module')
-    filter_group.add_argument('--role')
-    filter_group.add_argument('--path')
-    filter_group.add_argument('--attribute')
+    filter_group.add_argument('--pipeline', action='append')
+    filter_group.add_argument('--step', action='append')
+    filter_group.add_argument('--module', action='append')
+    filter_group.add_argument('--role', action='append')
+    filter_group.add_argument('--path', action='append')
+    filter_group.add_argument('--attribute', action='append')
     args = parser.parse_args()
     
     
@@ -41,7 +41,7 @@ def main():
         
         filter_func = generate_filter(args)
         any_matches = False
-        for f in s.files:
+        for f in s.files[:]:
             any_matches = True
             if filter_func(f):
                 if args.action == 'show':
