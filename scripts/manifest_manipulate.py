@@ -28,8 +28,11 @@ def main():
     for manifest in args.manifest:
         changed = False
         m_path = os.path.abspath(manifest)
+        m_dir = os.path.dirname(m_path)
+        m_base = filetools.basename_noext(m_path, True)
+        m_name = m_base.replace("_output_manifest", "")
         sys.stderr.write("Processing manifest {}\n".format(m_path))
-        s = PipelineSample(filetools.basename_noext(m_path, True), 'mm9', os.path.dirname(m_path))
+        s = PipelineSample(m_name, 'mm9', m_dir)
         s.read_file_manifest(m_path)
         sys.stderr.write("Inferred Information:\n")
         sys.stderr.write("Sample Name: {}\n".format(s.name))
@@ -45,7 +48,7 @@ def main():
                     print f
                 elif args.action == 'del':
                     changed = True
-                    sys.stderr.write('Removing file {} from manifest {}\n'.format(str(f), s.name))
+                    sys.stderr.write('Removing file {}\n'.format(str(f)))
                     s.remove_file(f)
         if not any_matches:
             sys.stderr.write('No items matched.\n')
