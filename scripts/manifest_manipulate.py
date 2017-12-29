@@ -129,7 +129,7 @@ The most commonly used commands are:
         self.add_manifest_opts(cmd_parser)
         cmd_args = cmd_parser.parse_args(sys.argv[2:])
         cmd_args.command = args.command
-        return args
+        return cmd_args
         
     
     def add_filter_opts(self, parser):
