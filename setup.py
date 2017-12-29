@@ -41,6 +41,7 @@ setup(  name='ThackTech',
             "scripts/designCNVprobes.py",
             "scripts/subsample_fastq.py",
             "scripts/tuxedo2_pipeline.py",
-            "scripts/ginfo_inspect.py"
+            "scripts/ginfo_inspect.py",
+            "scripts/manifest_manipulate.py"
         ],
         zip_safe=False)
