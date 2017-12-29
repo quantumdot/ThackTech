@@ -70,10 +70,10 @@ def action_move(s, f, args):
     d_fullpath = os.path.join(d, f.basename)
     s.remove_file(f)
     if args.fs:
-        sys.stderr.write('Moving file {} -> {}'.format(f.fullpath, d_fullpath))
+        sys.stderr.write('Moving file {} -> {}\n'.format(f.fullpath, d_fullpath))
         f.move(d)
     else:
-        sys.stderr.write('Changing path {} -> {}'.format(f.fullpath, d_fullpath))
+        sys.stderr.write('Changing path {} -> {}\n'.format(f.fullpath, d_fullpath))
         f.__fullpath = d_fullpath
     s.add_file(f)
     return True
