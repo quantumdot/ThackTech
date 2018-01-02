@@ -12,8 +12,8 @@ class BamToRpkmNormBigWig(PipelineModule):
 	#end __init__()
 	
 	def _declare_parameters(self):
-		self.add_parameter(ModuleParameter('output_format', str, 	'bigwig',	desc="Output file type. Either 'bigwig' or 'bedgraph'."))
-		self.add_parameter(ModuleParameter('bin_size', 		int, 	1,			desc="Size of the bins, in bases, for the output of the bigwig/bedgraph file."))
+		self.add_parameter(ModuleParameter('output_format', str, 'bigwig', choices=['bigwig', 'bedgraph'], desc="Output file format."))
+		self.add_parameter(ModuleParameter('bin_size', int, 1, desc="Size of the bins, in bases, for the output."))
 	#end __declare_parameters()
 	
 	def _declare_resolvers(self):
@@ -38,7 +38,6 @@ class BamToRpkmNormBigWig(PipelineModule):
 			bam = bam[0]
 		
 		out_ext = ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw')
-		#dest = cxt.sample.get_attribute('origional_dest') if cxt.sample.has_attribute('origional_dest') else cxt.sample.dest
 		sample_basename = bam.basename_with_ext('rpkm_norm.{}'.format(out_ext))
 		bamcoverage_args = [
 			'bamCoverage',

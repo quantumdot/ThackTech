@@ -74,8 +74,8 @@ def main():
     parser.add_argument('--dest', action='store', required=True, help="Path to destination for results.")
     parser.add_argument('--genome', action='store', required=True, help="Reference genome to use.")
     
-    available_qc_choices = ['ism', 'fqscreen', 'fastqc']
-    parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC pipelines to run after the alignment process completes.")
+    available_qc_choices = ['ism', 'fqscreen', 'fastqc', 'rpkmbw']
+    parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC modules to run.")
     parser.add_argument('--pe_pre', default='_R', help="Paired-end prefix. String to insert between the file basename and the pair number when searching for read files. If your FASTQ files are names as [reads_R1.fastq, reads_R2.fastq] then use '_R1', or if reads_1.fastq then use '_1'. This option is only used when in paired end mode. default: _R1")
     parser.add_argument('--sample_postfix', default="", help="Postfix to append when looking for read files (ex lane number: '_001')")
     
@@ -252,6 +252,13 @@ def make_read_alignment_pipeline(args, additional_args):
             x = InsertSizeMetrics.InsertSizeMetrics()
             x.set_resolver('bam', mapped_bam_resolver)
             pipeline.append_module(x)
+            
+        if 'rpkmbw' in args.qc:
+            from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
+            x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
+            x.set_parameter('bin_size', 10)
+            x.set_resolver('bam', mapped_bam_resolver)
+            pipeline.append_module(x)
     
     
     ################################
@@ -424,7 +431,6 @@ def prepare_ballgown_archive(samples, args):
 
 if __name__ == "__main__":
     main()
-
 
 
 
