@@ -42,6 +42,7 @@ setup(  name='ThackTech',
             "scripts/subsample_fastq.py",
             "scripts/tuxedo2_pipeline.py",
             "scripts/ginfo_inspect.py",
-            "scripts/manifest_manipulate.py"
+            "scripts/manifest_manipulate.py",
+            "scripts/extract_barcodes.py"
         ],
         zip_safe=False)
