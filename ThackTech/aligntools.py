@@ -48,7 +48,7 @@ def extract_barcode(fastq_path, complete=False):
             if match:
                 print "Match found! {}".format(match.group(1).upper())
                 all_barcodes.add(match.group(1).upper())
-                if not all:
+                if not complete:
                     break    
     return all_barcodes
 #end extract_barcode()
