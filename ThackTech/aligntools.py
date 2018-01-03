@@ -39,7 +39,7 @@ def extract_barcode(fastq_path, complete=False):
         Returns: 
             (set) Set of detected barcode(s)
     '''
-    illumina14_18 = re.compile(r"(?:#|:)([AGCT]+)(?:(?:/\d)?)$", re.I)
+    illumina14_18 = re.compile(r"(?:#|:)([AGCT]+)(?:/?)", re.I)
     all_barcodes = set()
     with pysam.FastxFile(fastq_path) as fh:
         for entry in fh:
