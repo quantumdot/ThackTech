@@ -43,10 +43,8 @@ def extract_barcode(fastq_path, complete=False):
     all_barcodes = set()
     with pysam.FastxFile(fastq_path) as fh:
         for entry in fh:
-            print entry.comment
             match = illumina14_18.search(entry.comment)
             if match:
-                print "Match found! {}".format(match.group(1).upper())
                 all_barcodes.add(match.group(1).upper())
                 if not complete:
                     break    
