@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from _pyio import __metaclass__
 from ThackTech import conf
 from ThackTech.Pipelines import ModuleParameter, FileInfo
+from mistune import inspect
 
 
 
@@ -93,18 +94,22 @@ class PipelineModule(object):
 	
 	@property
 	def is_critical(self):
-		"""Returns bool where True indicates that this module is critical
+		"""Returns boolean where True indicates that this module is critical
 		"""
 		return self._critical
 	#end is_critical()
 	
 	def add_parameter(self, parameter):
 		"""Adds a parameter to this module
-		Typically this is used only derivitives of PipelineModule.
+		Typically this is used only derivatives of PipelineModule.
 		To set the value of a parameter, use the set_parameter() method
 		"""
 		if not isinstance(parameter, ModuleParameter):
-			raise ValueError('Expecting parameter to be of type ModuleParmater, %s given!' % (type(parameter).__name__,))
+			raise ValueError('Expecting parameter to be of type ModuleParmater, {} given!'.format(type(parameter).__name__))
+		
+		if parameter.name in self.parameters:
+			raise ValueError('Parameter with name "{}" was already defined!'.format(parameter.name))
+		
 		self.parameters[parameter.name] = parameter
 	#end add_parameter()
 	
@@ -217,6 +222,14 @@ class PipelineModule(object):
 	
 	
 	def set_available_cpus(self, cpus):
+		""" Set the number of processors/threads/cpus that should be available
+		to this instance of the module. Most times, this is passed to other
+		programs through subprocess, but may be utilized by code running in the
+		current process itself.
+		
+		Parameters:
+			cpus: (int) number of processors/threads/cpus to allocate
+		"""
 		self.processors = cpus
 	#end set_available_processors()
 	
@@ -224,7 +237,13 @@ class PipelineModule(object):
 	def _call_output(self, cmd, **kwargs):
 		proc = subprocess.Popen(cmd, **dict(kwargs, stdout=subprocess.PIPE))
 		out, err = proc.communicate()
+		
+		#not sure if we should raise on bad process return code.......
+		#if not proc.returncode == 0:
+		#	raise subprocess.CalledProcessError(proc.returncode, str(cmd), str(out)+"\n"+str(err))
+		
 		return out
+	#end _call_output()
 		
 	def _run_subprocess(self, cmd, **kwargs):
 		"""Wrapper around the subprocess.Popen call and provides some extra convience
@@ -247,7 +266,7 @@ class PipelineModule(object):
 	#end _run_subprocess()
 	
 	def documentation(self):
-		"""Return a string that documents this module and its parameters and resolvers
+		"""Return a string that documents this module along with its parameters and resolvers
 		"""
 		buff = ""
 		hash_length = 40
@@ -279,7 +298,10 @@ class PipelineModule(object):
 		else:
 			buff += "\n"
 			for resolver in self.resolvers:
-				buff += "\t{}: {}\n".format(resolver, str(self.resolvers[resolver]))
+				try:
+					buff += "\t{}: {}\n".format(resolver, inspect.getsource(self.resolvers[resolver]))
+				except IOError:
+					buff += "\t{}: {}\n".format(resolver, str(self.resolvers[resolver]))
 		buff += '\n'
 		
 		buff += "TOOL VERSIONS:"

@@ -57,6 +57,8 @@ class HISAT2Align(PipelineModule):
 		
 		#Reporting
 		#-k
+		self.add_parameter(ModuleParameter('max_seeds', int, 5, desc="controls the maximum number of seeds that will be extended"))
+		self.add_parameter(ModuleParameter('secondary', bool, False, desc="Report secondary alignments"))
 		
 		#Paired-end:
 		self.add_parameter(ModuleParameter('minins', int, 0, desc="minimum fragment length, only valid with --no-spliced-alignment"))
