@@ -897,7 +897,7 @@ def format_tick_marks(ax):
         ax.set_xticks(majors)
         ax.set_xticklabels(labels)
     else:
-        ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:+g}'.format(x / gopts['co'].units[0]))) # display with the proper units
+        ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:-g}'.format(x / gopts['co'].units[0]))) # display with the proper units
 #end format_tick_marks()
 
 
