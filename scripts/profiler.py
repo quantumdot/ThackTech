@@ -62,7 +62,7 @@ def main():
     input_group = parser.add_argument_group('Input Data Options')
     input_group.add_argument('-b', '--bed', action='append', required='true', help='Bed files to profile against.')
     input_group.add_argument('-s', '--sig', action='append', required='true', help='Signal files to profile. BigWig, BAM, BED, BigBed files are supported, but all but bigwig will be treated by counting intervals.')
-    input_group.add_argument('-i', '--inp', action='append', default=[], help='Input files to be used for normalization.')
+    input_group.add_argument('-i', '--inp', action='append', default=[], help='Input files to be used for normalization. Use "none" to selectively not normalize particular samples.')
     input_group.add_argument('--ignoreinput', action='store_true', help='Do not use input data.')
     
     
@@ -220,6 +220,15 @@ def main():
         gopts['chromsets'].use -= filtered_chrs
         sys.stderr.write("\n")
         
+    gopts['summary_range'] = []
+    if args.summaryrange is not None:
+        sr = args.summaryrange.split(';')
+        for r in sr:
+            start, stop = r.split(':')
+            gopts['summary_range'].append((int(int(start) / args.res), int(int(stop) / args.res)))
+    else:
+        gopts['summary_range'].append((0, gopts['co'].total_bins))
+
         
     
     samples = []
@@ -370,15 +379,7 @@ def main():
     plt.close(fig)
     
     if args.dumpsummary:
-        ranges = []
-        if args.summaryrange is not None:
-            sr = args.summaryrange.split(';')
-            for r in sr:
-                start, stop = r.split(':')
-                ranges.append((int(int(start) / args.res), int(int(stop) / args.res)))
-        else:
-            ranges.append((0, gopts['co'].total_bins))
-        write_summary_profiles(samples, ranges, args.summarymethod)
+        write_summary_profiles(samples, gopts['summary_range'], args.summarymethod)
     sys.stderr.write('Done!')
 #end main()
 
@@ -722,7 +723,7 @@ def add_signal_to_figure(sample):
 
 def make_violin_plot(ax, sample, color='k'):
     
-    summary = ttstats.summarize_data(sample.signal_array, method=gopts['args'].summarymethod, axis=1)
+    summary = ttstats.summarize_data(sample.signal_array, method=gopts['args'].summarymethod, srange=gopts['summary_range'][0], axis=1)
     #print summary.shape
     #print gopts['x_axis'].shape
 #    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
