@@ -139,6 +139,17 @@ class IntervalProvider:
     #end midpoint_generator()
     
     def generate_scaled(self, bedtool):
+        if self.co.upstream == 0 and self.co.downstream == 0:
+            return self._generate_scaled_no_up_down(bedtool)
+        elif self.co.upstream == 0:
+            return self._generate_scaled_with_up(bedtool)
+        elif self.co.downstream == 0:
+            return self._generate_scaled_with_down(bedtool)
+        else:
+            return self._generate_scaled_with_up_down(bedtool)
+    #end generate_scaled()
+    
+    def _generate_scaled_with_up_down(self, bedtool):
         for interval in bedtool:
             if self.co.direction and interval.strand == '-':
                 upstream   = ((interval.start - self.co.downstream),  interval.start)
@@ -165,7 +176,72 @@ class IntervalProvider:
             gene_body.name = interval.name
             downstream.name = interval.name
             yield (upstream, gene_body, downstream)
-    #end generate_scaled()
+    #end _generate_scaled_with_up_down()
+    
+    def _generate_scaled_with_up(self, bedtool):
+        for interval in bedtool:
+            if self.co.direction and interval.strand == '-':
+                upstream   = ((interval.start - self.co.downstream),  interval.start)
+                gene_body  = (interval.start, interval.stop)
+            else:
+                upstream   = ((interval.start - self.co.upstream), interval.start)
+                gene_body  = (interval.start, interval.stop)
+            
+            #make sure the coordinates are sane
+            upstream = self.clamp_coordinates(interval.chrom, upstream[0], upstream[1])
+            gene_body = self.clamp_coordinates(interval.chrom, gene_body[0], gene_body[1])
+            
+            #make the actual interval
+            upstream   = Interval(interval.chrom, upstream[0], upstream[1], strand=interval.strand, name=interval.name, score=interval.score)
+            gene_body  = Interval(interval.chrom, gene_body[0], gene_body[1], strand=interval.strand, name=interval.name, score=interval.score)
+            
+            #pybedtools screws up when creating a standalone interval and does not set the name correctly from the constructor
+            #re-set the name manually!
+            upstream.name = interval.name
+            gene_body.name = interval.name
+            yield (upstream, gene_body)
+    #end _generate_scaled_with_up()
+    
+    def _generate_scaled_with_down(self, bedtool):
+        for interval in bedtool:
+            if self.co.direction and interval.strand == '-':
+                gene_body  = (interval.start, interval.stop)
+                downstream = (interval.stop, (interval.stop + self.co.upstream))
+            else:
+                gene_body  = (interval.start, interval.stop)
+                downstream = (interval.stop, (interval.stop + self.co.downstream))
+            
+            #make sure the coordinates are sane
+            gene_body = self.clamp_coordinates(interval.chrom, gene_body[0], gene_body[1])
+            downstream = self.clamp_coordinates(interval.chrom, downstream[0], downstream[1])
+            
+            #make the actual interval
+            gene_body  = Interval(interval.chrom, gene_body[0], gene_body[1], strand=interval.strand, name=interval.name, score=interval.score)
+            downstream = Interval(interval.chrom, downstream[0], downstream[1], strand=interval.strand, name=interval.name, score=interval.score)
+            
+            #pybedtools screws up when creating a standalone interval and does not set the name correctly from the constructor
+            #re-set the name manually!
+            gene_body.name = interval.name
+            downstream.name = interval.name
+            yield (gene_body, downstream)
+    #end _generate_scaled_with_down()
+    
+    def _generate_scaled_no_up_down(self, bedtool):
+        for interval in bedtool:
+            gene_body  = (interval.start, interval.stop)
+            
+            #make sure the coordinates are sane
+            gene_body = self.clamp_coordinates(interval.chrom, gene_body[0], gene_body[1])
+            
+            #make the actual interval
+            gene_body  = Interval(interval.chrom, gene_body[0], gene_body[1], strand=interval.strand, name=interval.name, score=interval.score)
+            
+            #pybedtools screws up when creating a standalone interval and does not set the name correctly from the constructor
+            #re-set the name manually!
+            gene_body.name = interval.name
+
+            yield gene_body
+    #end _generate_scaled_no_up_down()
 #end class IntervalProvider
 
 
