@@ -35,8 +35,11 @@ def summarize_data(data, method='mean', srange=None, axis=1):
         else:
             d = data
         
-        if method == 'median' and isinstance(data, np.ma.MaskedArray):
-            return np.ma.median(d, axis=axis)
+        if method == 'median':
+            if isinstance(data, np.ma.MaskedArray):
+                return np.ma.median(d, axis=axis)
+            else:
+                return np.median(d, axis=axis)
         else:
             return getattr(d, method)(axis=axis)
 
