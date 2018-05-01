@@ -137,7 +137,7 @@ The most commonly used commands are:
     def add_filter_opts(self, parser):
         filter_group = parser.add_argument_group('Filters')
         filter_group.add_argument('--pipeline', action='append')
-        filter_group.add_argument('--step', action='append')
+        filter_group.add_argument('--step', action='append', type=int)
         filter_group.add_argument('--module', action='append')
         filter_group.add_argument('--role', action='append')
         filter_group.add_argument('--path', action='append')
@@ -152,11 +152,11 @@ The most commonly used commands are:
         return parser
 
     def remove(self):
-        parser = argparse.ArgumentParser(description='Show files matching filters')
+        parser = argparse.ArgumentParser(description='Remove files matching filters')
         return parser
     
     def move(self):
-        parser = argparse.ArgumentParser(description='Show files matching filters')
+        parser = argparse.ArgumentParser(description='Move files matching filters')
         parser.add_argument('dest', help="destination for files that match. Use string formatting tokens for variables. i.e. {sname}. Tokens: [sdest, sname]")
         parser.add_argument('--fs', action='store_true', help="move the file on the filesystem in addition to changing the manifest entry.")
         return parser

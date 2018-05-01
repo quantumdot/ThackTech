@@ -78,7 +78,8 @@ def main():
     parser.add_argument('--override-dest', action='store', default=None, help="Override the destination read from the sample manifest.")
     
     performance_group = add_runner_args(parser)
-    performance_group.add_argument('--skipalign', action='store_true', help="Skip the alignment process and only run the QC routines. Assumes you have previously aligned files in the proper locations.")
+    ckpts = ['post_trim', 'pre_align', 'post_align', 'post_pbc']
+    performance_group.add_argument('--resume', action='store', default=None, choices=ckpts, help='Resume the pipeline from this checkpoint.')
 
     args, additional_args = parser.parse_known_args()
     
@@ -100,10 +101,7 @@ def main():
 
     #get the pipeline
     pipeline = make_read_alignment_pipeline(args, additional_args)
-    
-    #handle any checkpoints
-    if args.skipalign:
-        pipeline.offset = 'post_alignment_checkpoint'
+    pipeline.offset = args.resume #handle any checkpoints
     
     #get the runner, then run the pipeline
     runner = get_configured_runner(args, pipeline)
@@ -142,6 +140,13 @@ def make_read_alignment_pipeline(args, additional_args):
         def resolve_bowtie1(cxt):
             return cxt.sample.find_files(lambda f: f.cxt.role == "reads" )
     
+    
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('post_trim'))
+    ################################
+    
+    
     if 'fastqc' in args.qc:
         if args.trim:
             def fastqc_resolver(cxt):
@@ -163,6 +168,12 @@ def make_read_alignment_pipeline(args, additional_args):
         pipeline.append_module(x)
 
 
+    ################################
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('pre_align'))
+    ################################
+    
+    
     if args.bowtie_version == '1':
         from ThackTech.Pipelines.PipelineModules import DecompressFiles
         x = DecompressFiles.DecompressFiles()
@@ -200,8 +211,8 @@ def make_read_alignment_pipeline(args, additional_args):
     
     
     ################################
-    # CHECKPOINT - for `--skipalign`
-    pipeline.append_module(AnalysisPipelineCheckpoint('post_alignment_checkpoint'))
+    # CHECKPOINT
+    pipeline.append_module(AnalysisPipelineCheckpoint('post_align'))
     ################################
     
    
@@ -221,7 +232,10 @@ def make_read_alignment_pipeline(args, additional_args):
             return cxt.sample.find_files(lambda f: f.cxt.role == 'filtered_bam')[0]
         
         
-        
+        ################################
+        # CHECKPOINT
+        pipeline.append_module(AnalysisPipelineCheckpoint('post_pbc'))
+        ################################
         
         #if 'spp' in args.qc:
         #    from ThackTech.Pipelines.PipelineModules import SPP
