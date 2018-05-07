@@ -239,8 +239,8 @@ def plot_raw_data(dfs, labels, hdatabasefn, rbins=500, ibins=500):
 				of.write("intercept\t{}\n".format(ret_vals['linreg'][1]))
 				of.write("\n\n")
 				of.write("Correlation:\n")
-				of.write("Spearman\t{}\t{}\n".format(ret_vals['corr']["spearman"]))
-				of.write("Pearson\t{}\t{}\n".format(ret_vals['corr']["pearson"]))
+				of.write("Spearman\t{}\t{}\n".format(ret_vals['corr']["spearman"][0], ret_vals['corr']["spearman"][1]))
+				of.write("Pearson\t{}\t{}\n".format(ret_vals['corr']["pearson"][0], ret_vals['corr']["pearson"][1]))
 		
 	return fig
 #end plot_raw_data()
