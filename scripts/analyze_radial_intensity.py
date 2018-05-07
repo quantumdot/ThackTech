@@ -171,13 +171,15 @@ def compare_raw_data(args):
 	# for df in dfs:
 		# binned_dfs.append(bin_dataframe(dfm 
 	
+	print "plotting radial and 2D intensity"
+	fig = plot_raw_data(dfs, args.groupnames, args.out+'.hist2d', rbins=1000, ibins=1000)
+	save_figure(fig, args.out, args.figformat)
+	
 	print "plotting cumulative sum"
 	fig = plot_cum_sum(dfs, args.groupnames)
 	save_figure(fig, args.out+'.cumsum', args.figformat)
 	
-	print "plotting radial and 2D intensity"
-	fig = plot_raw_data(dfs, args.groupnames, args.out+'.hist2d', rbins=1000, ibins=1000)
-	save_figure(fig, args.out, args.figformat)
+	
 #end compare_raw_data()
 
 def coloc_raw_data(args):
