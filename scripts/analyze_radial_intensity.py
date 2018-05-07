@@ -219,13 +219,21 @@ def plot_raw_data(dfs, labels, hdatabasefn, rbins=500, ibins=500):
 		df = dfs[d]
 		for i in range(1, df_cols):
 			ax = plt.subplot2grid(gridsize, (d,i-1))
-			hist_data = ip.plot_radial_intensity(ax, df, df.columns[0], df.columns[i], radial_bins=rbins, intensity_bins=ibins)
-			write_2D_hist_data(hist_data['hist2d'], '{}.{}.tsv'.format(hdatabasefn, labels[d]), labels[d], 1)
+			ret_vals = ip.plot_radial_intensity(ax, df, df.columns[0], df.columns[i], radial_bins=rbins, intensity_bins=ibins)
+			write_2D_hist_data(ret_vals['hist2d'], '{}.{}.tsv'.format(hdatabasefn, labels[d]), labels[d], 1)
+			with open('{}.{}.stats.tsv'.format(hdatabasefn, labels[d]), 'w+') as of:
+				of.write("Linear Regression:\n")
+				of.write("slope\t{}\n".format(ret_vals['linreg'][0]))
+				of.write("intercept\t{}\n".format(ret_vals['linreg'][1]))
+				of.write("\n\n")
+				of.write("Correlation:\n")
+				of.write("Spearman\t{}\t{}\n".format(ret_vals['corr']["spearman"]))
+				of.write("Pearson\t{}\t{}\n".format(ret_vals['corr']["pearson"]))
 			
 		for j in range(len(combinations)):
 			ax = plt.subplot2grid(gridsize, (d,df_cols+j-1))
 			ret_vals = ip.plot_2D_intensity(ax, df, combinations[j][0], combinations[j][1], bins=ibins)
-			with open('{}.{}.stats.tsv'.format(hdatabasefn, labels[d]), 'w+') as of:
+			with open('{}.{}_{}.stats.tsv'.format(hdatabasefn, combinations[j][0], combinations[j][1]), 'w+') as of:
 				of.write("Linear Regression:\n")
 				of.write("slope\t{}\n".format(ret_vals['linreg'][0]))
 				of.write("intercept\t{}\n".format(ret_vals['linreg'][1]))
