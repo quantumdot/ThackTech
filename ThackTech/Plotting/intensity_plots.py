@@ -45,7 +45,7 @@ def plot_radial_intensity(ax, df, col_rad, col_int, radial_bins=1000, intensity_
     return plot_2D_intensity(ax, df, col_rad, col_int, **args)
 #end plot_radial_intensity()
     
-def plot_2D_intensity(ax, df, xcol, ycol, xbins=1000, ybins=1000, xrange=(0,1), yrange=(0,1), title=None, xlabel=None, ylabel=None, linreg=True, avg=True, **kwargs):
+def plot_2D_intensity(ax, df, xcol, ycol, xbins=1000, ybins=1000, xrange=(0,1), yrange=(0,1), title=None, xlabel=None, ylabel=None, linreg=True, corr=True, avg=True, **kwargs):
     '''Plots a 2D histogram on the supplied axis
     
     Parameters:
@@ -74,6 +74,9 @@ def plot_2D_intensity(ax, df, xcol, ycol, xbins=1000, ybins=1000, xrange=(0,1), 
             linreg: Present if linreg is True. Tuple containing the following items:
                 - m: slope of the linear regression
                 - b: y-intercept of the linear regression
+            corr: Present if corr is True. Dictionary containing the following items:
+                - spearman: Tuple containing spearman correlation coefficient and pvalue
+                - pearson: Tuple containing pearson correlation coefficient and pvalue
             avg: Present if avg is True. Tuple containing the following items:
                 - statistic: values of the mean statistic for each bin
                 - bin_edges: bin edges
@@ -91,7 +94,13 @@ def plot_2D_intensity(ax, df, xcol, ycol, xbins=1000, ybins=1000, xrange=(0,1), 
         m, b = np.polyfit(df[xcol], df[ycol], 1)
         ax.plot(df[xcol], m * df[xcol] + b, '-', c='k')
         return_values['linreg'] = (m, b)
-    
+        
+    if corr:
+        return_values['corr'] = {
+			"spearman": stats.spearmanr(df[xcol], df[ycol]),
+			"pearson": stats.pearsonr(df[xcol], df[ycol])
+		}
+     
     if avg:
         #plot the mean of y along the x
         data_stats, bin_edges, binnumber = stats.binned_statistic(df[xcol], df[ycol], statistic='mean', bins=xbins, range=xrange)
@@ -99,7 +108,7 @@ def plot_2D_intensity(ax, df, xcol, ycol, xbins=1000, ybins=1000, xrange=(0,1), 
         return_values['avg'] = (data_stats, bin_edges, binnumber)
     
     #make it pretty and informative
-    ax.set_title(xcol + ' vs. ' + coly) if (title is None) else ax.set_title(title)
+    ax.set_title(xcol + ' vs. ' + ycol) if (title is None) else ax.set_title(title)
     ax.set_xlabel(xcol + ' Intensity') if xlabel is None else ax.set_xlabel(xlabel)
     ax.set_ylabel(xcol + ' Intensity') if ylabel is None else ax.set_ylabel(ylabel)
     ax.set_xlim(xrange)

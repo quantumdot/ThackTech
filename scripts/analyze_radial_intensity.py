@@ -222,7 +222,15 @@ def plot_raw_data(dfs, labels, hdatabasefn, rbins=500, ibins=500):
 			
 		for j in range(len(combinations)):
 			ax = plt.subplot2grid(gridsize, (d,df_cols+j-1))
-			ip.plot_2D_intensity(ax, df, combinations[j][0], combinations[j][1], bins=ibins)
+			ret_vals = ip.plot_2D_intensity(ax, df, combinations[j][0], combinations[j][1], bins=ibins)
+			with open('{}.{}.stats.tsv'.format(hdatabasefn, labels[d]), 'w+') as of:
+				of.write("Linear Regression:\n")
+				of.write("slope\t{}\n".format(ret_vals['linreg'][0]))
+				of.write("intercept\t{}\n".format(ret_vals['linreg'][1]))
+				of.write("\n\n")
+				of.write("Correlation:\n")
+				of.write("Spearman\t{}\t{}\n".format(ret_vals['corr']["spearman"]))
+				of.write("Pearson\t{}\t{}\n".format(ret_vals['corr']["pearson"]))
 		
 	return fig
 #end plot_raw_data()

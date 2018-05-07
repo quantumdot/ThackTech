@@ -21,12 +21,12 @@ def main():
         m_dir = os.path.dirname(m_path)
         m_base = filetools.basename_noext(m_path, True)
         m_name = m_base.replace("_output_manifest", "")
-        sys.stderr.write("Processing manifest {}\n".format(m_path))
+        sys.stderr.write("Processing manifest {}\n\n".format(m_path))
         s = PipelineSample(m_name, 'mm9', m_dir)
         s.read_file_manifest(m_path)
         sys.stderr.write("Inferred Information:\n")
         sys.stderr.write("Sample Name: {}\n".format(s.name))
-        sys.stderr.write("Sample Dest: {}\n".format(s.dest))
+        sys.stderr.write("Sample Dest: {}\n\n".format(s.dest))
         sys.stderr.write("-----------------------------------------\n")
         
         match_count = 0
