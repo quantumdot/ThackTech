@@ -2,10 +2,9 @@ import subprocess
 import textwrap
 from tabulate import tabulate
 from abc import ABCMeta, abstractmethod
-from _pyio import __metaclass__
 from ThackTech import conf
 from ThackTech.Pipelines import ModuleParameter, FileInfo
-from mistune import inspect
+import inspect
 
 
 
