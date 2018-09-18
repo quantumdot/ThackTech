@@ -9,7 +9,7 @@ from ThackTech.Pipelines import PipelineSample, AnalysisPipeline, FileInfo, File
 from ThackTech.Pipelines.PipelineRunner import add_runner_args, get_configured_runner
 
 #BEFORE RUNNING SCRIPT WHEN USING LMOD
-#module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 python/2.7.12 bedtools2/2.25.0 R-Project/3.3.3 bowtie2/2.2.9
+#module load java/1.8.0_121 samtools/0.1.19 intel/17.0.2 bedtools2/2.25.0 R-Project/3.3.3 bowtie2/2.2.9 python/2.7.12
 
 
 #manifest should be structured as follows (with headers)
@@ -50,7 +50,9 @@ def main():
     parser.add_argument('--qc', choices=available_qc_choices+['all'], default=[], action='append', help="Specify which QC routines to run. chance runs the IPStrength and spectrum modules from the chance package (Song et al. Genome Biology 2012. doi:10.1186/gb-2012-13-10-r98). fingerprint runs the DeepTools BamFingerprint module. FRiP computes the Fraction of Reads in Peaks. all will run all available QC modules. rpkmbw generates a RPKM normalized BigWig.")
     parser.add_argument('--idr', action='store_true', help="Perform IDR analysis. Requires that the manifest contain an additional [Group] column that describes group names for replicates. Will generate pooled and psuedoreplicates and pass them through the same processing pipeline as the explicitly defined manifest items. IDR is only supported in combination with MACS2.")
     parser.add_argument('--ignore-control', action='store_true', help="Ignore control data present in the sample manifest.")
+    parser.add_argument('--override-dest', action='store', default=None, help="Override the destination read from the sample manifest.")
     
+
     performance_group = add_runner_args(parser)
     performance_group.add_argument('--skipmacs', action='store_true', help="Skip the peak calling process and only run the QC routines. Assumes files are in the location specified by the manifest.")
     
@@ -67,14 +69,21 @@ def main():
 
     sys.stdout.write('Reading sample manifest.....\n')
     sample_manifest = pd.read_csv(args.manifest, sep='\t', comment='#', skip_blank_lines=True, true_values=['true', 'True', 'TRUE', '1'], false_values=['false', 'False', 'FALSE', '0'])
-    
+
     if args.ignore_control:
+        sys.stdout.write("Ignore Control Data is turned ON\n")
         sample_manifest.drop('Control', axis=1, inplace=True)
     
     samples = [MacsPipelineSample(s) for s in sample_manifest.to_dict(orient='records')]
     sample_count = len(samples)
     sys.stdout.write('-> Found %d item%s for processing.\n\n' % (sample_count, ('s' if sample_count > 1 else '')))
     
+    
+    if args.override_dest is not None:
+        sys.stdout.write("Override Destination is turned ON\n")
+        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
+        for s in samples:
+            s.dest = args.override_dest
     
     if args.idr:
         #first generate the pooled sample.
