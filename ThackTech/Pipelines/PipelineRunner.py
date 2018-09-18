@@ -174,6 +174,7 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 			
 			logfile.write('-> Running on: {}\n'.format(' '.join(platform.uname())))
 			logfile.write("-> Wall clock: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
+			logfile.write("-> Current Working Directory: {}\n".format(os.getcwd()))
 			logfile.write("--------------------------------------------\n\n")
 			
 				

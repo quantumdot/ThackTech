@@ -75,11 +75,10 @@ class GenomeInfo(object):
 		return None
 	#end get_index()
 	
-	__known_references = None
+	__known_references = {}
 	@staticmethod
 	def get_reference_genomes():
-		if GenomeInfo.__known_references is None:
-			GenomeInfo.__known_references = {}
+		if not GenomeInfo.__known_references:
 			
 			from ThackTech import conf
 			genome_config = conf.get_config('genomes')

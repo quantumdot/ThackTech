@@ -83,7 +83,7 @@ def main():
         sys.stdout.write("Override Destination is turned ON\n")
         sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
         for s in samples:
-            s.dest = args.override_dest
+            s.dest = os.path.abspath(args.override_dest)
     
     if args.idr:
         #first generate the pooled sample.
@@ -428,13 +428,13 @@ def run_idr_analysis(samples, args):
             gsample.set_attribute('broad', True)
         for s in samples_in_group:
             if s.has_attribute('primaryreplicate'):
-                gsample.add_file('primaryreplicate', s.name, resolve_idr_peak_file(s))
+                gsample.add_file(FileInfo(resolve_idr_peak_file(s), FileContext.from_origin('primaryreplicate')))
                 
             elif s.has_attribute('pseudoreplicate'):
-                gsample.add_file('pseudoreplicate', s.name, resolve_idr_peak_file(s))
+                gsample.add_file(FileInfo(resolve_idr_peak_file(s), FileContext.from_origin('pseudoreplicate')))
                 
             elif s.has_attribute('pooledpseudoreplicate'):
-                gsample.add_file('pooledpseudoreplicate', s.name, resolve_idr_peak_file(s))
+                gsample.add_file(FileInfo(resolve_idr_peak_file(s), FileContext.from_origin('pooledpseudoreplicate')))
         idr_samples.append(gsample)
 
     for sample in idr_samples:
