@@ -94,9 +94,9 @@ def main():
     samples = [AlignmentPipelineSample(s, args.pe_pre, args.sample_postfix) for s in sample_manifest.to_dict(orient='records')]
     if args.override_dest is not None:
         sys.stdout.write("Override Destination is turned ON\n")
-        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
+        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=os.path.abspath(args.override_dest)))
         for s in samples:
-            s.dest = args.override_dest
+            s.dest = os.path.abspath(args.override_dest)
     sys.stdout.write('\t-> Found {count} item{plural} for processing.....\n'.format(count=len(samples), plural=('s' if len(samples) > 1 else '')))
 
     #get the pipeline

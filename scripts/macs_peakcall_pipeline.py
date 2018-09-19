@@ -81,7 +81,7 @@ def main():
     
     if args.override_dest is not None:
         sys.stdout.write("Override Destination is turned ON\n")
-        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=args.override_dest))
+        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=os.path.abspath(args.override_dest)))
         for s in samples:
             s.dest = os.path.abspath(args.override_dest)
     
