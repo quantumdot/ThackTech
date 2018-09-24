@@ -81,9 +81,16 @@ def main():
     
     if args.override_dest is not None:
         sys.stdout.write("Override Destination is turned ON\n")
-        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n'.format(dest=os.path.abspath(args.override_dest)))
+        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n\n'.format(dest=os.path.abspath(args.override_dest)))
         for s in samples:
             s.dest = os.path.abspath(args.override_dest)
+
+    if args.macs_version == "macs1" and len(samples['dest'].unique()) < len(samples.index):
+        sys.stdout.write("Detected that some of you destinations are not unique.\n")
+        sys.stdout.write("You are running MACS version 1 which can cause file name collisions with the same destination.\n")
+        sys.stdout.write("I will automatically append the sample name to your destination paths!\n\n")
+        for s in samples:
+            s.dest = os.path.join(s.dest, s.name)
     
     if args.idr:
         #first generate the pooled sample.
