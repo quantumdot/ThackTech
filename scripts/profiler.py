@@ -20,6 +20,7 @@ import multiprocessing
 from ThackTech import filetools
 from ThackTech.Plotting import sigcollector, stats as ttstats
 from ThackTech import chromtools
+from pdfrw import PdfReader, PdfWriter 
 
 #http://matplotlib.1069221.n5.nabble.com/Auto-wrapping-text-within-a-plot-Is-there-a-simpler-solution-td20.html
 
@@ -908,8 +909,16 @@ def save_figure(fig, notes):
     savename = "%s%s.%s" % (gopts['output_base'], notes, gopts['args'].format)
     sys.stderr.write('Saving Figure.....\n')
     fig.savefig(savename, dpi=gopts['args'].dpi, bbox_extra_artists=gopts['extra_artists'], bbox_inches='tight')
+    write_fig_metadata(savename)
     sys.stderr.write(' => See %s for results.\n' % (savename,))
 #end save_figure()
+
+def write_fig_metadata(path):
+    if gopts['args'].format == "pdf":
+        trailer = PdfReader(path)
+        trailer.Info.Subject = " ".join(sys.argv)
+        PdfWriter(path, trailer=trailer).write()
+#end write_fig_metadata()
 
 if __name__ == "__main__":
     main()
