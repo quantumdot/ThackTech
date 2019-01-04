@@ -49,6 +49,9 @@ class FastqScreen(PipelineModule):
 			
 		for f in self.resolve_input('fastqs', cxt):
 			fqscreen_args.append(f.fullpath)
+			out_base = os.path.join(dest_dir, f.basename.replace(".fastq.gz", "_screen"))
+			out_files.append(FileInfo("{}.html".format(out_base), FileContext.from_module_context(cxt, "FastqScreen_report")))
+			out_files.append(FileInfo("{}.txt".format(out_base), FileContext.from_module_context(cxt, "FastqScreen_data")))
 		
 		
 
