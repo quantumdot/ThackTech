@@ -833,7 +833,7 @@ def add_sample_to_average_overlay_sig_plot(ax, sample, color):
     #print sample.signal_array.shape
     #print summary.shape
     #print gopts['x_axis'].shape
-    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
+    label = sample.bed_label if gopts['args'].rotate else sample.sig_label
     ax.plot(gopts['x_axis'], summary, color=color, label=label, alpha=0.7, linewidth=gopts['args'].linewidth)
     
     
