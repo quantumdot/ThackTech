@@ -1,26 +1,30 @@
 #!/usr/bin/env python
 
-import matplotlib as mpl
-mpl.use('Agg')
-
+import argparse
+import multiprocessing
 import os
 import re
 import sys
 import time
-import argparse
+from operator import itemgetter
+
+from pdfrw import PdfReader, PdfWriter
+
+import matplotlib as mpl
+import matplotlib.ticker as ticker
 import metaseq
 import metaseq.colormap_adjust as colormap_adjust
-import pybedtools
-from matplotlib import pyplot as plt
-import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
+import pybedtools
+from matplotlib import pyplot as plt
 from scipy import stats
-import multiprocessing
-from ThackTech import filetools
-from ThackTech.Plotting import sigcollector, stats as ttstats
-from ThackTech import chromtools
-from pdfrw import PdfReader, PdfWriter 
+from ThackTech import chromtools, filetools
+from ThackTech.Plotting import sigcollector
+from ThackTech.Plotting import stats as ttstats
+
+mpl.use('Agg')
+
 
 #http://matplotlib.1069221.n5.nabble.com/Auto-wrapping-text-within-a-plot-Is-there-a-simpler-solution-td20.html
 
@@ -367,7 +371,6 @@ def main():
     
     #if we have multiple bed and multiple signals, add legend outside last avg plot
     if ('avg' in gopts['args'].plot and (len(args.sig) > 1 or len(args.bed) > 1)) or ('avgoverlay' in gopts['args'].plot):
-
         last_avg_ax = get_plot_axes('leg', 0, 0, 0)
         leg = last_avg_ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         leg.get_frame().set_linewidth(0.1)
@@ -666,13 +669,15 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
         #return get_plot_axes('avg', )
         rowspan = gopts['args'].avgplotrows
 
-        num_plot_types = len(set(['violin', 'avg', 'avgoverlay']) & set(gopts['args'].plot))
-        row = gopts['fig_rows'] - (num_plot_types * gopts['args'].avgplotrows)
+        #num_plot_types = len(set(['violin', 'avg', 'avgoverlay']) & set(gopts['args'].plot))
+        #row = gopts['fig_rows'] - (num_plot_types * gopts['args'].avgplotrows)
             
-        if 'heat' in gopts['args'].plot:
-            col = gopts['fig_cols'] - 2
-        else:
-            col = gopts['fig_cols'] - 1
+        #if 'heat' in gopts['args'].plot:
+        #    col = gopts['fig_cols'] - 2
+        #else:
+        #    col = gopts['fig_cols'] - 1
+        col = max(gopts['plot_axes'].keys(), key=itemgetter(1))[0]
+        row = max(gopts['plot_axes'].keys(), key=itemgetter(0))[0]
             
             
     if (row,col) not in gopts['plot_axes']:
