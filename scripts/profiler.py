@@ -113,7 +113,7 @@ def main():
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument('--name', action='store', default='', help='Base name for the plot output.')
     output_group.add_argument('--format', action='store', default='pdf', choices=['pdf', 'png', 'svg'], help='Format to output the final figure.')
-    output_group.add_argument('--plot', action='append', choices=['avg', 'violin','heat','kavg','bedscores','truebedscores'], required='true', help='Types of plots to produce. Supply multiple options to produce hybrid plots. avg will produce average profiles, heat will produce heatmaps, kavg will produce average profiles for each class determined by k-means clustering (only available when used with --plot heat AND --kmeans). bedscores will plot the score column for intervals simply, while truebedscores will plot the score column for intervals more accuratly (showing true genomic context of element; mutually exclusive with --plot bedscores).')
+    output_group.add_argument('--plot', action='append', choices=['avg', 'avgoverlay', 'violin','heat','kavg','bedscores','truebedscores'], required='true', help='Types of plots to produce. Supply multiple options to produce hybrid plots. avg will produce average profiles, heat will produce heatmaps, kavg will produce average profiles for each class determined by k-means clustering (only available when used with --plot heat AND --kmeans). bedscores will plot the score column for intervals simply, while truebedscores will plot the score column for intervals more accuratly (showing true genomic context of element; mutually exclusive with --plot bedscores).')
     output_group.add_argument('--dpi', action='store', type=int, default=600, help='DPI resolution of the saved figure.')
     output_group.add_argument('--width', action='store', type=float, default=8.0, help='Width (in inches) of the figure.')
     output_group.add_argument('--height', action='store', type=float, default=6.0, help='Height (in inches) of the figure.')
@@ -625,6 +625,10 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             row = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
         else:
             row = gopts['fig_rows'] - gopts['args'].avgplotrows
+
+    elif plot_type == 'avgoverlay':
+        rowspan = gopts['args'].avgplotrows
+        row = gopts['fig_rows'] - gopts['args'].avgplotrows
         
     elif plot_type == 'violin':
         rowspan = gopts['args'].avgplotrows
@@ -699,7 +703,7 @@ def add_signal_to_figure(sample):
         make_violin_plot(ax, sample, color)
         
     if 'avg' in gopts['args'].plot:
-        ax =  get_plot_axes('avg', sample.group, sample.bed_id, sample.sig_id)
+        ax = get_plot_axes('avg', sample.group, sample.bed_id, sample.sig_id)
         if 'kavg' in gopts['args'].plot:
             sys.stderr.write("    -> Generating average profile for clusters...\n")
             #sys.stderr.write("    -> (%d, %d)\n" % (avg_profile_row,sample.sig_id))
@@ -719,6 +723,10 @@ def add_signal_to_figure(sample):
         if 'kavg' in gopts['args'].plot:
             leg = ax.legend(loc='best', bbox_to_anchor=(0.5, -0.1))
             leg.get_frame().set_linewidth(0.1)
+
+    if 'avgoverlay' in gopts['args'].plot:
+        ax = get_plot_axes('avgoverlay', sample.group, sample.bed_id, sample.sig_id)
+        make_average_sig_plot(ax, sample, color)
 #end add_signal_to_figure()
 
 
@@ -766,7 +774,7 @@ def adjacent_values(vals, q1, q3):
     lower_adjacent_value = q1 - (q3 - q1) * 1.5
     lower_adjacent_value = np.clip(lower_adjacent_value, vals[0], q1)
     return lower_adjacent_value, upper_adjacent_value
-
+#end adjacent_values()
 
 def make_average_sig_plot(ax, sample, color='k'):
     if gopts['args'].vline:
@@ -795,6 +803,11 @@ def make_average_sig_plot(ax, sample, color='k'):
         ax.set_yticklabels([])
     return ax
 #end make_average_sig_plot()
+
+
+def add_sample_to_average_overlay_sig_plot(ax, sample, color):
+    summary = ttstats.summarize_data(sample.signal_array, method=gopts['args'].summarymethod, axis=0)
+    ax.plot(gopts['x_axis'], np.ma.array(sample.signal_array, mask=real_mask).mean(axis=0), color=color, label=label)
 
 
 def add_masked_group_to_avg_plot(ax, sample, mask, label, color='k'):
