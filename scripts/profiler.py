@@ -650,12 +650,13 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             row = bed_id * gopts['args'].heatplotrows
             col = gopts['fig_cols']-1
         else:
-            if 'violin' in gopts['args'].plot and 'avg' in gopts['args'].plot:
-                rowspan = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
-            elif 'violin' in gopts['args'].plot or 'avg' in gopts['args'].plot:
-                rowspan = gopts['fig_rows'] - gopts['args'].avgplotrows
-            else:
-                rowspan = gopts['fig_rows']
+            rowspan = gopts['args'].heatplotrows
+            #if 'violin' in gopts['args'].plot and 'avg' in gopts['args'].plot:
+            #    rowspan = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
+            #elif 'violin' in gopts['args'].plot or 'avg' in gopts['args'].plot:
+            #    rowspan = gopts['fig_rows'] - gopts['args'].avgplotrows
+            #else:
+            #    rowspan = gopts['fig_rows']
             row = 0
             col = sig_id + group + 1
     
@@ -735,11 +736,11 @@ def add_signal_to_figure(sample):
 
     if 'avgoverlay' in gopts['args'].plot:
         if gopts['args'].rotate:
-            color = gopts['args'].colors[sample.sig_id % len(gopts['args'].colors)]
-        else:
             color = gopts['args'].colors[sample.bed_id % len(gopts['args'].colors)]
+        else:
+            color = gopts['args'].colors[sample.sig_id % len(gopts['args'].colors)]
         ax = get_plot_axes('avgoverlay', sample.group, sample.bed_id, sample.sig_id)
-        make_average_sig_plot(ax, sample, color)
+        add_sample_to_average_overlay_sig_plot(ax, sample, color)
 #end add_signal_to_figure()
 
 
@@ -819,8 +820,30 @@ def make_average_sig_plot(ax, sample, color='k'):
 
 
 def add_sample_to_average_overlay_sig_plot(ax, sample, color):
+    if gopts['args'].vline:
+        ax.axvline(0, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
+        if gopts['args'].align == 'scale':
+            ax.axvline(gopts['args'].scaleregionsize, linestyle=gopts['args'].vlinestyle, color='k', linewidth=gopts['args'].vlineweight)
+    
     summary = ttstats.summarize_data(sample.signal_array, method=gopts['args'].summarymethod, axis=0)
-    ax.plot(gopts['x_axis'], np.ma.array(sample.signal_array, mask=real_mask).mean(axis=0), color=color, label=label)
+    #print sample.signal_array.shape
+    #print summary.shape
+    #print gopts['x_axis'].shape
+    label = sample.sig_label if gopts['args'].rotate else sample.bed_label
+    ax.plot(gopts['x_axis'], summary, color=color, label=label, alpha=0.7, linewidth=gopts['args'].linewidth)
+    
+    
+    if gopts['args'].showci:
+        computed_error = ttstats.compute_error(sample, gopts['args'].ciwidth)
+        ax.fill_between(gopts['x_axis'], summary, summary + computed_error, facecolor=color, edgecolor='none', alpha=0.2)
+        ax.fill_between(gopts['x_axis'], summary, summary - computed_error, facecolor=color, edgecolor='none', alpha=0.2)
+        
+    ax.set_xlim(gopts['x_axis'][0], gopts['x_axis'][-1])
+    ax.set_ylim(bottom=sample.avg_min, top=sample.avg_max)
+    format_tick_marks(ax)
+    
+    return ax
+#end add_sample_to_average_overlay_sig_plot()
 
 
 def add_masked_group_to_avg_plot(ax, sample, mask, label, color='k'):
