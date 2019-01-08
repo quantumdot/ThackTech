@@ -725,6 +725,10 @@ def add_signal_to_figure(sample):
             leg.get_frame().set_linewidth(0.1)
 
     if 'avgoverlay' in gopts['args'].plot:
+        if gopts['args'].rotate:
+            color = gopts['args'].colors[sample.sig_id % len(gopts['args'].colors)]
+        else:
+            color = gopts['args'].colors[sample.bed_id % len(gopts['args'].colors)]
         ax = get_plot_axes('avgoverlay', sample.group, sample.bed_id, sample.sig_id)
         make_average_sig_plot(ax, sample, color)
 #end add_signal_to_figure()
