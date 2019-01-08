@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import matplotlib as mpl
+mpl.use('Agg')
+
 import argparse
 import multiprocessing
 import os
@@ -10,7 +13,6 @@ from operator import itemgetter
 
 from pdfrw import PdfReader, PdfWriter
 
-import matplotlib as mpl
 import matplotlib.ticker as ticker
 import metaseq
 import metaseq.colormap_adjust as colormap_adjust
@@ -23,7 +25,7 @@ from ThackTech import chromtools, filetools
 from ThackTech.Plotting import sigcollector
 from ThackTech.Plotting import stats as ttstats
 
-mpl.use('Agg')
+
 
 
 #http://matplotlib.1069221.n5.nabble.com/Auto-wrapping-text-within-a-plot-Is-there-a-simpler-solution-td20.html
