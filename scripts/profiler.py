@@ -634,7 +634,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
 
     elif plot_type == 'avgoverlay':
 
-        col = len([item for sublist in gopts['group_data'][:group] for item in sublist])
+        col = len([item for sublist in gopts['group_data'][:group] for item in sublist]) + group
         colspan = len(gopts['group_data'][group])
         rowspan = gopts['args'].avgplotrows
         row = gopts['fig_rows'] - gopts['args'].avgplotrows
