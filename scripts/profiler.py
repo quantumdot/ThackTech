@@ -289,6 +289,7 @@ def main():
             s.signal_array *= c
     
     
+    gopts['group_data'] = get_groups(args.scalegroups, samples)
     gopts['group_count'] = count_groups(args.scalegroups, samples)
     if args.rotate:
         gopts['fig_cols'] = len(args.bed) + 1#gopts['group_count']
@@ -296,6 +297,8 @@ def main():
         if 'heat' in args.plot:
             gopts['fig_rows'] += (args.heatplotrows * len(args.sig))
         if 'avg' in args.plot:
+            gopts['fig_rows'] += args.avgplotrows
+        if 'avgoverlay' in args.plot:
             gopts['fig_rows'] += args.avgplotrows
         if 'violin' in args.plot:
             gopts['fig_rows'] += args.avgplotrows
@@ -305,6 +308,8 @@ def main():
         if 'heat' in args.plot:
             gopts['fig_rows'] += (args.heatplotrows * len(args.bed))
         if 'avg' in args.plot:
+            gopts['fig_rows'] += args.avgplotrows
+        if 'avgoverlay' in args.plot:
             gopts['fig_rows'] += args.avgplotrows
         if 'violin' in args.plot:
             gopts['fig_rows'] += args.avgplotrows
@@ -607,6 +612,7 @@ def compute_scales_for_group(group_id, samples, min_saturate, max_saturate):
 
 def get_plot_axes(plot_type, group, bed_id, sig_id):
     #print "getting axis for %s (%d, %d, %d)\n" % (plot_type, group, bed_id, sig_id)
+    colspan = 1
     if gopts['args'].rotate:
         col = bed_id #+ group
     else:
@@ -627,6 +633,9 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             row = gopts['fig_rows'] - gopts['args'].avgplotrows
 
     elif plot_type == 'avgoverlay':
+
+        col = len([item for sublist in gopts['group_data'][:group] for item in sublist])
+        colspan = len(gopts['group_data'][group])
         rowspan = gopts['args'].avgplotrows
         row = gopts['fig_rows'] - gopts['args'].avgplotrows
         
@@ -671,7 +680,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
             
             
     if (row,col) not in gopts['plot_axes']:
-        ax = plt.subplot2grid((gopts['fig_rows'],gopts['fig_cols']), (row, col), rowspan)
+        ax = plt.subplot2grid((gopts['fig_rows'],gopts['fig_cols']), (row, col), rowspan, colspan)
         ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=gopts['args'].xnumticks-1))
         ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(nbins=gopts['args'].ynumticks-1))
         [i.set_linewidth(0.1) for i in ax.spines.itervalues()]
