@@ -679,8 +679,7 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
         #else:
         #    col = gopts['fig_cols'] - 1
         sys.stderr.write("plot_axes keys: {}".format(gopts['plot_axes'].keys()))
-        row = max(gopts['plot_axes'].keys(), key=itemgetter(0))[0]
-        col = max(gopts['plot_axes'].keys(), key=itemgetter(1))[1]
+        row, col = max(gopts['plot_axes'].keys(), key=itemgetter(0))
         sys.stderr.write("leg row col: {},{}".format(row, col))
         
             
