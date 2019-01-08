@@ -664,15 +664,9 @@ def get_plot_axes(plot_type, group, bed_id, sig_id):
         #we are tryign to return the bottom-right-most average plot
         #return get_plot_axes('avg', )
         rowspan = gopts['args'].avgplotrows
-        
-        if 'violin' in gopts['args'].plot and 'avg' in gopts['args'].plot:
-            row = gopts['fig_rows'] - (2 * gopts['args'].avgplotrows)
-            
-        elif 'violin' in gopts['args'].plot or 'avg' in gopts['args'].plot:
-            row = gopts['fig_rows'] - gopts['args'].avgplotrows
-            
-        else:
-            row = gopts['fig_rows'] #should probably not be able to get here....
+
+        num_plot_types = len(set(['violin', 'avg', 'avgoverlay']) & set(gopts['args'].plot))
+        row = gopts['fig_rows'] - (num_plot_types * gopts['args'].avgplotrows)
             
         if 'heat' in gopts['args'].plot:
             col = gopts['fig_cols'] - 2
