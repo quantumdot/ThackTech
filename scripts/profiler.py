@@ -391,7 +391,8 @@ def main():
     plt.close(fig)
     
     if args.dumpsummary:
-        write_summary_profiles(samples, gopts['summary_range'], args.summarymethod)
+        write_interval_summary_profiles(samples, gopts['summary_range'], args.summarymethod)
+        write_summary_profiles(samples, args.summarymethod)
     sys.stderr.write('Done!')
 #end main()
 
@@ -507,7 +508,7 @@ def make_interval_classes(sort_indicies, breaks, bed, white_chroms=None):
     return intervals
 #end make_interval_classes()
 
-def write_summary_profiles(samples, ranges, method):
+def write_interval_summary_profiles(samples, ranges, method):
     iv_beds = {}
     for s in samples:
         if s.bed_label not in iv_beds:
@@ -519,9 +520,22 @@ def write_summary_profiles(samples, ranges, method):
             b["{}_[{}..{}]".format(s.sig_label, r[0], r[1])] = ttstats.summarize_data(s.signal_array, method=method, srange=r, axis=1)
     
     for b in iv_beds:
-        iv_beds[b].to_csv("{}.summary_{}.tsv".format(gopts['output_base'], b), sep='\t', index=False)
+        iv_beds[b].to_csv("{}.interval_summary_{}.tsv".format(gopts['output_base'], b), sep='\t', index=False)
+#end write_interval_summary_profiles()
 
-#end make_interval_classes()
+
+def write_summary_profiles(samples, method):
+    iv_beds = {}
+    for s in samples:
+        if s.bed_label not in iv_beds:
+            iv_beds[s.bed_label] = pd.DataFrame()
+
+    for s in samples:
+        iv_beds[s.bed_label][s.sig_label] = ttstats.summarize_data(s.signal_array, method=method, axis=0)
+
+    for b in iv_beds:
+        iv_beds[b].to_csv("{}.summary_{}.tsv".format(gopts['output_base'], b), sep='\t', index=True)
+#end write_summary_profiles()
 
 def compute_sorting(samples, sort_index, method, sort_range):
     #print range
