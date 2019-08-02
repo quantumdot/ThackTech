@@ -28,7 +28,7 @@ class BamCoverage(PipelineModule):
 			
 		
 		#Read coverage normalization options:
-		self.add_parameter(ModuleParameter('normalize', str, 'rpkm', nullable=True, choices=['RPKM','CPM','BPM','RPGC'], desc="Normalization type to perform"))
+		self.add_parameter(ModuleParameter('normalize', str, 'RPKM', nullable=True, choices=['RPKM','CPM','BPM','RPGC'], desc="Normalization type to perform"))
 		self.add_parameter(ModuleParameter('ignore_contigs', list, None, nullable=True, desc="list of contig (chromosome) names to exclude for normalization computation."))
 		self.add_parameter(ModuleParameter('skip_na', bool, False, desc="This parameter determines if non-covered regions (regions without overlapping reads) in a BAM file should be skipped."))
 		self.add_parameter(ModuleParameter('smooth', int, None, nullable=True, desc="The smooth length defines a window, larger than the binSize, to average the number of reads."))

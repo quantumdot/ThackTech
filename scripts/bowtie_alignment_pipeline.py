@@ -265,14 +265,14 @@ def make_read_alignment_pipeline(args, additional_args):
             
             
         if 'rpkm' in args.qc:
-            from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
+            from ThackTech.Pipelines.PipelineModules import BamCoverage
 
             if 'pbc' in args.qc:
-                x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
+                x = BamCoverage.BamCoverage(processors=args.threads)
                 x.set_resolver('bam', qc_pbc_bam_resolver)
                 pipeline.append_module(x)
                 
-            x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
+            x = BamCoverage.BamCoverage(processors=args.threads)
             x.set_resolver('bam', qc_bt_bam_resolver)
             pipeline.append_module(x)
             
