@@ -22,6 +22,10 @@ def main():
         m_base = filetools.basename_noext(m_path, True)
         m_name = m_base.replace("_output_manifest", "")
         sys.stderr.write("Processing manifest {}\n\n".format(m_path))
+            
+        if args.alt_dest is not None:
+            m_dir = os.path.abspath(args.alt_dest)
+
         s = PipelineSample(m_name, 'mm9', m_dir)
         s.read_file_manifest(m_path)
         sys.stderr.write("Inferred Information:\n")
@@ -146,6 +150,7 @@ The most commonly used commands are:
     def add_manifest_opts(self, parser):
         parser.add_argument('manifest', nargs='+', help="Path to manifest(s) to manipulate.")
         parser.add_argument('--nocommit', action='store_true', help="Do not commit any changes, just show what would be done.")
+        parser.add_argument('--alt-dest', action='store', help="Specify an alternate destination path than supplied in the manifest.")
     
     def show(self):
         parser = argparse.ArgumentParser(description='Show files matching filters')
