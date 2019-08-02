@@ -3,7 +3,7 @@ import subprocess
 from ThackTech import filetools
 from ThackTech.Pipelines import PipelineModule
 from ThackTech.Pipelines.ModuleParameter import ModuleParameter
-#from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
+from ThackTech.Pipelines.FileInfo import FileInfo, FileContext
 
 
 class FastqScreen(PipelineModule):
@@ -27,7 +27,7 @@ class FastqScreen(PipelineModule):
 	
 	def tool_versions(self):
 		return {
-			'fastq_screen': self._call_output(self.get_parameter_value('fastq_screen_path')+" --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
+			'fastq_screen': self._call_output(self.get_parameter_value('fastq_screen_path')+r" --version 2>&1 | perl -ne 'if(m/([\d\.]+)/){ print $1 }'", shell=True, stderr=subprocess.STDOUT)
 		}
 	#end tool_versions()
 	
