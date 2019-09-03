@@ -81,6 +81,7 @@ def main():
     profile_group.add_argument('--res', action='store', default=10, type=int, help='Profiling resolution in bp.')
     profile_group.add_argument('--dir', action='store_true', help='If set, the direction (+/-) [strand orientation] is considered in profiling. Strand information should be present in bed file used, and if not present is assumed to be +.')
     profile_group.add_argument('--genome', action='store', help='UCSC reference genome that intervals and signal are computed with (i.e. mm9, hg19, etc.).')
+    profile_group.add_argument('--collectionmethod', action='store', choices=['get_as_array', 'ucsc_summarize', 'summarize'], default='get_as_array', help='Method for collecting signal data.')
 
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument('--name', action='store', default='', help='Base name for the plot output.')
