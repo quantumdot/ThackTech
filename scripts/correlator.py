@@ -533,9 +533,10 @@ def make_correlation_plot(samples):
     num_cols = len(samples) + 3
     labels = [s.sig_label for s in samples]
 
+    fig = plt.figure(figsize=(9,8), dpi=gopts['args'].dpi)
+
     if gopts['args'].corrdendro:
         # Compute and plot first dendrogram.
-        fig = plt.figure(figsize=(9,8), dpi=gopts['args'].dpi)
         ax1 = plt.subplot2grid((num_rows,num_cols), (2, 0), rowspan=num_samples, colspan=2)
         Y = sch.linkage(corr_matrix[:,:,0], method=gopts['args'].corrlinkagemethod, metric=gopts['args'].corrdistancemetric)
         Z1 = sch.dendrogram(Y, orientation='right', labels=labels, leaf_font_size=8)
