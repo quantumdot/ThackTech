@@ -178,7 +178,7 @@ def main():
     
     
     
-    chromsets = chromtools.get_common_chroms(args.bed, args.sig)
+    """ chromsets = chromtools.get_common_chroms(args.bed, args.sig)
     if not args.nochromfilter:
         sys.stderr.write("Filtering common chromomsomes....\n")
         chromsets.use = chromsets.common
@@ -186,7 +186,32 @@ def main():
         sys.stderr.write("=> Ignoring: "+', '.join(map(str,sorted(chromsets.uncommon)))+"\n")
         sys.stderr.write("\n")
     else:
-        chromsets.use = chromsets.all
+        chromsets.use = chromsets.all """
+
+    gopts['chromsets'] = chromtools.get_common_chroms(args.bed, args.sig)
+    if not args.nochromfilter:
+        sys.stderr.write("Filtering common chromomsomes....\n")
+        gopts['chromsets'].use = gopts['chromsets'].common
+        sys.stderr.write("=>  Keeping: "+', '.join(gopts['chromsets'].common)+"\n")
+        sys.stderr.write("=> Ignoring: "+', '.join(gopts['chromsets'].uncommon)+"\n")
+        sys.stderr.write("\n")
+    else:
+        gopts['chromsets'].use = gopts['chromsets'].all
+    if len(gopts['chromsets'].use) < 1:
+        sys.stderr.write("ERROR: No valid chromosomes left after filtering for only common chromosomes!\n")
+        sys.stderr.write(" -> Try using the --nochromfilter or --chrignore options.\n")
+        sys.exit(1)
+        
+    if args.chrignore is not None:
+        pattern = re.compile(args.chrignore)
+        filtered_chrs = set()
+        for chrom in gopts['chromsets'].use:
+            if pattern.search(chrom) is not None:
+                filtered_chrs.add(chrom)
+        sys.stderr.write('Filtering chromomsomes matching filter "%s"....\n' % (args.chrignore,))
+        sys.stderr.write("=>  Ignoring: "+', '.join(filtered_chrs)+"\n")
+        gopts['chromsets'].use -= filtered_chrs
+        sys.stderr.write("\n")
     
     samples = []
     for s in xrange(len(args.sig)):
