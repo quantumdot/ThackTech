@@ -79,7 +79,8 @@ def main():
     profile_group.add_argument('--scaleregionsize', action='store', type=int, default='3000', help='Size of the scaled region (i.e. gene-body) in bp. This option is only useful for "--align scale" option.')
     profile_group.add_argument('--res', action='store', default=10, type=int, help='Profiling resolution in bp.')
     profile_group.add_argument('--dir', action='store_true', help='If set, the direction (+/-) [strand orientation] is considered in profiling. Strand information should be present in bed file used, and if not present is assumed to be +.')
-    
+    profile_group.add_argument('--genome', action='store', help='UCSC reference genome that intervals and signal are computed with (i.e. mm9, hg19, etc.).')
+
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument('--name', action='store', default='', help='Base name for the plot output.')
     output_group.add_argument('--format', action='store', default='pdf', choices=['pdf', 'png', 'svg'], help='Format to output the final figure.')

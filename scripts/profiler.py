@@ -94,7 +94,8 @@ def main():
     profile_group.add_argument('--scaleregionsize', action='store', type=int, default='3000', help='Size of the scaled region (i.e. gene-body) in bp. This option is only useful for "--align scale" option.')
     profile_group.add_argument('--nan', action='store', choices=['zero', 'ignore'], default='ignore', help='How to handle missing or NaN values.')
     profile_group.add_argument('--collectionmethod', action='store', choices=['get_as_array', 'ucsc_summarize', 'summarize'], default='get_as_array', help='Method for collecting signal data.')
-    
+    profile_group.add_argument('--genome', action='store', help='UCSC reference genome that intervals and signal are computed with (i.e. mm9, hg19, etc.).')
+
     scale_group = parser.add_argument_group('Scaling Options')
     scale_group.add_argument('--scalegroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
     scale_group.add_argument('--scalebedgroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
@@ -139,7 +140,6 @@ def main():
     plot_group.add_argument('--legendfontsize', action='store', type=int, default=6, help='Font size used in plot legend.')
     plot_group.add_argument('--showci', action='store_true', help='Plot confidence interval for average plot.')
     plot_group.add_argument('--ciwidth', action='store', default='sem', help='Confidence interval width for average plot. sem for Standard Error of the mean, std for Standard deviation, or float for percent CI (i.e. 0.95).')
-    plot_group.add_argument('--genome', action='store', help='UCSC reference genome that intervals and signal are computed with (i.e. mm9, hg19, etc.).')
     plot_group.add_argument('--colors', action='store', nargs='+', default=['r','g','b','c','m','y','k','firebrick','darkolivegreen','navy','palevioletred'], help="Colors to cycle through for individual samples on aggregate plots.")
     plot_group.add_argument('--heatcolor', action='store', default='#b11902', help="Color of the max positive heatmap value, used to derive heatmap colormap that is centered on zero, and accounts for asymmetrical vmin and vmax by matching saturation/value of high and low colors.")
     plot_group.add_argument('--linewidth', action='store', type=float, default=0.5, help="Width of line used for aggregate plots (i.e. average profile).")
