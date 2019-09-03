@@ -76,6 +76,9 @@ def main():
     profile_group.add_argument('--up', action='store', default=1000, type=int, help='Span upstream (in bp) from selected intervals alignement to profile.')
     profile_group.add_argument('--down', action='store', default=1000, type=int, help='Span downstream (in bp) from selected intervals alignement to profile.')
     profile_group.add_argument('--align', action='store', choices=['left', 'center', 'right', 'scale'], default='center', help='Method used to align intervals. Left aligns intervals along the 5\' end, while right aligns intervals aling the 3\' end (assuming intervals provide strand information and --dir is specified, otherwise + strand is assumed). Center aligns intervals along the center center point of intervals.')
+    profile_group.add_argument('--scaleregionsize', action='store', type=int, default='3000', help='Size of the scaled region (i.e. gene-body) in bp. This option is only useful for "--align scale" option.')
+    profile_group.add_argument('--res', action='store', default=10, type=int, help='Profiling resolution in bp.')
+    profile_group.add_argument('--dir', action='store_true', help='If set, the direction (+/-) [strand orientation] is considered in profiling. Strand information should be present in bed file used, and if not present is assumed to be +.')
     
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument('--name', action='store', default='', help='Base name for the plot output.')
