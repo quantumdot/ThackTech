@@ -62,16 +62,16 @@ class GenomeInfo(object):
 	#end try_discover()
 	
 	def add_index(self, name, value):
-		self.indexes[name] = value
+		self.indexes[name.lower()] = value
 	#end add_index
 	
 	def has_index(self, name):
-		return name in self.indexes
+		return name.lower() in self.indexes
 	#end has_index()
 	
 	def get_index(self, name):
-		if self.has_index(name):
-			return self.indexes[name]
+		if self.has_index(name.lower()):
+			return self.indexes[name.lower()]
 		return None
 	#end get_index()
 	
