@@ -29,7 +29,7 @@ class MoveFiles(PipelineModule):
 		
 		files_to_move = self.resolve_input('files', cxt)
 		for f in files_to_move:
-			cxt.log.write('Moving file: {} -> {}'.format(f.fullpath, outdir))
+			cxt.log.write('Moving file: {} -> {}\n'.format(f.fullpath, outdir))
 			f.move(outdir)
 	#end run()
 #end class MoveFiles	
