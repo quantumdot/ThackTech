@@ -56,7 +56,7 @@ class HISAT2Align(PipelineModule):
 		self.add_parameter(ModuleParameter('score_min', str, 'L,0.0,-0.2', desc="min acceptable alignment score with respect to read length"))
 		
 		#Reporting
-		#-k
+		self.add_parameter(ModuleParameter('k', int, 5, desc="search for at most <k> distinct, primary alignments for each read"))
 		self.add_parameter(ModuleParameter('max_seeds', int, 5, desc="controls the maximum number of seeds that will be extended"))
 		self.add_parameter(ModuleParameter('secondary', bool, False, desc="Report secondary alignments"))
 		
@@ -112,13 +112,14 @@ class HISAT2Align(PipelineModule):
 		bowtiecmd.extend([
 			'-S', output_result['sam'],
 			'--threads', str(self.processors),
-			'--time', 			#print time info			
+			'--time', 			#print time info
 			'--n-ceil', self.get_parameter_value_as_string('n_ceil'),
+			'-k', self.get_parameter_value_as_string('k'),
 			
 			#Scoring:
 			'--mp', "{max},{min}".format(min=self.get_parameter_value('pen_mismatch_min'), max=self.get_parameter_value('pen_mismatch_min')),
-  			'--sp', "{max},{min}".format(min=self.get_parameter_value('pen_sclip_min'), max=self.get_parameter_value('pen_sclip_max')),
-    		
+			'--sp', "{max},{min}".format(min=self.get_parameter_value('pen_sclip_min'), max=self.get_parameter_value('pen_sclip_max')),
+
 			'--np', self.get_parameter_value_as_string('pen_n'),
 			'--rdg', "{opn},{ext}".format(opn=self.get_parameter_value('pen_read_gap_open'), ext=self.get_parameter_value('pen_read_gap_extn')),
 			'--rfg', "{opn},{ext}".format(opn=self.get_parameter_value('pen_ref_gap_open'), ext=self.get_parameter_value('pen_ref_gap_extn')),
