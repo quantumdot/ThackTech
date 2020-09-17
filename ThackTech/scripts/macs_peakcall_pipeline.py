@@ -302,7 +302,7 @@ def make_replicate_pool_pipeline(args):
     x.set_parameter('sort', True)
     x.set_parameter('index', True)
     x.set_parameter('postfix', 'treatment')
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.context.role == 'treatment'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.context.role == 'treatment'))
     pool_pipeline.append_module(x, critical=True)
     
     
@@ -310,7 +310,7 @@ def make_replicate_pool_pipeline(args):
     x.set_parameter('sort', True)
     x.set_parameter('index', True)
     x.set_parameter('postfix', 'control')
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.context.role == 'control'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.context.role == 'control'))
     pool_pipeline.append_module(x, critical=False)
     
     
@@ -395,7 +395,7 @@ def make_pseudoreplicate_pipeline(args):
         
     from ThackTech.Pipelines.PipelineModules import GeneratePseudoreplicates
     x = GeneratePseudoreplicates.GeneratePseudoreplicates()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.cxt.role == 'treatment'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'treatment'))
     idr_pre_pipeline.append_module(x, critical=True)
     
     #sort pseudoreplicate files

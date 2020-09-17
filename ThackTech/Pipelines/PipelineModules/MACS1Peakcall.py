@@ -70,11 +70,13 @@ class MACS1Peakcall(PipelineModule):
 		else:
 			signal_output_ext = '.wig.gz'
 			signal_folder = '_MACS_wiggle'
+
 		output_files = {
 			'peaks_xls':		os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.xls'),
 			'neg_peaks_xls':	os.path.join(cxt.sample.dest, cxt.sample.name+'_negative_peaks.xls'),
 			'peaks':			os.path.join(cxt.sample.dest, cxt.sample.name+'_peaks.bed'),
 			'summits':			os.path.join(cxt.sample.dest, cxt.sample.name+'_summits.bed'),
+			'diagnostics':			os.path.join(cxt.sample.dest, cxt.sample.name+'_diag.xls'),
 			'treatment_signal':	os.path.join(cxt.sample.dest, cxt.sample.name+signal_folder, 'treat', cxt.sample.name+'_treat_afterfiting_all'+signal_output_ext)
 		}
 		
