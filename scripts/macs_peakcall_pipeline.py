@@ -80,10 +80,11 @@ def main():
     
     
     if args.override_dest is not None:
+        args.override_dest = os.path.abspath(args.override_dest)
         sys.stdout.write("Override Destination is turned ON\n")
-        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n\n'.format(dest=os.path.abspath(args.override_dest)))
+        sys.stdout.write('\t-> Setting destination for all samples to "{dest}"\n\n'.format(dest=args.override_dest))
         for s in samples:
-            s.dest = os.path.abspath(args.override_dest)
+            s.dest = args.override_dest
 
     if args.macs_version == "macs1" and len(samples['dest'].unique()) < len(samples.index):
         sys.stdout.write("Detected that some of you destinations are not unique.\n")
@@ -243,8 +244,8 @@ def generate_replicate_pools(samples, args):
             group_samples[group] = PipelineSample(group, sample.genome, sample.dest)
             group_samples[group].set_attribute('template', sample.name)
             
-        for sf in sample.find_files(lambda f: f.cxt.is_origin()):
-            c = len(group_samples[group].find_files(lambda f: f.cxt.is_origin() and f.cxt.role == sf.role))
+        for sf in sample.find_files(lambda f: f.cxt.is_origin):
+            c = len(group_samples[group].find_files(lambda f: f.cxt.is_origin and f.cxt.role == sf.role))
             group_samples[group].add_file(FileInfo(sf.fullpath, FileContext.from_origin(sf.role+'_rep'+str(c))))
         
     
@@ -301,7 +302,7 @@ def make_replicate_pool_pipeline(args):
     x.set_parameter('sort', True)
     x.set_parameter('index', True)
     x.set_parameter('postfix', 'treatment')
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin() and f.context.role == 'treatment'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.context.role == 'treatment'))
     pool_pipeline.append_module(x, critical=True)
     
     
@@ -309,7 +310,7 @@ def make_replicate_pool_pipeline(args):
     x.set_parameter('sort', True)
     x.set_parameter('index', True)
     x.set_parameter('postfix', 'control')
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin() and f.context.role == 'control'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.context.role == 'control'))
     pool_pipeline.append_module(x, critical=False)
     
     
