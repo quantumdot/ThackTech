@@ -336,8 +336,9 @@ def generate_psuedoreplicate_samples(samples, args):
         psr2_bam_dest = os.path.join(s.dest, 'pseudoreps', s.name+'.pr2.bam')
         if os.path.isfile(psr1_bam_dest) and os.path.isfile(psr2_bam_dest):
             sys.stdout.write('-> It appears that %s already has pseudoreplicates generated. Skipping this sample...\n' % (s.name,))
-            s.add_file('Pseudoreplicates', 'pr1', psr1_bam_dest)
-            s.add_file('Pseudoreplicates', 'pr2', psr2_bam_dest)
+            #FileInfo(psr1_bam_dest, FileContext.from_origin('control')
+            s.add_file(FileInfo(psr1_bam_dest, FileContext('Generate Pseudoreplicates', 1, 'Pseudoreplicates', 'pr1')))
+            s.add_file(FileInfo(psr2_bam_dest, FileContext('Generate Pseudoreplicates', 1, 'Pseudoreplicates', 'pr2')))
             psr_samples_to_skip.append(s)
         else:
             psr_samples_to_run.append(s)
@@ -357,7 +358,7 @@ def generate_psuedoreplicate_samples(samples, args):
         else:
             psr1.set_attribute('pseudoreplicate', True)
         psr1.name = sample.name+'_psrep1'
-        psr1.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr1'))
+        psr1.add_file(FileInfo(sample.find_files(lambda f: f.cxt.role == 'pr1')[0], FileContext.from_origin('treatment')))
         pseudo_reps.append(psr1)
         
         #generate sample for psuedoreplicate 2
@@ -368,7 +369,7 @@ def generate_psuedoreplicate_samples(samples, args):
         else:
             psr2.set_attribute('pseudoreplicate', True)
         psr2.name = sample.name+'_psrep2'
-        psr2.add_file('source', 'treatment', sample.get_file('Pseudoreplicates', 'pr2'))
+        psr2.add_file(FileInfo(sample.find_files(lambda f: f.cxt.role == 'pr2')[0], FileContext.from_origin('treatment')))
         pseudo_reps.append(psr2)
         
         #mark the sample as primary replicate if necessary (should be last to avoid dirtying the psr from copy)
@@ -394,25 +395,25 @@ def make_pseudoreplicate_pipeline(args):
         
     from ThackTech.Pipelines.PipelineModules import GeneratePseudoreplicates
     x = GeneratePseudoreplicates.GeneratePseudoreplicates()
-    x.set_resolver('alignments', lambda s: s.get_file('source', 'treatment'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.is_origin and f.cxt.role == 'treatment'))
     idr_pre_pipeline.append_module(x, critical=True)
     
     #sort pseudoreplicate files
     from ThackTech.Pipelines.PipelineModules import SortBam
     x = SortBam.SortBam()
-    x.set_resolver('alignments', lambda s: s.get_file('Pseudoreplicates', 'pr1'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr1'))
     idr_pre_pipeline.append_module(x, critical=True)
     x = SortBam.SortBam()
-    x.set_resolver('alignments', lambda s: s.get_file('Pseudoreplicates', 'pr2'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr2'))
     idr_pre_pipeline.append_module(x, critical=True)
     
     #index sorted merged bam file
     from ThackTech.Pipelines.PipelineModules import IndexBam
     x = IndexBam.IndexBam()
-    x.set_resolver('alignments', lambda s: s.get_file('Pseudoreplicates', 'pr1'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr1'))
     idr_pre_pipeline.append_module(x, critical=True)
     x = IndexBam.IndexBam()
-    x.set_resolver('alignments', lambda s: s.get_file('Pseudoreplicates', 'pr2'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr2'))
     idr_pre_pipeline.append_module(x, critical=True)
     
     if args.shm:
@@ -461,9 +462,11 @@ def make_IDR_analysis_pipeline(args):
     post_idr_pipeline = AnalysisPipeline('IDR Analysis')
     from ThackTech.Pipelines.PipelineModules import PerformIDRv2Analysis
     x = PerformIDRv2Analysis.PerformIDRv2Analysis()
-    x.set_resolver('primary_replicates', lambda s: s.get_file_group('primaryreplicate').values())
-    x.set_resolver('pseudo_replicates', lambda s: s.get_file_group('pseudoreplicate').values())
-    x.set_resolver('pooled_pseudo_replicates', lambda s: s.get_file_group('pooledpseudoreplicate').values())
+    
+     
+    x.set_resolver('primary_replicates', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'primaryreplicate'))
+    x.set_resolver('pseudo_replicates', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pseudoreplicate'))
+    x.set_resolver('pooled_pseudo_replicates', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pooledpseudoreplicate'))
     x.set_parameter('primary_replicates_IDR_threshold', 0.01)
     x.set_parameter('pseudo_replicates_IDR_threshold', 0.01)
     x.set_parameter('pooled_pseudo_replicates_IDR_threshold', 0.0025)
@@ -477,14 +480,12 @@ def make_IDR_analysis_pipeline(args):
 
 
 
-def resolve_idr_peak_file(sample):
-    if sample.has_file_group('MACS2'):
-        if sample.has_attribute('broad') and sample.get_attribute('broad'):
-            return sample.get_file('MACS2', 'broad_peaks')
-        else:
-            return sample.get_file('MACS2', 'narrow_peaks')
+def resolve_idr_peak_file(cxt):
+    #right now only MACS2 peak calling is supported for IDR
+    if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
+        return cxt.sample.find_files(lambda f.cxt.module == 'MACS2' and f.cxt.role == 'broad_peaks')
     else:
-        return "" #right now only MACS2 peak calling is supported for IDR
+        return cxt.sample.find_files(lambda f.cxt.module == 'MACS2' and f.cxt.role == 'narrow_peaks')
 #end resolve_idr_peak_file()
 
 if __name__ == "__main__":
