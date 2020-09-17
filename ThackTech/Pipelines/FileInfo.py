@@ -305,7 +305,7 @@ class FileInfo(object):
 	#end __str__()
 	
 	def __repr__(self):
-		return "FileInfo('%s', %s)" % (self.fullpath, self.cxt.__repr__)
+		return "FileInfo('%s', %s)" % (self.fullpath, self.cxt.__repr__())
 	#end __repr__()
 	
 	def __eq__(self, other):
