@@ -245,6 +245,7 @@ def generate_replicate_pools(samples, args):
             group_samples[group].set_attribute('template', sample.name)
             
         for sf in sample.find_files(lambda f: f.cxt.is_origin):
+            print sf, sf.cxt
             c = len(group_samples[group].find_files(lambda f: f.cxt.role == sf.cxt.role))
             group_samples[group].add_file(FileInfo(sf.fullpath, FileContext.from_origin(sf.cxt.role+'_rep'+str(c))))
         
