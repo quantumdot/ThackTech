@@ -54,7 +54,9 @@ class FileContext(BaseModuleContext):
 	def __str__(self):
 		return "%s_%s" % (super(FileContext, self).__str__(), self.role)
 	
-	
+	def __repr__(self):
+		return "FileContext('%s', %d, '%s', '%s')" % (self.pipeline, self.step, self.module, self.role)
+	#end __repr__()
 
 #end class FileContext
 
@@ -303,7 +305,7 @@ class FileInfo(object):
 	#end __str__()
 	
 	def __repr__(self):
-		return "FileInfo('%s')" % (self.fullpath,)
+		return "FileInfo('%s', %s)" % (self.fullpath, self.cxt.__repr__)
 	#end __repr__()
 	
 	def __eq__(self, other):
