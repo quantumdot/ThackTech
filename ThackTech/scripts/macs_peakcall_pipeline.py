@@ -248,6 +248,7 @@ def generate_replicate_pools(samples, args):
             print sf, sf.cxt
             c = len(group_samples[group].find_files(lambda f: f.cxt.role == sf.cxt.role))
             group_samples[group].add_file(FileInfo(sf.fullpath, FileContext.from_origin(sf.cxt.role+'_rep'+str(c))))
+            print group_samples[group].find_files(lambda f: True)
         
     
     #lets alleviate the load of generating pooled bams if they already exist.
