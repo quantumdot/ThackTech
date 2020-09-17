@@ -258,7 +258,7 @@ def generate_replicate_pools(samples, args):
         print ""
         print s.name
         for f in s.find_files(lambda f: True):
-            print f
+            print f.__repr__()
         
         out_manifest_dest = os.path.join(s.dest, s.name+'_output_manifest.tsv')
         if os.path.isfile(out_manifest_dest):
