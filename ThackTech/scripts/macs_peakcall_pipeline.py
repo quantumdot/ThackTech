@@ -245,11 +245,8 @@ def generate_replicate_pools(samples, args):
             group_samples[group].set_attribute('template', sample.name)
             
         for sf in sample.find_files(lambda f: f.cxt.is_origin):
-            print sf, sf.cxt
             c = len(group_samples[group].find_files(lambda f: f.cxt.role == sf.cxt.role))
             group_samples[group].add_file(FileInfo(sf.fullpath, FileContext.from_origin(sf.cxt.role+'_rep'+str(c))))
-            print group_samples[group].find_files(lambda f: True)
-            print ""
         
     
     #lets alleviate the load of generating pooled bams if they already exist.
@@ -258,6 +255,11 @@ def generate_replicate_pools(samples, args):
     group_samples_to_run = []
     group_samples_to_skip = []
     for s in group_samples.values():
+        print ""
+        print s.name
+        for f in s.find_files(lambda f: True)
+            print f
+        
         out_manifest_dest = os.path.join(s.dest, s.name+'_output_manifest.tsv')
         if os.path.isfile(out_manifest_dest):
             sys.stdout.write('-> It appears that %s has already been pooled. Skipping this sample...\n' % (s.name,))
