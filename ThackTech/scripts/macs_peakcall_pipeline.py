@@ -401,19 +401,19 @@ def make_pseudoreplicate_pipeline(args):
     #sort pseudoreplicate files
     from ThackTech.Pipelines.PipelineModules import SortBam
     x = SortBam.SortBam()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr1'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'pr1'))
     idr_pre_pipeline.append_module(x, critical=True)
     x = SortBam.SortBam()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr2'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'pr2'))
     idr_pre_pipeline.append_module(x, critical=True)
     
     #index sorted merged bam file
     from ThackTech.Pipelines.PipelineModules import IndexBam
     x = IndexBam.IndexBam()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr1'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'pr1'))
     idr_pre_pipeline.append_module(x, critical=True)
     x = IndexBam.IndexBam()
-    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pr2'))
+    x.set_resolver('alignments', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'pr2'))
     idr_pre_pipeline.append_module(x, critical=True)
     
     if args.shm:
@@ -464,9 +464,9 @@ def make_IDR_analysis_pipeline(args):
     x = PerformIDRv2Analysis.PerformIDRv2Analysis()
     
      
-    x.set_resolver('primary_replicates', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'primaryreplicate'))
-    x.set_resolver('pseudo_replicates', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pseudoreplicate'))
-    x.set_resolver('pooled_pseudo_replicates', lambda cxt: cxt.sample.find_files(lambda f.cxt.role == 'pooledpseudoreplicate'))
+    x.set_resolver('primary_replicates', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'primaryreplicate'))
+    x.set_resolver('pseudo_replicates', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'pseudoreplicate'))
+    x.set_resolver('pooled_pseudo_replicates', lambda cxt: cxt.sample.find_files(lambda f: f.cxt.role == 'pooledpseudoreplicate'))
     x.set_parameter('primary_replicates_IDR_threshold', 0.01)
     x.set_parameter('pseudo_replicates_IDR_threshold', 0.01)
     x.set_parameter('pooled_pseudo_replicates_IDR_threshold', 0.0025)
@@ -483,9 +483,9 @@ def make_IDR_analysis_pipeline(args):
 def resolve_idr_peak_file(cxt):
     #right now only MACS2 peak calling is supported for IDR
     if cxt.sample.has_attribute('broad') and cxt.sample.get_attribute('broad'):
-        return cxt.sample.find_files(lambda f.cxt.module == 'MACS2' and f.cxt.role == 'broad_peaks')
+        return cxt.sample.find_files(lambda f: f.cxt.module == 'MACS2' and f.cxt.role == 'broad_peaks')
     else:
-        return cxt.sample.find_files(lambda f.cxt.module == 'MACS2' and f.cxt.role == 'narrow_peaks')
+        return cxt.sample.find_files(lambda f: f.cxt.module == 'MACS2' and f.cxt.role == 'narrow_peaks')
 #end resolve_idr_peak_file()
 
 if __name__ == "__main__":
