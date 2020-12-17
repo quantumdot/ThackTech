@@ -3,6 +3,7 @@ import pybedtools
 import sys
 import cStringIO
 import csv
+import os
 
 
 class ChromosomeSets:
@@ -76,7 +77,11 @@ class ChromSizes(dict):
     """
     def __init__(self, genome, path=None):
         self.genome = genome
-        self.path = path
+        if os.path.isfile(genome):
+            self.path = genome
+        else:
+            self.path = path
+        
         if self.path is None:
             self.__load_UCSC()
         else:
