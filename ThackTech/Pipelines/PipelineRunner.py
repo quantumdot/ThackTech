@@ -204,8 +204,8 @@ def _execute_pipeline_on_sample(pipeline, sample, tasks_statuses):
 							for f in results:
 								sample.add_file(f)
 						
-						#done running this step, update the output manifest
-						sample.write_file_manifest(sample.default_file_manifest_location)
+					#done running this step, update the output manifest
+					sample.write_file_manifest(sample.default_file_manifest_location)
 			
 				except Exception as e:
 					if step.module.is_critical:
