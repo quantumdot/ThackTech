@@ -42,6 +42,8 @@ class BamCoverage(PipelineModule):
 		self.add_parameter(ModuleParameter('sam_flag_exclude', int, None, nullable=True))
 		self.add_parameter(ModuleParameter('min_frag_len', int, None, nullable=True))
 		self.add_parameter(ModuleParameter('max_frag_len', int, None, nullable=True))
+
+		self.add_parameter(ModuleParameter('verbose', bool, True, desc='Turn on or off verbose mode'))
 	#end __declare_parameters()
 	
 	def _declare_resolvers(self):
@@ -67,31 +69,43 @@ class BamCoverage(PipelineModule):
 			bam = bam[0]
 		
 		out_ext = ('bg' if self.get_parameter_value_as_string('output_format') == 'bedgraph' else 'bw')
-		sample_basename = bam.basename_with_ext('rpkm_norm.{}'.format(out_ext))
+		out_suffix = [
+			'{}bp'.format(self.get_parameter_value_as_string('bin_size'))
+		]
 		bamcoverage_args = [
 			self.get_parameter_value_as_string('bamCoverage_path'),
 			'--bam', bam.fullpath,
-			'--outFileName', os.path.join(cxt.sample.dest, sample_basename),
 			'--outFileFormat', self.get_parameter_value_as_string('output_format'),
 			'--binSize', self.get_parameter_value_as_string('bin_size'),
 			'--numberOfProcessors', str(self.processors),
-			'--scaleFactor', self.get_parameter_value_as_string('scale_factor'),
-			#'--verbose'
 		]
+		if self.get_parameter_value('scale_factor') != 1.0:
+			bamcoverage_args.extend(['--scaleFactor', self.get_parameter_value_as_string('scale_factor')])
+			out_suffix.append('{}_sf'.format(self.get_parameter_value_as_string('scale_factor')))
+
 		if self.get_parameter_value('normalize') is not None:
 			bamcoverage_args.extend(['--normalizeUsing', self.get_parameter_value_as_string('normalize')])
+			out_suffix.append('{}_norm'.format(self.get_parameter_value_as_string('normalize')))
 
 		if self.get_parameter_value('MNase'):
 			bamcoverage_args.append('--MNase')
 
 		if self.get_parameter_value('filter_strand') is not None:
 			bamcoverage_args.extend(['--filterRNAstrand', self.get_parameter_value_as_string('filter_strand')])
+			out_suffix.append('{}_strand'.format(self.get_parameter_value_as_string('filter_strand')))
 
 		if self.get_parameter_value('smooth') is not None:
 			bamcoverage_args.extend(['--smoothLength', self.get_parameter_value_as_string('smooth')])
+			out_suffix.append('smooth_{}'.format(self.get_parameter_value_as_string('smooth')))
 
 		if self.get_parameter_value('skip_na'):
 			bamcoverage_args.append('--skipNonCoveredRegions')
+
+		sample_basename = bam.basename_with_ext('{}.{}'.format('.'.join(out_suffix), out_ext))
+		bamcoverage_args.extend(['--outFileName', os.path.join(cxt.sample.dest, sample_basename)])
+
+		if self.get_parameter_value('verbose'):
+			bamcoverage_args.append('--verbose')
 
 		cxt.log.write('Generating normalized signal track....')
 		cxt.log.write("\n..............................................\n")

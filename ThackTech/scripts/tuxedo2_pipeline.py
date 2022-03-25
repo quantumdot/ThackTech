@@ -74,7 +74,7 @@ def main():
     parser.add_argument('--dest', action='store', required=True, help="Path to destination for results.")
     parser.add_argument('--genome', action='store', required=True, help="Reference genome to use.")
     
-    available_qc_choices = ['ism', 'fqscreen', 'fastqc', 'rpkmbw']
+    available_qc_choices = ['ism', 'fqscreen', 'fastqc', 'signal_bw']
     parser.add_argument('--qc', action='append', default=[], choices=available_qc_choices+['all'], help="Specify which QC modules to run.")
     parser.add_argument('--pe_pre', default='_R', help="Paired-end prefix. String to insert between the file basename and the pair number when searching for read files. If your FASTQ files are names as [reads_R1.fastq, reads_R2.fastq] then use '_R1', or if reads_1.fastq then use '_1'. This option is only used when in paired end mode. default: _R1")
     parser.add_argument('--sample_postfix', default="", help="Postfix to append when looking for read files (ex lane number: '_001')")
@@ -252,11 +252,26 @@ def make_read_alignment_pipeline(args, additional_args):
             x = InsertSizeMetrics.InsertSizeMetrics()
             x.set_resolver('bam', mapped_bam_resolver)
             pipeline.append_module(x)
-            
-        if 'rpkmbw' in args.qc:
-            from ThackTech.Pipelines.PipelineModules import BamToRpkmNormBigWig
-            x = BamToRpkmNormBigWig.BamToRpkmNormBigWig(processors=args.threads)
+
+        if 'signal_bw' in args.qc:
+            from ThackTech.Pipelines.PipelineModules import BamCoverage
+            x = BamCoverage.BamCoverage(name='BamCoverage_all_reads', processors=args.threads)
             x.set_parameter('bin_size', 10)
+            x.set_parameter('normalize', 'CPM')
+            x.set_resolver('bam', mapped_bam_resolver)
+            pipeline.append_module(x)
+
+            x = BamCoverage.BamCoverage(name='BamCoverage_forward_reads', processors=args.threads)
+            x.set_parameter('bin_size', 10)
+            x.set_parameter('normalize', 'CPM')
+            x.set_parameter('filter_strand', 'forward')
+            x.set_resolver('bam', mapped_bam_resolver)
+            pipeline.append_module(x)
+
+            x = BamCoverage.BamCoverage(name='BamCoverage_reverse_reads', processors=args.threads)
+            x.set_parameter('bin_size', 10)
+            x.set_parameter('normalize', 'CPM')
+            x.set_parameter('filter_strand', 'reverse')
             x.set_resolver('bam', mapped_bam_resolver)
             pipeline.append_module(x)
     
