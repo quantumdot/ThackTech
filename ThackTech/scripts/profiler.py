@@ -99,6 +99,8 @@ def main():
     scale_group = parser.add_argument_group('Scaling Options')
     scale_group.add_argument('--scalegroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
     scale_group.add_argument('--scalebedgroups', action='store', default=None, help='Groups of plots to share color/y-axis scales. If not specified, all plots will be constructed with the same scale. Parameter should be specified as comma-separated lists of 0-based offsets of samples, and groups separated with a semicolon. Ex: 0;1,2;3,4 results in sample 0 plotted with independent scale, 1 and 2 sharing scale, and 3 and 4 sharing scale. If specified, but parameter omits samples, then the omitted samples will each be scaled independently.')
+    scale_group.add_argument('--globalvmin', action='store', default=None, help='If "auto", calculate minimum value globally across all groups, if a number, use this number globally, if not specified, see --scalegroups')
+    scale_group.add_argument('--globalvmax', action='store', default=None, help='If "auto", calculate maximum value globally across all groups, if a number, use this number globally, if not specified, see --scalegroups')
     scale_group.add_argument('--saturatemin', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemin> percent bottom values.')
     scale_group.add_argument('--saturatemax', action='store', type=float, default=0.01, help='In the heatmap plot, saturate the <--saturatemax> percent top values.')
     scale_group.add_argument('--coefficients', action='store', nargs='*', type=float, help='Coefficients to multiply signals by, one value for each signal submitted.')
@@ -363,7 +365,7 @@ def main():
             gopts['savename_notes'].append("sort%d%s" % (args.sort, args.sortmethod))
         
     #compute saturation points and average profile limits
-    compute_group_scales(args.scalegroups, samples, args.saturatemin, args.saturatemax)
+    compute_group_scales(args.scalegroups, samples, args.saturatemin, args.saturatemax, args.globalvmin, args.globalvmax)
     
     #generate the subplots....
     sys.stderr.write("Generating Figure....\n")
@@ -571,11 +573,64 @@ def count_groups(groups, samples):
     return len(get_groups(groups, samples))
 #end count_groups()
 
-def compute_group_scales(groups, samples, min_saturate, max_saturate):
+def compute_group_scales(groups, samples, min_saturate, max_saturate, globalvmin, globalvmax):
     groups_list = get_groups(groups, samples)
     #print groups_list
     for i in range(len(groups_list)):
         compute_scales_for_group(i, [s for s in samples if str(s.sig_id) in groups_list[i]], min_saturate, max_saturate)
+
+    if globalvmax is not None:
+        if globalvmax == "auto":
+            # automatic mode, pull the max of the maxes
+            gvmax_heat = max([s.heat_max for s in samples])
+            gvmax_avg = max([s.avg_max for s in samples])
+            gvmax_raw = max([s.raw_max for s in samples])
+
+        elif globalvmax.isdigit():
+            # set to a single number, assign out
+            globalvmax = float(globalvmax)
+            gvmax_heat = globalvmax
+            gvmax_avg = globalvmax
+            gvmax_raw = globalvmax
+
+        else:
+            # tuple of numbers, separated by commas
+            gvmax_heat, gvmax_avg, gvmax_raw = [float(gvm) for gvm in globalvmax.split(',')]
+
+        sys.stderr.write("-> Global vmax enabled ('%s')\n" % (globalvmax))
+        sys.stderr.write("    -> Using heatmap max (%f)\n" % (gvmax_heat))
+        sys.stderr.write("    -> Using average profile max (%f)\n" % (gvmax_avg))
+        for s in samples:
+            s.heat_max = gvmax_heat
+            s.avg_max = gvmax_avg
+            s.raw_max = gvmax_raw
+
+
+    if globalvmin is not None:
+        if globalvmin == "auto":
+            # automatic mode, pull the min of the min-s
+            gvmin_heat = min([s.heat_min for s in samples])
+            gvmin_avg = min([s.avg_min for s in samples])
+            gvmin_raw = min([s.raw_min for s in samples])
+
+        elif globalvmin.isdigit():
+            # set to a single number, assign out
+            globalvmin = float(globalvmin)
+            gvmin_heat = globalvmin
+            gvmin_avg = globalvmin
+            gvmin_raw = globalvmin
+
+        else:
+            # tuple of numbers, separated by commas
+            gvmin_heat, gvmin_avg, gvmin_raw = [float(gvm) for gvm in globalvmin.split(',')]
+
+        sys.stderr.write("-> Global vmin enabled ('%s')\n" % (globalvmin))
+        sys.stderr.write("    -> Using heatmap min (%f)\n" % (gvmin_heat))
+        sys.stderr.write("    -> Using average profile min (%f)\n" % (gvmin_avg))
+        for s in samples:
+            s.heat_min = gvmin_heat
+            s.avg_min = gvmin_avg
+            s.raw_min = gvmin_raw
 #end compute_group_scales()
 
 def compute_scales_for_group(group_id, samples, min_saturate, max_saturate):
